@@ -284,7 +284,7 @@ class _MetadataParser(HTMLParser):
 
 def _claims(value: str) -> list[str]:
     patterns = (
-        r"(?<!\w)(?:\$[\d,]+|[\d,]+(?:\.\d+)?%|[\d,]+\s+(?:points|miles))(?!\w)",
+        r"(?<!\w)(?:\$[\d,]+|[\d,]+(?:\.\d+)?%|[\d,]+\s+(?:credits|seats|users))(?!\w)",
         r"\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,\s*\d{4})?\b",
     )
     return sorted({match.casefold() for pattern in patterns for match in re.findall(pattern, value, re.I)})

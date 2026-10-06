@@ -241,7 +241,7 @@ def test_explicit_canonical_conflict_blocks_fact_check(tmp_path):
     }, actor="connector:test")
     editorial = EditorialStore(store.DATA_PATH)
     content = {
-        "editorial_thesis": "Explain the offer", "target_reader": "Points collectors",
+        "editorial_thesis": "Explain the offer", "target_reader": "Readers",
         "intended_outcome": "Decide whether to transfer", "working_title": "Offer",
         "final_title": "Offer", "subject": "Offer", "preview_text": "Terms",
         "sections": [{"body": "The offer is 40%."}], "cta": {"label": "Read"},

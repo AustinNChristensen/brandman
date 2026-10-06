@@ -33,7 +33,7 @@ def setup(tmp_path, monkeypatch):
     brand = store.get_brand("demo-brand")
     editorial = EditorialStore(database, clock=lambda: "2026-09-02T12:00:00Z")
     issue = editorial.create_issue(brand["id"], {
-        "editorial_thesis": "Explain the deal", "target_reader": "Points collectors",
+        "editorial_thesis": "Explain the deal", "target_reader": "Readers",
         "intended_outcome": "Make an informed choice", "subject": "Issue",
         "final_title": "Issue", "sections": [{"body": "Body"}],
         "content_basis": {"kind": "original_analysis", "statement": "Test editorial analysis."},

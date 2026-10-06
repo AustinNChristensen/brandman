@@ -15,7 +15,7 @@ _STRONG_FIXTURE_MARKERS = (
     "Canonical dispatch", "Test one content source", "Draft text",
     "Opinion-led posts generate more qualified traffic.",
     "Authenticated lifecycle actor", "Cleanup candidate ", "Unused issue ",
-    "A better points decision", "How should I use these points?",
+    "A better pricing decision", "How should I use these credits?",
     "read-sync-api", "read-no-inbox-api", "Approval dead-end blocked: queue",
     "910000006", "910000007",
 )

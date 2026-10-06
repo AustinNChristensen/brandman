@@ -141,8 +141,8 @@ def test_brand_connection_surface_filters_metadata_and_rejects_shared_lane_ids(
     })
     points = store.get_brand("demo-brand")
     store.upsert_connector_account(
-        points["id"], connector_type="beehiiv", account_key="points-read",
-        display_name="Points read", status="needs_attention", scopes=["posts.read"],
+        points["id"], connector_type="beehiiv", account_key="demo-read",
+        display_name="Demo read", status="needs_attention", scopes=["posts.read"],
         capabilities=["posts.read", "metrics.read"],
         configuration={"delivery_mode": "api", "connection_role": "beehiiv_read"},
     )
@@ -159,34 +159,34 @@ def test_brand_connection_surface_filters_metadata_and_rejects_shared_lane_ids(
     )
     store.upsert_connector_account(
         points["id"], connector_type="beehiiv", account_key="shared-id",
-        display_name="Points shared", status="needs_attention", scopes=["posts.read"],
+        display_name="Demo shared", status="needs_attention", scopes=["posts.read"],
         capabilities=["posts.read"], configuration={"delivery_mode": "api"},
     )
     with TestClient(app, headers=HEADERS) as client:
         connected = client.put(
-            "/api/brands/demo-brand/connections/beehiiv/points-read",
+            "/api/brands/demo-brand/connections/beehiiv/demo-read",
             json={
-                "display_name": "Points read", "credentials": {"api_key": "secret-a"},
+                "display_name": "Demo read", "credentials": {"api_key": "secret-a"},
                 "required_scopes": ["posts.read"], "granted_scopes": ["posts.read"],
             },
         )
         assert connected.status_code == 200
         assert [row["account_id"] for row in client.get(
             "/api/brands/demo-brand/connections"
-        ).json()] == ["points-read"]
+        ).json()] == ["demo-read"]
         overbroad = client.put(
-            "/api/brands/demo-brand/connections/beehiiv/points-read",
+            "/api/brands/demo-brand/connections/beehiiv/demo-read",
             json={
-                "display_name": "Points read", "credentials": {"api_key": "secret-wide"},
+                "display_name": "Demo read", "credentials": {"api_key": "secret-wide"},
                 "required_scopes": ["posts.read", "posts.write"],
                 "granted_scopes": ["posts.read", "posts.write"],
             },
         )
         assert overbroad.status_code == 422
         extra_field = client.put(
-            "/api/brands/demo-brand/connections/beehiiv/points-read",
+            "/api/brands/demo-brand/connections/beehiiv/demo-read",
             json={
-                "display_name": "Points read",
+                "display_name": "Demo read",
                 "credentials": {"api_key": "secret-a", "refresh_token": "not-allowed"},
                 "required_scopes": ["posts.read"], "granted_scopes": ["posts.read"],
             },

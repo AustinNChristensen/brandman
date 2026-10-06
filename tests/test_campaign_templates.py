@@ -8,7 +8,7 @@ from app.main import app
 
 def answers():
     return {
-        "goal": "Explain the offer", "audience": "Points collectors",
+        "goal": "Explain the offer", "audience": "Readers",
         "source": "Governed candidate source", "cta": "Read the guide",
         "flight": "Launch week", "success": "CTR above the 2% baseline",
     }

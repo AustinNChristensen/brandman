@@ -36,7 +36,7 @@ def opportunity_event(post_id: str = "910000001") -> ConnectorEvent:
         {
             "evidence_type": "x_engagement_opportunity",
             "opportunity_type": "mention",
-            "text": "How should I use these points?",
+            "text": "How should I use these credits?",
             "author": {"id": "reader-1", "username": "reader"},
             "conversation_id": post_id,
             "referenced_tweets": [],
@@ -108,7 +108,7 @@ def test_rest_brand_scoped_inbox_detail_history_draft_and_submit():
             f"/api/brands/demo-brand/engagement/{saved['id']}/draft-action",
             json={
                 "action_type": "reply",
-                "text": "Start with the transfer partner that matches your trip.",
+                "text": "Start with the integration that matches your plan.",
             },
         )
         assert drafted.status_code == 200

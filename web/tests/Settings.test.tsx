@@ -12,7 +12,7 @@ vi.mock('../src/state/Toast', () => ({ useToast: () => ({ notify: mocks.notify }
 import Settings from '../src/pages/Settings'
 
 const data = {
-  brand: { id: 'b1', slug: 'demo-brand', name: 'Demo Brand', mission: 'Make points practical.', voice: 'Clear and specific.', compliance_rules: 'Verify material claims.', approval_policy: 'human_approval_required', created_at: '', updated_at: '' },
+  brand: { id: 'b1', slug: 'demo-brand', name: 'Demo Brand', mission: 'Make pricing practical.', voice: 'Clear and specific.', compliance_rules: 'Verify material claims.', approval_policy: 'human_approval_required', created_at: '', updated_at: '' },
   audit: [{ sequence: 1, brand_id: 'b1', actor: 'chris', reason: 'Clarify mission', before: {}, after: {}, at: '2026-09-03T15:00:00Z' }],
   rate_cards: [{ id: 'r1', brand_id: 'b1', version: 'customer-2026', provider: 'beehiiv', method: 'GET', endpoint_pattern: '/v2/*', billable_category: 'read', unit_name: 'request', unit_price: '0.002', currency: 'USD', effective_at: '2026-09-03T00:00:00Z', configured_by: 'chris', created_at: '' }],
   orchestration: { as_of: '2026-09-03T15:00:00Z', schedules: { total: 1, enabled: 1, due: 1 }, pending_decisions: 0, latest_tick: null },
@@ -25,7 +25,7 @@ afterEach(cleanup)
 describe('Settings', () => {
   it('saves complete governed brand settings with an explicit audit reason', async () => {
     render(<MemoryRouter><Settings /></MemoryRouter>)
-    expect(await screen.findByDisplayValue('Make points practical.')).toBeInTheDocument()
+    expect(await screen.findByDisplayValue('Make pricing practical.')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Mission'), { target: { value: 'Make rewards simpler.' } })
     fireEvent.change(screen.getByLabelText('Reason for this change'), { target: { value: 'Tighten the mission statement' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save governed settings' }))

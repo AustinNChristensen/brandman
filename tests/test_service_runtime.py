@@ -59,7 +59,7 @@ def configured_database(tmp_path):
     key = Fernet.generate_key().decode()
     credentials = CredentialStore(database, key)
     beehiiv = store.upsert_connector_account(
-        brand["id"], "beehiiv", "pub_points", "Demo Brand Beehiiv",
+        brand["id"], "beehiiv", "pub_demo", "Demo Brand Beehiiv",
         status="healthy", scopes=["posts.read", "posts.write"],
         capabilities=["posts.read", "drafts.write"],
     )
@@ -74,7 +74,7 @@ def configured_database(tmp_path):
         status="healthy", scopes=[], capabilities=["content.read"],
     )
     credentials.put(
-        "beehiiv", "pub_points", "Beehiiv", {"api_key": "beehiiv-secret"},
+        "beehiiv", "pub_demo", "Beehiiv", {"api_key": "beehiiv-secret"},
         required_scopes=["posts.read", "posts.write"],
         granted_scopes=["posts.read", "posts.write"],
     )
@@ -145,7 +145,7 @@ def test_beehiiv_secret_is_revealed_only_when_request_is_executed(tmp_path):
     assert reveals == []
     result = service.run_once()
     assert result["status"] == "completed"
-    assert reveals == [("beehiiv", "pub_points")]
+    assert reveals == [("beehiiv", "pub_demo")]
     assert calls[0]["headers"]["Authorization"] == "Bearer beehiiv-secret"
     assert "beehiiv-secret" not in repr(result)
     assert "beehiiv-secret" not in repr(service)
@@ -161,12 +161,12 @@ def test_periodic_native_beehiiv_sync_projects_subscribers_and_issue_metrics(tmp
     store.ensure_demo_brand_growth_mission()
     scopes = ["posts.read", "posts.write", "publications.read"]
     store.upsert_connector_account(
-        brand["id"], "beehiiv", "pub_points", "Demo Brand Beehiiv",
+        brand["id"], "beehiiv", "pub_demo", "Demo Brand Beehiiv",
         status="healthy", scopes=scopes,
         capabilities=["posts.read", "drafts.write", "publication.stats.read"],
     )
     CredentialStore(database, key).put(
-        "beehiiv", "pub_points", "Beehiiv", {"api_key": "beehiiv-secret"},
+        "beehiiv", "pub_demo", "Beehiiv", {"api_key": "beehiiv-secret"},
         required_scopes=scopes, granted_scopes=scopes,
     )
     editorial = EditorialStore(database)
@@ -193,7 +193,7 @@ def test_periodic_native_beehiiv_sync_projects_subscribers_and_issue_metrics(tmp
 
     class MetricsTransport:
         def request(self, method, url, **kwargs):
-            if url.endswith("/publications/pub_points"):
+            if url.endswith("/publications/pub_demo"):
                 return HttpResponse(200, json.dumps({"data": {"stats": {
                     "active_subscriptions": 18, "active_free_subscriptions": 18,
                     "active_premium_subscriptions": 0,
@@ -256,14 +256,14 @@ def test_bounded_runtime_exports_only_exact_approved_newsletter_draft(tmp_path):
     database, key, brand, beehiiv, _, _ = configured_database(tmp_path)
     editorial = EditorialStore(database)
     issue = editorial.create_issue(brand["id"], {
-        "editorial_thesis": "Make one useful points decision.",
-        "target_reader": "Points collectors",
+        "editorial_thesis": "Make one useful decision.",
+        "target_reader": "Readers",
         "intended_outcome": "Choose a card strategy",
         "working_title": "A useful decision", "final_title": "A useful decision",
         "subject": "A useful decision", "preview_text": "The useful math",
         "sections": [{"heading": "Decision", "body": "Details"}],
         "cta": {"label": "Read more", "url": "https://demo.example"},
-        "seo": {"title": "A useful decision", "description": "Points guidance"},
+        "seo": {"title": "A useful decision", "description": "Guidance"},
         "content_basis": {"kind": "original_analysis", "statement": "DemoBrand card-strategy analysis."},
         "claims": [], "source_provenance": [],
     }, created_by="agent")
@@ -298,7 +298,7 @@ def test_unhealthy_or_under_scoped_accounts_are_not_mapped(tmp_path):
     database, key, _, beehiiv, x_account, _ = configured_database(tmp_path)
     brand = store.get_brand("demo-brand")
     store.upsert_connector_account(
-        brand["id"], "beehiiv", "pub_points", "Beehiiv",
+        brand["id"], "beehiiv", "pub_demo", "Beehiiv",
         status="unhealthy", scopes=["posts.read"], capabilities=["posts.read"],
     )
     store.upsert_connector_account(

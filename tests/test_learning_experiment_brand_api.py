@@ -80,7 +80,7 @@ def test_brand_scoped_experiment_detail_and_decisions_never_publish(tmp_path, mo
     monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app, headers=HEADERS) as client:
         source = client.post("/api/brands/demo-brand/sources", json={
-            "title": "Verified offer", "source_type": "rss", "body_summary": "The source reports 80,000 points.",
+            "title": "Verified offer", "source_type": "rss", "body_summary": "The source reports 80,000 credits.",
             "url": "https://source.test/offer", "lifecycle_state": "published",
         }).json()
         campaign = client.post("/api/brands/demo-brand/campaigns", json={

@@ -21,7 +21,7 @@ def store(tmp_path):
 def issue_content(claims=None):
     return {
         "editorial_thesis": "A deadline makes this transfer bonus actionable.",
-        "target_reader": "Points collectors",
+        "target_reader": "Readers",
         "intended_outcome": "Choose whether to transfer",
         "working_title": "Transfer bonus",
         "final_title": "The transfer bonus worth checking today",
@@ -302,7 +302,7 @@ def test_fact_check_is_revision_bound_complete_and_reviewable(store):
 
 
 def test_fact_check_rejects_unknown_source_identity(store):
-    claim = {"id": "amount", "text": "100 points", "citations": [{"source_id": "loose-source"}]}
+    claim = {"id": "amount", "text": "100 credits", "citations": [{"source_id": "loose-source"}]}
     issue = store.create_issue("brand-1", issue_content([claim]), created_by="writer")
     store.transition(issue["id"], IssueLifecycle.OUTLINE)
     store.transition(issue["id"], IssueLifecycle.DRAFT)

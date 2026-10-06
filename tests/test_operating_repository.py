@@ -76,7 +76,7 @@ def test_repository_reads_all_current_operating_sources(tmp_path):
     editorial = EditorialStore(database)
     editorial.upsert_candidate("brand-1", "Transfer bonus", {"relevance": 1}, duplicate_identity="candidate-key")
     issue = editorial.create_issue("brand-1", {
-        "editorial_thesis": "Explain the deal", "target_reader": "Points collectors",
+        "editorial_thesis": "Explain the deal", "target_reader": "Readers",
         "intended_outcome": "Make an informed choice", "subject": "Issue",
         "working_title": "Issue", "sections": [{"body": "Body"}],
         "content_basis": {"kind": "original_analysis", "statement": "Repository test analysis."},

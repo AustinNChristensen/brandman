@@ -28,7 +28,7 @@ def response(status, data=None, headers=None):
 def approved(tmp_path):
     store = EditorialStore(tmp_path / "editorial.db", clock=lambda: "2026-09-02T12:00:00+00:00")
     issue = store.create_issue("brand-1", {
-        "editorial_thesis": "Explain the deal", "target_reader": "Points collectors",
+        "editorial_thesis": "Explain the deal", "target_reader": "Readers",
         "intended_outcome": "Make an informed choice",
         "working_title": "Working", "final_title": "Final <Title>",
         "subject": "Subject", "preview_text": "Preview",

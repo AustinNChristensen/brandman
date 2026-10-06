@@ -33,8 +33,8 @@ vi.mock('../src/state/useWorkspace', () => ({
 import Content from '../src/pages/Content'
 
 const rejected = { id: 'draft-1', brand_id: 'b1', connector: 'x', payload: { body: 'Rejected text' }, status: 'rejected', revision: 2, canonical_post_id: null, approval: null, external_id: null, external_url: null, attempt_count: 0, last_error: null, updated_at: '2026-09-03T12:00:00Z' }
-const candidate = { id: 'candidate-1', brand_id: 'b1', duplicate_identity: 'dupe', title: 'Transfer bonus', summary: 'Help readers decide', recommended_treatment: 'newsletter_and_social', score: 8.5, scoring_inputs: {}, rationale: [], supporting_sources: [{ source_id: 'source-1', url: 'https://issuer.test' }], publisher_name: '', cluster_key: '', intelligence: {}, status: 'open', created_at: '', updated_at: '' }
-const campaign = { id: 'campaign-1', brand_id: 'b1', source_id: null, name: 'Transfer campaign', objective: 'Help readers decide', status: 'draft', created_at: '', memberships: [], relationships: [], flights: [], primary_anchor: null }
+const candidate = { id: 'candidate-1', brand_id: 'b1', duplicate_identity: 'dupe', title: 'Price drop', summary: 'Help readers decide', recommended_treatment: 'newsletter_and_social', score: 8.5, scoring_inputs: {}, rationale: [], supporting_sources: [{ source_id: 'source-1', url: 'https://issuer.test' }], publisher_name: '', cluster_key: '', intelligence: {}, status: 'open', created_at: '', updated_at: '' }
+const campaign = { id: 'campaign-1', brand_id: 'b1', source_id: null, name: 'Pricing campaign', objective: 'Help readers decide', status: 'draft', created_at: '', memberships: [], relationships: [], flights: [], primary_anchor: null }
 const post = { id: 'post-1', campaign_id: 'campaign-1', brand_id: 'b1', candidate_id: null, created_by: 'chris', channel: 'x', body: 'Canonical draft', status: 'draft', scheduled_for: null, external_post_id: null, revision: 1, created_at: '', updated_at: '' }
 
 beforeEach(() => {
@@ -66,8 +66,8 @@ describe('Content authoring flows', () => {
     await waitFor(() => expect(api.editDraft).toHaveBeenCalledWith('draft-1', { body: 'Revised text' })); expect(api.submitDraft).toHaveBeenCalledWith('draft-1')
 
     fireEvent.click(screen.getByRole('button', { name: /Ideas/ })); fireEvent.click(screen.getByRole('button', { name: 'Draft newsletter' }))
-    dialog = screen.getByRole('dialog'); fireEvent.change(within(dialog).getByLabelText('Target reader'), { target: { value: 'Points collectors' } }); fireEvent.change(within(dialog).getByLabelText('Intended outcome'), { target: { value: 'Evaluate the transfer' } }); fireEvent.click(within(dialog).getByRole('button', { name: 'Create newsletter idea' }))
-    await waitFor(() => expect(api.createNewsletter).toHaveBeenCalledWith('demo-brand', expect.objectContaining({ final_title: 'Transfer bonus', source_provenance: [expect.objectContaining({ source_id: 'source-1' })] }), 'candidate-1'))
+    dialog = screen.getByRole('dialog'); fireEvent.change(within(dialog).getByLabelText('Target reader'), { target: { value: 'Readers' } }); fireEvent.change(within(dialog).getByLabelText('Intended outcome'), { target: { value: 'Evaluate the change' } }); fireEvent.click(within(dialog).getByRole('button', { name: 'Create newsletter idea' }))
+    await waitFor(() => expect(api.createNewsletter).toHaveBeenCalledWith('demo-brand', expect.objectContaining({ final_title: 'Price drop', source_provenance: [expect.objectContaining({ source_id: 'source-1' })] }), 'candidate-1'))
     expect(JSON.stringify(api.createNewsletter.mock.calls)).not.toContain('created_by')
   })
 

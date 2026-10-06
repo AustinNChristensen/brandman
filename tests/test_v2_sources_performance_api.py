@@ -22,8 +22,8 @@ def test_sources_and_performance_are_brand_scoped_and_read_only_first():
         demo_other = store.get_brand("demo-personal")
 
         configured = client.post("/api/brands/demo-brand/third-party-sources", json={
-            "publisher_name": "Doctor of Credit",
-            "feed_url": "https://doctorofcredit.example.test/feed.xml",
+            "publisher_name": "Example Newsletter",
+            "feed_url": "https://newsletter.example.test/feed.xml",
             "feed_format": "rss",
             "polling_interval_seconds": 1800,
             "reason": "Track relevant public reporting",
@@ -49,7 +49,7 @@ def test_sources_and_performance_are_brand_scoped_and_read_only_first():
         assert canonical.json()["brand_id"] == points["id"]
 
         beehiiv = store.upsert_connector_account(
-            points["id"], "beehiiv", "pub_points", "Points newsletter",
+            points["id"], "beehiiv", "pub_demo", "Demo newsletter",
             status="connected", scopes=["posts.read", "metrics.read"],
             capabilities=["posts.read", "metrics.read"],
             configuration={"delivery_mode": "browser_assisted", "connection_role": "beehiiv_read"},

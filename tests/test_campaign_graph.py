@@ -120,8 +120,8 @@ def test_template_idempotency_is_tenant_scoped_and_payload_bound(tmp_path, monke
     answers = {"goal": "Explain", "audience": "Readers", "source": "Official source",
                "cta": "Read", "flight": "Launch", "success": "Clicks above baseline"}
     points = templates.instantiate(
-        "newsletter-led", "demo-brand", answers, name="Points campaign",
-        objective="Serve Points readers", source_id=points_source["id"],
+        "newsletter-led", "demo-brand", answers, name="Demo campaign",
+        objective="Serve demo readers", source_id=points_source["id"],
         idempotency_key="shared", actor="Chris",
     )
     demo_other = templates.instantiate(
@@ -136,14 +136,14 @@ def test_template_idempotency_is_tenant_scoped_and_payload_bound(tmp_path, monke
     changed_answers = {**answers, "goal": "Sell something else"}
     with pytest.raises(CampaignGraphError, match="already bound to a different request"):
         templates.instantiate(
-            "newsletter-led", "demo-brand", changed_answers, name="Points campaign",
-            objective="Serve Points readers", source_id=points_source["id"],
+            "newsletter-led", "demo-brand", changed_answers, name="Demo campaign",
+            objective="Serve demo readers", source_id=points_source["id"],
             idempotency_key="shared", actor="Chris",
         )
     with pytest.raises(CampaignGraphError, match="already bound to a different request"):
         templates.instantiate(
-            "x-thread-explainer", "demo-brand", answers, name="Points campaign",
-            objective="Serve Points readers", source_id=points_source["id"],
+            "x-thread-explainer", "demo-brand", answers, name="Demo campaign",
+            objective="Serve demo readers", source_id=points_source["id"],
             idempotency_key="shared", actor="Chris",
         )
     assert len(graph.list(points_brand["id"])) == 1

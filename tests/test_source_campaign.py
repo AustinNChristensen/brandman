@@ -22,8 +22,8 @@ def event(
     *,
     key: str = "story-1",
     url: str | None = "https://example.test/deal?utm_source=feed",
-    title: str = "A points deal changed",
-    summary: str = "The source says the offer is now 80,000 points.",
+    title: str = "A pricing deal changed",
+    summary: str = "The source says the offer is now 80,000 credits.",
 ) -> ConnectorEvent:
     return ConnectorEvent(
         connector=connector,
@@ -71,7 +71,7 @@ def test_rss_event_creates_source_grounded_candidate_campaign_and_draft(tmp_path
     evidence = store.row("SELECT * FROM source_campaign_evidence")
 
     assert candidate["recommended_treatment"] == "evaluate_for_coverage"
-    assert candidate["summary"] == "The source says the offer is now 80,000 points."
+    assert candidate["summary"] == "The source says the offer is now 80,000 credits."
     assert candidate["supporting_sources"][0]["connector"] == "rss"
     assert candidate["supporting_sources"][0]["connector_account_id"] == account["id"]
     assert candidate["supporting_sources"][0]["connector_event_id"] == evidence["connector_event_id"]
@@ -83,8 +83,8 @@ def test_rss_event_creates_source_grounded_candidate_campaign_and_draft(tmp_path
     assert post["scheduled_for"] is None
     assert post["external_post_id"] is None
     assert post["body"] == (
-        "From the source: A points deal changed — "
-        "The source says the offer is now 80,000 points.\nhttps://example.test/deal"
+        "From the source: A pricing deal changed — "
+        "The source says the offer is now 80,000 credits.\nhttps://example.test/deal"
     )
 
 
@@ -175,13 +175,13 @@ def test_sync_job_handler_accepts_injected_source_operator(tmp_path):
 def test_batch_ingests_all_intelligence_but_promotes_clustered_top_three(tmp_path):
     brand, operator = setup_operator(tmp_path)
     account = store.upsert_connector_account(
-        brand["id"], "rss", "batch", "Doctor of Credit", status="healthy",
+        brand["id"], "rss", "batch", "Example Newsletter", status="healthy",
     )
     events = (
-        event(key="transfer-1", url="https://example.test/transfer-1", title="New 30% transfer bonus ends September 9", summary="Transfer points for a limited time."),
-        event(key="transfer-2", url="https://example.test/transfer-2", title="A transfer partner bonus is available", summary="Another report about the transfer bonus."),
-        event(key="card", url="https://example.test/card", title="Credit card welcome bonus increased", summary="Earn 90,000 points after minimum spend."),
-        event(key="hotel", url="https://example.test/hotel", title="Hotel award chart update", summary="New award rates affect travel redemptions."),
+        event(key="transfer-1", url="https://example.test/transfer-1", title="New 30% price drop ends September 9", summary="Pricing falls for a limited time."),
+        event(key="transfer-2", url="https://example.test/transfer-2", title="A price drop is announced for annual plans", summary="Another report about the price drop."),
+        event(key="card", url="https://example.test/card", title="New discount for annual plans", summary="Earn 90,000 credits after minimum spend."),
+        event(key="hotel", url="https://example.test/hotel", title="Integration partnership update", summary="New partner rates affect integrations."),
         event(key="unrelated", url="https://example.test/desk", title="Office furniture review", summary="A review of a standing desk."),
     )
     outcome = SyncOrchestrator(source_campaign_operator=operator).apply_result(
@@ -197,13 +197,13 @@ def test_batch_ingests_all_intelligence_but_promotes_clustered_top_three(tmp_pat
     assert outcome.post_drafts_projected <= 3
     assert len(store.rows("SELECT * FROM campaigns")) <= 3
     assert len({candidate["score"] for candidate in candidates}) > 1
-    assert {candidate["publisher_name"] for candidate in candidates} == {"Doctor of Credit"}
-    assert any(candidate["cluster_key"] == "transfer-bonus" for candidate in candidates)
+    assert {candidate["publisher_name"] for candidate in candidates} == {"Example Newsletter"}
+    assert any(candidate["cluster_key"] == "pricing-change" for candidate in candidates)
     transfer = next(candidate for candidate in candidates if "30%" in candidate["title"])
     assert transfer["intelligence"]["offers"] == ["30%"]
     assert transfer["intelligence"]["deadlines"] == ["September 9"]
     assert transfer["intelligence"]["terms"] == ["limited time"]
-    assert transfer["intelligence"]["authority"]["publisher"] == "Doctor of Credit"
+    assert transfer["intelligence"]["authority"]["publisher"] == "Example Newsletter"
     assert transfer["intelligence"]["licensing"]["reuse"] == "source_attribution_required"
 
 
@@ -250,12 +250,12 @@ def test_legacy_fanout_is_preserved_and_backfilled_without_new_work(tmp_path):
 def test_legacy_reconciliation_is_dry_run_first_and_fails_closed(tmp_path):
     brand, operator = setup_operator(tmp_path)
     for index, title in enumerate((
-        "New points transfer bonus ends soon", "Credit card welcome bonus increased",
-        "Hotel award travel points update", "Airline miles bonus launched",
-        "Cash back card offer increased", "Loyalty points offer changed",
+        "New pricing change ends soon", "Annual plan discount increased",
+        "Integration partnership update", "Feature launch announced",
+        "Subscription plan offer increased", "Pricing page update changed",
     )):
         apply(operator, brand, event(key=f"legacy-{index}", url=f"https://example.test/legacy-{index}",
-                                     title=title, summary="Earn 80,000 points for a limited time."),
+                                     title=title, summary="Earn 80,000 credits for a limited time."),
               account_key=f"legacy-{index}")
     dry_run = operator.reconcile_legacy_fanout(brand["id"])
     assert dry_run["mode"] == "dry_run"
@@ -279,25 +279,27 @@ def test_legacy_reconciliation_is_dry_run_first_and_fails_closed(tmp_path):
     assert rerun["eligible"] == 0
 
 
-def test_live_product_family_titles_cluster_by_program_and_content_type():
-    marriott = (
-        "American Express Marriott Bonvoy Bevy Card: 125,000 Point Bonus + $150 Credit (NLL)",
-        "American Express Marriott Bonvoy Brilliant Card: 150,000 Point Bonus + $250 Credit (NLL)",
-    )
-    delta_reviews = (
-        "Delta SkyMiles Gold Amex Card review: Best for occasional Delta flyers",
-        "Delta SkyMiles Platinum Amex review: A solid mid-tier pick for Delta devotees",
-        "Delta SkyMiles Platinum Business card review: Valuable Delta perks without lounge access",
-    )
-    assert {semantic_cluster(title, "") for title in marriott} == {
-        "offer:amex-marriott-bonvoy-card"
-    }
-    assert {semantic_cluster(title, "") for title in delta_reviews} == {
-        "review:amex-delta-skymiles-card"
-    }
-    assert semantic_cluster("Delta is cutting America's longest domestic flight", "") != (
-        "review:amex-delta-skymiles-card"
-    )
+def test_product_family_titles_cluster_by_vendor_line_and_content_type():
+    from app.source_campaign import SourceVocabulary, configure_source_vocabulary
+    configure_source_vocabulary(SourceVocabulary(
+        vendors=(("acme", ("acme",)),),
+        product_lines=(("cloud", ("acme cloud", "cloud")), ("desk", ("acme desk", "desk"))),
+    ))
+    try:
+        cloud_offers = (
+            "Acme Cloud Starter plan: 20% Discount + 3 Months Free",
+            "Acme Cloud Team plan: 30% Discount + 6 Months Free",
+        )
+        desk_reviews = (
+            "Acme Desk Basic plan review: Best for small teams",
+            "Acme Desk Pro plan review: A solid mid-tier pick",
+            "Acme Desk Enterprise product review: Valuable perks without onboarding",
+        )
+        assert {semantic_cluster(title, "") for title in cloud_offers} == {"offer:acme-cloud-product"}
+        assert {semantic_cluster(title, "") for title in desk_reviews} == {"review:acme-desk-product"}
+        assert semantic_cluster("Acme is cutting its longest running promotion", "") != "review:acme-desk-product"
+    finally:
+        configure_source_vocabulary(None)
 
 
 def test_only_accepted_active_learning_changes_source_candidate_planning(tmp_path):

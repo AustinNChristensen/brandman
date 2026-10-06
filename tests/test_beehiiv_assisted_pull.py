@@ -25,7 +25,7 @@ NOW = datetime(2026, 9, 2, 12, tzinfo=UTC)
 
 def aggregate_post(post_id="post_aggregate", *, delivered=100, opens=45, clicks=8):
     return {
-        "id": post_id, "title": "The weekly points briefing", "status": "published",
+        "id": post_id, "title": "The weekly pricing briefing", "status": "published",
         "published_at": NOW.isoformat(),
         "editor_url": f"https://app.beehiiv.com/posts/{post_id}",
         "stats": {"email": {
@@ -41,13 +41,13 @@ def setup_assisted(tmp_path, monkeypatch, *, clock=lambda: NOW):
     store.init_db()
     brand = store.get_brand("demo-brand")
     account = store.upsert_connector_account(
-        brand["id"], "beehiiv", "pub_points", "DemoBrand Beehiiv",
+        brand["id"], "beehiiv", "pub_demo", "DemoBrand Beehiiv",
         status="connected", capabilities=["browser.assisted", "beehiiv_read"],
         configuration={"delivery_mode": "browser_assisted", "connection_role": "beehiiv_read"},
     )
     agents = ExecutionAgentRegistry(database, clock=clock)
-    agents.configure(brand["id"], "points-browser", "browser")
-    agents.heartbeat(brand["id"], "points-browser")
+    agents.configure(brand["id"], "demo-browser", "browser")
+    agents.heartbeat(brand["id"], "demo-browser")
     return database, brand, account
 
 
@@ -98,18 +98,18 @@ def test_claim_heartbeat_and_aggregate_receipt_are_idempotent_and_pii_free(
         brand_id=brand["id"], connector_account_id=account["id"],
         scheduled_for=NOW.isoformat(),
     )["id"] == task["id"]
-    claimed = tasks.claim(task["id"], actor="points-browser", lease_seconds=120)
+    claimed = tasks.claim(task["id"], actor="demo-browser", lease_seconds=120)
     assert "claim_token" in claimed
     renewed = tasks.heartbeat(
-        task["id"], actor="points-browser", claim_token=claimed["claim_token"],
+        task["id"], actor="demo-browser", claim_token=claimed["claim_token"],
         lease_seconds=300,
     )
     assert renewed["claim_expires_at"] == (NOW + timedelta(seconds=300)).isoformat()
     payload = {
-        "actor": "points-browser", "claim_token": claimed["claim_token"],
+        "actor": "demo-browser", "claim_token": claimed["claim_token"],
         "observed_at": NOW.isoformat(),
         "posts": [{
-            "id": "post_abc-123", "title": "The weekly points briefing",
+            "id": "post_abc-123", "title": "The weekly pricing briefing",
             "status": "published", "editor_url": "https://app.beehiiv.com/posts/post_abc-123",
             "subtitle": "Safe summary", "subscriber_email": "never-store@example.com",
             "stats": {"email": {"delivered": 100, "unique_opens": 45,
@@ -151,10 +151,10 @@ def test_malformed_or_pii_shaped_provider_data_cannot_partially_complete(
         brand_id=brand["id"], connector_account_id=account["id"],
         scheduled_for=NOW.isoformat(),
     )
-    claim = tasks.claim(task["id"], actor="points-browser")
+    claim = tasks.claim(task["id"], actor="demo-browser")
     with pytest.raises(ValueError, match="canonical post_"):
         tasks.submit_receipt(
-            task["id"], actor="points-browser", claim_token=claim["claim_token"],
+            task["id"], actor="demo-browser", claim_token=claim["claim_token"],
             observed_at=NOW.isoformat(), posts=[{
                 "id": "victim@example.com", "title": "Bad", "status": "published",
                 "stats": {"email": {"delivered": -1, "unique_clicks": 5}},
@@ -174,10 +174,10 @@ def test_publication_total_cannot_complete_required_post_measurement_pull(
         brand_id=brand["id"], connector_account_id=account["id"],
         scheduled_for=NOW.isoformat(),
     )
-    claim = tasks.claim(task["id"], actor="points-browser")
+    claim = tasks.claim(task["id"], actor="demo-browser")
     with pytest.raises(ValueError, match="per-post aggregate measurement"):
         tasks.submit_receipt(
-            task["id"], actor="points-browser", claim_token=claim["claim_token"],
+            task["id"], actor="demo-browser", claim_token=claim["claim_token"],
             observed_at=NOW.isoformat(), posts=[],
             publication_stats={"active_subscriptions": 123},
         )
@@ -227,9 +227,9 @@ def test_structured_pull_records_metadata_and_exact_campaign_performance(
         brand_id=brand["id"], connector_account_id=account["id"],
         scheduled_for=NOW.isoformat(),
     )
-    claim = tasks.claim(task["id"], actor="points-browser")
+    claim = tasks.claim(task["id"], actor="demo-browser")
     completed = tasks.submit_receipt(
-        task["id"], actor="points-browser", claim_token=claim["claim_token"],
+        task["id"], actor="demo-browser", claim_token=claim["claim_token"],
         observed_at=NOW.isoformat(), posts=[
             aggregate_post("post_campaign", delivered=200, opens=100, clicks=25),
             aggregate_post("post_metadata", delivered=50, opens=20, clicks=4),
@@ -264,17 +264,17 @@ def test_expired_leases_retry_then_fail_closed_at_bound(tmp_path, monkeypatch):
         brand_id=brand["id"], connector_account_id=account["id"],
         scheduled_for=NOW.isoformat(), max_attempts=2,
     )
-    tasks.claim(task["id"], actor="points-browser", lease_seconds=60)
+    tasks.claim(task["id"], actor="demo-browser", lease_seconds=60)
     now[0] += timedelta(seconds=61)
     ExecutionAgentRegistry(database, clock=lambda: now[0]).heartbeat(
-        brand["id"], "points-browser",
+        brand["id"], "demo-browser",
     )
     assert tasks.get(task["id"])["status"] == "pending"
-    tasks.claim(task["id"], actor="points-browser", lease_seconds=60)
+    tasks.claim(task["id"], actor="demo-browser", lease_seconds=60)
     now[0] += timedelta(seconds=61)
     assert tasks.get(task["id"])["status"] == "failed"
     with pytest.raises(BeehiivAssistedPullError, match="not available"):
-        tasks.claim(task["id"], actor="points-browser")
+        tasks.claim(task["id"], actor="demo-browser")
     assert [event["action"] for event in tasks.audit(task["id"])] == [
         "requested", "claimed", "lease_expired", "claimed", "lease_exhausted",
     ]
@@ -291,7 +291,7 @@ def test_provider_kill_switch_invalidates_claim_and_prevents_every_projection(
         brand_id=brand["id"], connector_account_id=account["id"],
         scheduled_for=NOW.isoformat(),
     )
-    claim = tasks.claim(task["id"], actor="points-browser")
+    claim = tasks.claim(task["id"], actor="demo-browser")
     controls = ExecutionHandoffStore(
         database, EditorialStore(database),
         GovernedDispatcher(SQLiteDispatchStore(database)), clock=lambda: NOW,
@@ -300,7 +300,7 @@ def test_provider_kill_switch_invalidates_claim_and_prevents_every_projection(
 
     with pytest.raises(BeehiivAssistedPullError, match="valid active claim"):
         tasks.submit_receipt(
-            task["id"], actor="points-browser", claim_token=claim["claim_token"],
+            task["id"], actor="demo-browser", claim_token=claim["claim_token"],
             observed_at=NOW.isoformat(), posts=[{
                 "id": "post_blocked", "title": "Must not persist", "status": "published",
                 "stats": {"email": {"delivered": 10, "unique_clicks": 1}},
@@ -324,7 +324,7 @@ def test_submit_and_concurrent_kill_switch_are_serialized_in_one_writer_transact
         brand_id=brand["id"], connector_account_id=account["id"],
         scheduled_for=NOW.isoformat(),
     )
-    claim = tasks.claim(task["id"], actor="points-browser")
+    claim = tasks.claim(task["id"], actor="demo-browser")
     controls = ExecutionHandoffStore(
         database, EditorialStore(database),
         GovernedDispatcher(SQLiteDispatchStore(database)), clock=lambda: NOW,
@@ -342,7 +342,7 @@ def test_submit_and_concurrent_kill_switch_are_serialized_in_one_writer_transact
 
     def submit():
         results["receipt"] = tasks.submit_receipt(
-            task["id"], actor="points-browser", claim_token=claim["claim_token"],
+            task["id"], actor="demo-browser", claim_token=claim["claim_token"],
             observed_at=NOW.isoformat(), posts=[aggregate_post("post_concurrent")],
             publication_stats={"active_subscriptions": 10},
         )
