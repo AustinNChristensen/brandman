@@ -74,7 +74,7 @@ def test_secretless_assisted_worker_processes_beehiiv_pull_requests(tmp_path, mo
     store.init_db()
     brand = store.get_brand("demo-brand")
     account = store.upsert_connector_account(
-        brand["id"], "beehiiv", "pub_points", "DemoBrand Beehiiv",
+        brand["id"], "beehiiv", "pub_demo", "DemoBrand Beehiiv",
         status="connected", capabilities=["browser.assisted", "beehiiv_read"],
         configuration={
             "delivery_mode": "browser_assisted",

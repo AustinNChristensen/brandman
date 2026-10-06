@@ -21,8 +21,8 @@ def newsletter_review_token(client, issue_id):
 
 def complete_content() -> dict:
     return {
-        "editorial_thesis": "Help readers make one useful points decision.",
-        "target_reader": "Points collectors",
+        "editorial_thesis": "Help readers make one useful pricing decision.",
+        "target_reader": "Readers",
         "intended_outcome": "Choose the better redemption",
         "working_title": "A useful redemption",
         "final_title": "A useful redemption",
@@ -30,7 +30,7 @@ def complete_content() -> dict:
         "preview_text": "The useful math",
         "sections": [{"heading": "Decision", "body": "Details"}],
         "cta": {"label": "Read more", "url": "https://demo.example"},
-        "seo": {"title": "A useful redemption", "description": "Points guidance"},
+        "seo": {"title": "A useful redemption", "description": "Guidance"},
         "content_basis": {"kind": "original_analysis", "statement": "DemoBrand redemption framework."},
         "claims": [],
         "source_provenance": [],
@@ -48,11 +48,11 @@ def test_api_queues_only_approved_revision_and_exposes_durable_status(
     store.init_db()
     brand = store.get_brand("demo-brand")
     account = store.upsert_connector_account(
-        brand["id"], "beehiiv", "pub-points", "Demo Brand Beehiiv",
+        brand["id"], "beehiiv", "pub-demo", "Demo Brand Beehiiv",
         status="healthy", scopes=["posts.write"], capabilities=["drafts.write"],
     )
     CredentialStore(store.DATA_PATH, key).put(
-        "beehiiv", "pub-points", "Demo Brand Beehiiv", {"api_key": "secret"},
+        "beehiiv", "pub-demo", "Demo Brand Beehiiv", {"api_key": "secret"},
         required_scopes=["posts.write"], granted_scopes=["posts.write"],
     )
 

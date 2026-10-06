@@ -16,7 +16,7 @@ import Engagement from '../src/pages/Engagement'
 
 const opportunity = {
   id: 'o1', brand_id: 'b1', connector_account_id: 'x-read', event_identity: 'mention:1', external_post_id: '1',
-  opportunity_type: 'mention', text: 'How should I use these points?', author: { id: 'reader-1', username: 'reader' },
+  opportunity_type: 'mention', text: 'How should I use these credits?', author: { id: 'reader-1', username: 'reader' },
   thread_context: { external_url: 'https://x.com/reader/status/1', parent_context: [{ id: 'parent', text: 'Original context' }] },
   source_query: null, target_user_id: null, ranking_score: 80, ranking_reasons: ['direct question'], state: 'new',
   requires_approval: true, material_fingerprint: 'abc', dispatch_item_id: null, action_type: null, result: null,
@@ -35,12 +35,12 @@ afterEach(cleanup)
 describe('Governed engagement inbox', () => {
   it('creates only a draft and never exposes direct external actions', async () => {
     render(<MemoryRouter><Engagement /></MemoryRouter>)
-    expect(await screen.findAllByText('How should I use these points?')).toHaveLength(2)
+    expect(await screen.findAllByText('How should I use these credits?')).toHaveLength(2)
     fireEvent.click(screen.getByRole('button', { name: 'Draft governed action' }))
     const dialog = screen.getByRole('dialog')
-    fireEvent.change(within(dialog).getByLabelText('Reply draft'), { target: { value: 'Check award space before transferring points.' } })
+    fireEvent.change(within(dialog).getByLabelText('Reply draft'), { target: { value: 'Check the pricing page before changing plans.' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create draft only' }))
-    await waitFor(() => expect(mocks.draft).toHaveBeenCalledWith('demo-brand', 'o1', 'reply', 'Check award space before transferring points.'))
+    await waitFor(() => expect(mocks.draft).toHaveBeenCalledWith('demo-brand', 'o1', 'reply', 'Check the pricing page before changing plans.'))
     expect(screen.queryByRole('button', { name: /^(send|publish|schedule|like|follow)$/i })).not.toBeInTheDocument()
   })
 

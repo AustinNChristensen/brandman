@@ -39,7 +39,7 @@ const issue = {
   beehiiv_external_id: null, beehiiv_preview_url: null, scheduled_for: null, published_at: null,
   created_at: '2026-09-02T00:00:00Z', updated_at: '2026-09-03T00:00:00Z', approval_valid: true,
   governance: { reviewable: true, fact_check_valid: true, next_safe_action: 'Prepare a private draft.', blockers: [] },
-  content: { id: 'revision-2', issue_id: 'issue-1', revision: 2, editorial_thesis: 'Explain the offer', target_reader: 'Points readers', intended_outcome: 'Read the guide', working_title: '', final_title: 'Exact approved newsletter', subject: 'Exact subject', preview_text: 'Exact preview', sections: [{ heading: 'Lead', body: 'Hey, exact material.' }], cta: { label: 'Read', url: 'https://points.test' }, seo: { title: 'Exact', description: 'Description' }, content_basis: {}, claims: [], source_provenance: [{ source_id: 'source-1' }], change_note: null, created_by: 'chris', created_at: '2026-09-03T00:00:00Z' },
+  content: { id: 'revision-2', issue_id: 'issue-1', revision: 2, editorial_thesis: 'Explain the offer', target_reader: 'Readers', intended_outcome: 'Read the guide', working_title: '', final_title: 'Exact approved newsletter', subject: 'Exact subject', preview_text: 'Exact preview', sections: [{ heading: 'Lead', body: 'Hey, exact material.' }], cta: { label: 'Read', url: 'https://points.test' }, seo: { title: 'Exact', description: 'Description' }, content_basis: {}, claims: [], source_provenance: [{ source_id: 'source-1' }], change_note: null, created_by: 'chris', created_at: '2026-09-03T00:00:00Z' },
 }
 
 beforeEach(() => {

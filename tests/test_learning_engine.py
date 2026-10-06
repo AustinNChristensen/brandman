@@ -5,7 +5,7 @@ from app.campaign_templates import CampaignTemplateError, CampaignTemplateStore
 from app.learning_engine import BrandLearningEngine, LearningError
 
 
-ANSWERS = {"goal": "Explain the offer", "audience": "Points collectors",
+ANSWERS = {"goal": "Explain the offer", "audience": "Readers",
            "source": "Governed source", "cta": "Read", "flight": "Launch week",
            "success": "CTR over baseline"}
 

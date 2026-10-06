@@ -14,7 +14,7 @@ from app.readiness import LiveReadinessService
 def issue_content():
     return {
         "editorial_thesis": "The approved offer is useful now.",
-        "target_reader": "Points collectors", "intended_outcome": "Review the offer",
+        "target_reader": "Readers", "intended_outcome": "Review the offer",
         "working_title": "Offer", "final_title": "The offer worth checking",
         "subject": "A current offer", "preview_text": "The facts and source.",
         "sections": [{"heading": "Details", "body": "Source-grounded details."}],
@@ -355,7 +355,7 @@ def test_handoff_rejects_secret_shaped_audit_and_receipt_fields(setup):
     [
         ("1", None, "external_url is required"),
         ("1", "http://x.com/demobrand/status/1", "canonical HTTPS"),
-        ("1", "https://attacker.test/points/status/1", "canonical x.com"),
+        ("1", "https://attacker.test/demo/status/1", "canonical x.com"),
         ("2", "https://x.com/demobrand/status/1", "matching external_id"),
         ("1", "https://x.com/demobrand/status/1?token=secret", "query parameters"),
     ],

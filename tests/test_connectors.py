@@ -46,14 +46,14 @@ def test_identity_strips_tracking_and_fingerprints_normalized_content():
 def test_rss_normalizes_items_and_stops_at_cursor():
     feed = b"""<?xml version="1.0"?><rss version="2.0"><channel>
       <item><guid>new</guid><title>New deal</title><link>https://example.com/new?utm_source=rss</link>
-      <description><![CDATA[<b>80,000 points</b>]]></description><pubDate>Tue, 01 Sep 2026 15:00:00 GMT</pubDate></item>
+      <description><![CDATA[<b>80,000 credits</b>]]></description><pubDate>Tue, 01 Sep 2026 15:00:00 GMT</pubDate></item>
       <item><guid>old</guid><title>Old deal</title><link>https://example.com/old</link></item>
     </channel></rss>"""
     connector = RssConnector("https://example.com/feed", FakeTransport(HttpResponse(200, feed)))
     first = connector.sync()
     assert [event.external_id for event in first.events] == ["new", "old"]
     assert first.events[0].payload["url"] == "https://example.com/new"
-    assert first.events[0].payload["summary"] == "80,000 points"
+    assert first.events[0].payload["summary"] == "80,000 credits"
     assert first.events[0].occurred_at == "2026-09-01T15:00:00+00:00"
     assert first.next_cursor == SyncCursor(first.events[0].dedup_key)
 
@@ -86,7 +86,7 @@ def test_beehiiv_incremental_post_normalization_and_cursor():
                         "id": "post_123",
                         "title": "A new offer",
                         "subtitle": "Worth considering",
-                        "web_url": "https://points.test/p/offer?utm_campaign=launch",
+                        "web_url": "https://demo.test/p/offer?utm_campaign=launch",
                         "status": "confirmed",
                         "publish_date": "2026-09-01T12:00:00Z",
                         "free_web_content": "<p>The details.</p>",

@@ -49,13 +49,13 @@ def test_rate_cards_list_only_the_selected_brand(tmp_path, monkeypatch):
         "compliance_rules": "Other rules", "approval_policy": "human_approval_required",
     })
     ledger = ProviderUsageLedger(database)
-    for brand_id, version in ((points["id"], "points-v1"), (other["id"], "other-v1")):
+    for brand_id, version in ((points["id"], "demo-v1"), (other["id"], "other-v1")):
         ledger.configure_price(
             brand_id=brand_id, version=version, provider="x", method="POST",
             endpoint_pattern="https://api.x.com/2/tweets", unit_name="request", unit_price="0.01",
             currency="USD", effective_at="2026-09-03T00:00:00Z", actor="chris",
         )
-    assert [item["version"] for item in ledger.list_prices(points["id"])] == ["points-v1"]
+    assert [item["version"] for item in ledger.list_prices(points["id"])] == ["demo-v1"]
 
 
 def test_rate_card_exact_replay_is_idempotent_and_conflict_is_explicit(tmp_path, monkeypatch):
@@ -65,7 +65,7 @@ def test_rate_card_exact_replay_is_idempotent_and_conflict_is_explicit(tmp_path,
     brand = store.get_brand("demo-brand")
     ledger = ProviderUsageLedger(database)
     values = {
-        "brand_id": brand["id"], "version": "points-v1", "provider": "x",
+        "brand_id": brand["id"], "version": "demo-v1", "provider": "x",
         "method": "POST", "endpoint_pattern": "https://api.x.com/2/tweets",
         "unit_name": "request", "unit_price": "0.01", "currency": "USD",
         "effective_at": "2026-09-03T00:00:00Z", "actor": "chris",

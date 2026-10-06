@@ -40,7 +40,7 @@ def setup_package(tmp_path, monkeypatch):
         }],
     )
     issue = editorial.create_issue(brand["id"], {
-        "editorial_thesis": "Explain the sourced terms", "target_reader": "Points collectors",
+        "editorial_thesis": "Explain the sourced terms", "target_reader": "Readers",
         "intended_outcome": "Make an informed choice", "subject": "Offer explained",
         "preview_text": "What changed and what it means", "final_title": "Offer explained",
         "sections": [{"heading": "What changed", "body": "Source-backed summary"}],
@@ -58,8 +58,8 @@ def package_input(source_id):
         "email": {"subject": "Offer explained", "preview_text": "What changed"},
         "web": {"title": "Offer explained", "slug": "offer-explained",
                 "seo_description": "A source-backed explanation",
-                "url": "https://points.test/offer-explained"},
-        "distribution": {"audience": "Points collectors", "primary_cta": "Read the guide",
+                "url": "https://demo.test/offer-explained"},
+        "distribution": {"audience": "Readers", "primary_cta": "Read the guide",
                          "measurement_plan": "Track attributed clicks and conversions"},
         "x_drafts": [
             {"body": "The offer changed. Here is what the official terms mean.",
@@ -140,18 +140,18 @@ def test_exact_revision_official_evidence_is_distinct_from_drifted_discovery(
         "body_summary": "Issuer-published terms", "lifecycle_state": "published",
         "scheduled_for": None, "external_source_id": "ba-official-1",
     })
-    amex = store.insert("sources", {
-        "brand_id": brand["id"], "title": "American Express official terms",
-        "url": "https://amex.test/official-terms", "source_type": "issuer",
-        "body_summary": "Card issuer terms", "lifecycle_state": "published",
-        "scheduled_for": None, "external_source_id": "amex-official-1",
+    vendor_src = store.insert("sources", {
+        "brand_id": brand["id"], "title": "Vendor official terms",
+        "url": "https://vendor.test/official-terms", "source_type": "issuer",
+        "body_summary": "Vendor issuer terms", "lifecycle_state": "published",
+        "scheduled_for": None, "external_source_id": "vendor-official-1",
     })
     revised = editorial.revise_issue(issue["id"], {
         "source_provenance": [
             {"source_id": discovery["id"], "url": discovery["url"],
              "authority_type": "third_party"},
             {"source_id": ba["id"], "url": ba["url"], "authority_type": "official"},
-            {"source_id": amex["id"], "url": amex["url"], "authority_type": "issuer"},
+            {"source_id": vendor_src["id"], "url": vendor_src["url"], "authority_type": "issuer"},
         ],
         "preview_text": "Corrected with issuer evidence",
     }, created_by="writer", change_note="Replace drifted headline terms")
@@ -181,13 +181,13 @@ def test_exact_revision_official_evidence_is_distinct_from_drifted_discovery(
     assert package["lineage"]["primary_evidence"]["id"] == ba["id"]
     assert {item["source_id"] for item in package["discovery_sources"]} == {discovery["id"]}
     assert {item["source_id"] for item in package["evidence_sources"]} == {
-        discovery["id"], ba["id"], amex["id"],
+        discovery["id"], ba["id"], vendor_src["id"],
     }
     assert next(
         item for item in package["evidence_sources"] if item["source_id"] == ba["id"]
     )["role"] == "primary_evidence"
     assert next(
-        item for item in package["evidence_sources"] if item["source_id"] == amex["id"]
+        item for item in package["evidence_sources"] if item["source_id"] == vendor_src["id"]
     )["authority_type"] == "issuer"
     drifted = next(
         item for item in package["evidence_sources"] if item["source_id"] == discovery["id"]
@@ -200,12 +200,12 @@ def test_exact_revision_official_evidence_is_distinct_from_drifted_discovery(
     graph = CampaignGraphStore(packages.database).get(package["campaign_id"])
     assert graph["discovery_sources"][0]["source_id"] == discovery["id"]
     assert {item["source_id"] for item in graph["evidence_sources"]} == {
-        discovery["id"], ba["id"], amex["id"],
+        discovery["id"], ba["id"], vendor_src["id"],
     }
     assert packages.create(brand["id"], issue["id"], **payload)["id"] == package["id"]
 
     conflicting = dict(payload)
-    conflicting["primary_source_id"] = amex["id"]
+    conflicting["primary_source_id"] = vendor_src["id"]
     with pytest.raises(DistributionPackageError, match="different package input"):
         packages.create(brand["id"], issue["id"], **conflicting)
 
@@ -239,10 +239,10 @@ def test_exact_revision_official_evidence_is_distinct_from_drifted_discovery(
 def test_revision_discovery_role_stays_discovery_and_citation_authority_wins(tmp_path, monkeypatch):
     brand, tpg, _, issue, editorial, _, packages = setup_package(tmp_path, monkeypatch)
     official = store.insert("sources", {
-        "brand_id": brand["id"], "title": "Amex offer terms",
-        "url": "https://amex.test/offer", "source_type": "manual",
+        "brand_id": brand["id"], "title": "Vendor offer terms",
+        "url": "https://vendor.test/offer", "source_type": "manual",
         "body_summary": "Primary terms", "lifecycle_state": "published",
-        "scheduled_for": None, "external_source_id": "amex-manual-import",
+        "scheduled_for": None, "external_source_id": "vendor-manual-import",
     })
     revised = editorial.revise_issue(issue["id"], {
         "claims": [{
@@ -577,7 +577,7 @@ def test_campaign_memberships_flight_and_measurement_are_explicit(tmp_path, monk
     AttributionStore(packages.database).create_tracked_link(
         brand_id=brand["id"], campaign_id=package["campaign_id"], artifact_id=post_id,
         cta_id="read", source="x", medium="organic-social",
-        destination="https://points.test/offer", actor="tester",
+        destination="https://demo.test/offer", actor="tester",
     )
 
     measurement = packages.measurement(package["id"])
@@ -796,13 +796,13 @@ def test_traffic_package_is_blocked_until_destination_is_bound(tmp_path, monkeyp
         dispatcher.submit_for_approval(dispatch_id, actor="writer")
 
     bound = packages.bind_destination(
-        package["id"], "https://points.test/guide", actor="writer",
+        package["id"], "https://demo.test/guide", actor="writer",
     )
     assert bound["governance"]["approval_ready"] is True
     assert all(item["tracked_url"] in item["body"] for item in bound["artifacts"])
     revisions = [item["dispatch"]["revision"] for item in bound["artifacts"]]
     replay = packages.bind_destination(
-        package["id"], "https://points.test/guide", actor="writer",
+        package["id"], "https://demo.test/guide", actor="writer",
     )
     assert [item["dispatch"]["revision"] for item in replay["artifacts"]] == revisions
 
@@ -848,7 +848,7 @@ def test_new_anchor_revision_atomically_stales_package_dispatches_and_handoffs(
         for entry in packages.membership_audit(package["id"])
     )
     with pytest.raises(DistributionPackageError, match="must be regenerated"):
-        packages.bind_destination(package["id"], "https://points.test/new", actor="writer")
+        packages.bind_destination(package["id"], "https://demo.test/new", actor="writer")
 
     r2_input = package_input(source["id"])
     r2_input["expected_revision"] = 2

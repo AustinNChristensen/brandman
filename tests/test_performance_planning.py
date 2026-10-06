@@ -90,11 +90,11 @@ def test_no_data_is_explicit_inert_and_audited(tmp_path):
 
 def test_stale_and_incompatible_channel_metrics_never_influence(tmp_path):
     brand, engine = setup(tmp_path)
-    add_performance(brand["id"], "transfer-bonus", "stale", observed_at="2026-01-01T00:00:00Z")
-    add_performance(brand["id"], "transfer-bonus", "email", channel="newsletter")
+    add_performance(brand["id"], "pricing-change", "stale", observed_at="2026-01-01T00:00:00Z")
+    add_performance(brand["id"], "pricing-change", "email", channel="newsletter")
 
     result = engine.plan(
-        brand["id"], {"stage": "source_candidate", "channel": "x", "topic": "transfer-bonus"},
+        brand["id"], {"stage": "source_candidate", "channel": "x", "topic": "pricing-change"},
         as_of=NOW, audit=False,
     )
 
@@ -106,12 +106,12 @@ def test_stale_and_incompatible_channel_metrics_never_influence(tmp_path):
 
 def test_performance_prior_is_scoped_decayed_shrunk_bounded_and_deterministic(tmp_path):
     brand, engine = setup(tmp_path)
-    add_performance(brand["id"], "transfer-bonus", "match-1", clicks=180)
-    add_performance(brand["id"], "transfer-bonus", "match-2", clicks=160,
+    add_performance(brand["id"], "pricing-change", "match-1", clicks=180)
+    add_performance(brand["id"], "pricing-change", "match-2", clicks=160,
                     observed_at="2026-08-20T12:00:00Z")
     add_performance(brand["id"], "award-travel", "baseline-1", clicks=10)
     add_performance(brand["id"], "award-travel", "baseline-2", clicks=20)
-    scope = {"stage": "source_candidate", "channel": "x", "topic": "transfer-bonus"}
+    scope = {"stage": "source_candidate", "channel": "x", "topic": "pricing-change"}
 
     first = engine.plan(brand["id"], scope, as_of=NOW, audit=False)
     second = engine.plan(brand["id"], scope, as_of=NOW, audit=False)
@@ -128,21 +128,21 @@ def test_performance_prior_is_scoped_decayed_shrunk_bounded_and_deterministic(tm
 def test_small_sample_and_repetition_cannot_overfit(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "now", lambda: NOW)
     brand, engine = setup(tmp_path)
-    add_performance(brand["id"], "transfer-bonus", "winner", clicks=900)
+    add_performance(brand["id"], "pricing-change", "winner", clicks=900)
     too_small = engine.plan(
-        brand["id"], {"channel": "x", "topic": "transfer-bonus"}, as_of=NOW, audit=False,
+        brand["id"], {"channel": "x", "topic": "pricing-change"}, as_of=NOW, audit=False,
     )
     assert too_small["status"] == "insufficient_evidence"
     assert too_small["bounded_prior"]["score_adjustment_points"] == 0
 
-    add_performance(brand["id"], "transfer-bonus", "winner-2", clicks=800)
+    add_performance(brand["id"], "pricing-change", "winner-2", clicks=800)
     add_performance(brand["id"], "award-travel", "baseline", clicks=10)
     # Three recent campaigns with this topic suppress positive exploitation,
     # while deterministic exploration remains a separate, unchanged policy.
-    add_performance(brand["id"], "transfer-bonus", "repeat-3", clicks=700,
+    add_performance(brand["id"], "pricing-change", "repeat-3", clicks=700,
                     create_campaign_only=True)
     repeated = engine.plan(
-        brand["id"], {"channel": "x", "topic": "transfer-bonus"}, as_of=NOW, audit=False,
+        brand["id"], {"channel": "x", "topic": "pricing-change"}, as_of=NOW, audit=False,
     )
     assert repeated["status"] == "applied"
     assert repeated["bounded_prior"]["unfatigued_adjustment_points"] > 0
@@ -157,10 +157,10 @@ def test_tenant_isolation_excludes_other_brand_performance(tmp_path):
         "slug": "other-brand", "name": "Other", "mission": "Other mission",
         "voice": "Other voice", "compliance_rules": json.dumps([]), "approval_policy": "human",
     })
-    add_performance(other["id"], "transfer-bonus", "other-1", clicks=900)
-    add_performance(other["id"], "transfer-bonus", "other-2", clicks=900)
+    add_performance(other["id"], "pricing-change", "other-1", clicks=900)
+    add_performance(other["id"], "pricing-change", "other-2", clicks=900)
 
-    result = engine.plan(brand["id"], {"channel": "x", "topic": "transfer-bonus"}, as_of=NOW)
+    result = engine.plan(brand["id"], {"channel": "x", "topic": "pricing-change"}, as_of=NOW)
 
     assert result["status"] == "no_data"
     assert result["evidence"]["available_count"] == 0
@@ -169,7 +169,7 @@ def test_tenant_isolation_excludes_other_brand_performance(tmp_path):
 
 def test_native_observation_wins_over_duplicate_normalized_projection(tmp_path):
     brand, engine = setup(tmp_path)
-    record = add_performance(brand["id"], "transfer-bonus", "duplicate", clicks=100)
+    record = add_performance(brand["id"], "pricing-change", "duplicate", clicks=100)
     post = store.row("SELECT * FROM posts WHERE id=?", (record["post_id"],))
     graph = CampaignGraphStore(store.DATA_PATH)
     member = graph.attach(
@@ -194,27 +194,27 @@ def test_native_observation_wins_over_duplicate_normalized_projection(tmp_path):
 
 def test_source_promotion_reads_bounded_prior_without_approval_side_effects(tmp_path):
     brand, _ = setup(tmp_path)
-    add_performance(brand["id"], "transfer-bonus", "history-1", clicks=180)
-    add_performance(brand["id"], "transfer-bonus", "history-2", clicks=160)
+    add_performance(brand["id"], "pricing-change", "history-1", clicks=180)
+    add_performance(brand["id"], "pricing-change", "history-2", clicks=160)
     add_performance(brand["id"], "award-travel", "history-base", clicks=5)
     editorial = EditorialStore(store.DATA_PATH)
     operator = SourceCampaignOperator(editorial)
     account = store.upsert_connector_account(brand["id"], "rss", "live", "Live feed")
     incoming = ConnectorEvent(
         connector=ConnectorKind.RSS, kind=EventKind.SOURCE_ITEM,
-        dedup_key="rss:new-transfer", occurred_at="2026-09-02T11:00:00Z",
-        external_id="new-transfer", payload={
-            "title": "New 30% transfer bonus", "summary": "Transfer points for a limited time.",
-            "url": "https://example.test/new-transfer", "published_at": "2026-09-02T11:00:00Z",
+        dedup_key="rss:new-pricing", occurred_at="2026-09-02T11:00:00Z",
+        external_id="new-pricing", payload={
+            "title": "New 30% price drop", "summary": "Pricing falls for a limited time.",
+            "url": "https://example.test/new-pricing", "published_at": "2026-09-02T11:00:00Z",
             "canonical_revalidation": {
-                "canonical_url": "https://example.test/new-transfer",
+                "canonical_url": "https://example.test/new-pricing",
                 "observed_at": "2026-09-02T11:30:00Z",
                 "snapshot_fingerprint": "sha256:verified-current-page",
                 "feed_fingerprint": "feed-current", "status": "verified",
-                "confidence": "medium", "title": "New 30% transfer bonus",
-                "summary": "Transfer points for a limited time.", "claims": ["30%"],
+                "confidence": "medium", "title": "New 30% price drop",
+                "summary": "Pricing falls for a limited time.", "claims": ["30%"],
                 "rationale": ["Current canonical metadata agrees with the feed"],
-                "idempotency_key": "verified-new-transfer",
+                "idempotency_key": "verified-new-pricing",
             },
         },
     )
@@ -225,7 +225,7 @@ def test_source_promotion_reads_bounded_prior_without_approval_side_effects(tmp_
     )
 
     candidate = next(item for item in editorial.list_candidates(brand["id"])
-                     if item["title"] == "New 30% transfer bonus")
+                     if item["title"] == "New 30% price drop")
     context = candidate["intelligence"]["performance_context"]
     assert context["status"] == "applied"
     assert context["bounded_prior"]["score_adjustment_points"] > 0
@@ -244,10 +244,10 @@ def test_source_promotion_reads_bounded_prior_without_approval_side_effects(tmp_
 def test_guided_template_preflight_exposes_performance_but_keeps_exploration_stable(tmp_path):
     brand, _ = setup(tmp_path)
     templates = CampaignTemplateStore(store.DATA_PATH)
-    source_one = add_source(brand["id"], "transfer-bonus", "template-source-1")
-    source_two = add_source(brand["id"], "transfer-bonus", "template-source-2")
+    source_one = add_source(brand["id"], "pricing-change", "template-source-1")
+    source_two = add_source(brand["id"], "pricing-change", "template-source-2")
     answers = {"goal": "Explain", "audience": "Readers", "source": "Official",
-               "cta": "Read", "flight": "Launch", "success": "Clicks", "topic": "transfer-bonus"}
+               "cta": "Read", "flight": "Launch", "success": "Clicks", "topic": "pricing-change"}
     for index, source in enumerate((source_one, source_two), start=1):
         campaign = templates.instantiate(
             "newsletter-led", "demo-brand", answers, name=f"Newsletter {index}",
@@ -279,8 +279,8 @@ def test_guided_template_preflight_exposes_performance_but_keeps_exploration_sta
 
 def test_source_content_drift_withholds_an_otherwise_positive_prior(tmp_path):
     brand, _ = setup(tmp_path)
-    add_performance(brand["id"], "transfer-bonus", "prior-1", clicks=180)
-    add_performance(brand["id"], "transfer-bonus", "prior-2", clicks=160)
+    add_performance(brand["id"], "pricing-change", "prior-1", clicks=180)
+    add_performance(brand["id"], "pricing-change", "prior-2", clicks=160)
     add_performance(brand["id"], "award-travel", "prior-base", clicks=5)
     editorial = EditorialStore(store.DATA_PATH)
     operator = SourceCampaignOperator(editorial)
@@ -289,7 +289,7 @@ def test_source_content_drift_withholds_an_otherwise_positive_prior(tmp_path):
         connector=ConnectorKind.RSS, kind=EventKind.SOURCE_ITEM,
         dedup_key="rss:drift", occurred_at="2026-09-02T11:00:00Z", external_id="drift",
         payload={
-            "title": "Old transfer bonus headline", "summary": "Terms may have changed.",
+            "title": "Old price drop headline", "summary": "Terms may have changed.",
             "url": "https://example.test/drift", "published_at": "2026-09-02T11:00:00Z",
             "content_fingerprint": "feed-version", "canonical_content_fingerprint": "current-page-version",
             "claim_conflicts": ["Offer amount differs from the canonical page"],
@@ -311,7 +311,7 @@ def test_source_content_drift_withholds_an_otherwise_positive_prior(tmp_path):
     )
 
     candidate = next(item for item in editorial.list_candidates(brand["id"])
-                     if item["title"] == "Old transfer bonus headline")
+                     if item["title"] == "Old price drop headline")
     context = candidate["intelligence"]["performance_context"]
     gate = context["source_evidence_gate"]
     assert context["status"] == "source_evidence_blocked"
@@ -336,16 +336,16 @@ def test_rest_and_mcp_expose_read_only_planning_and_audit(tmp_path, monkeypatch)
     with TestClient(app, headers=headers) as client:
         response = client.get(
             "/api/brands/demo-brand/performance-planning",
-            params={"channel": "x", "topic": "transfer-bonus", "as_of": NOW},
+            params={"channel": "x", "topic": "pricing-change", "as_of": NOW},
         )
         assert response.status_code == 200
         assert response.json()["status"] == "no_data"
         audit = client.get("/api/brands/demo-brand/performance-planning/audit").json()
         assert audit[0]["brand_id"] == brand["id"]
-        assert audit[0]["scope"]["topic"] == "transfer-bonus"
+        assert audit[0]["scope"]["topic"] == "pricing-change"
 
     mcp_result = get_performance_planning(
-        "demo-brand", channel="x", topic="transfer-bonus", as_of=NOW,
+        "demo-brand", channel="x", topic="pricing-change", as_of=NOW,
     )
     assert mcp_result["policy"]["side_effects"].startswith("read_and_audit_only")
     assert store.rows("SELECT * FROM campaigns") == []

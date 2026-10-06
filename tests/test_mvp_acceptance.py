@@ -58,16 +58,16 @@ def test_periodic_source_to_approved_draft_to_evidence_backed_trajectory(tmp_pat
     attribution = AttributionStore(database, clock=lambda: "2026-09-02T12:00:00+00:00")
 
     rss_account = store.upsert_connector_account(
-        brand["id"], "rss", "https://doctorofcredit.test/feed", "Doctor of Credit",
+        brand["id"], "rss", "https://newsletter.test/feed", "Example Newsletter",
         status="healthy", capabilities=["content.read"],
     )
     source_event = ConnectorEvent(
         ConnectorKind.RSS, EventKind.SOURCE_ITEM, "rss:story-1",
         "2026-09-02T11:55:00+00:00", "story-1",
         {
-            "title": "A transfer offer changed",
+            "title": "A pricing change was announced",
             "summary": "The source reports an 80,000-point offer.",
-            "url": "https://doctorofcredit.test/story",
+            "url": "https://newsletter.test/story",
             "published_at": "2026-09-02T11:45:00+00:00",
             "content_fingerprint": "source-fingerprint-1",
         },
@@ -106,7 +106,7 @@ def test_periodic_source_to_approved_draft_to_evidence_backed_trajectory(tmp_pat
     }
     issue = editorial.create_issue(brand["id"], {
         "editorial_thesis": "Explain the sourced offer without adding facts.",
-        "target_reader": "Points collectors", "intended_outcome": "Review the offer",
+        "target_reader": "Readers", "intended_outcome": "Review the offer",
         "final_title": source_event.payload["title"], "subject": source_event.payload["title"],
         "preview_text": source_event.payload["summary"],
         "sections": [{"heading": source_event.payload["title"], "body": source_event.payload["summary"]}],

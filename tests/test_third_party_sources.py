@@ -26,7 +26,7 @@ def setup_source_service(tmp_path):
 def test_onboarding_validates_public_feed_and_enrolls_default_schedule(tmp_path):
     _, brand, service = setup_source_service(tmp_path)
     source = service.onboard(
-        brand["id"], publisher_name="Independent points feed",
+        brand["id"], publisher_name="Independent news feed",
         feed_url="https://news.example.test/feed/",
         homepage_url="https://news.example.test/",
         actor="Chris", reason="Monitor relevant public deal reporting",
@@ -44,7 +44,7 @@ def test_onboarding_validates_public_feed_and_enrolls_default_schedule(tmp_path)
     # Repeated onboarding is idempotent and does not create duplicate accounts
     # or mutate the original governed audit decision.
     repeated = service.onboard(
-        brand["id"], publisher_name="Independent points feed",
+        brand["id"], publisher_name="Independent news feed",
         feed_url="https://news.example.test/feed/", actor="Chris", reason="Repeat",
     )
     assert repeated["connector_account_id"] == source["connector_account_id"]
@@ -113,7 +113,7 @@ def test_disable_is_audited_stops_schedule_and_cancels_waiting_sync(tmp_path):
 def test_onboarded_feed_runs_through_rss_projection_without_real_network(tmp_path):
     database, brand, service = setup_source_service(tmp_path)
     source = service.onboard(
-        brand["id"], publisher_name="Public points reporting",
+        brand["id"], publisher_name="Public reporting",
         feed_url="https://publisher.example.test/feed/",
         actor="Chris", reason="Evaluate stories for original coverage",
         polling_interval_seconds=900,

@@ -27,7 +27,7 @@ def _ingest(brand, account, operator, key: str):
     item = ConnectorEvent(
         ConnectorKind.RSS, EventKind.SOURCE_ITEM, f"rss:{key}",
         "2026-09-02T12:00:00+00:00", key,
-        {"title": f"New points offer {key}",
+        {"title": f"New pricing offer {key}",
          "summary": "The source reports an 80,000 point limited-time offer.",
          "url": f"https://example.test/{key}",
          "published_at": "2026-09-02T11:00:00+00:00",

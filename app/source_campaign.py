@@ -730,7 +730,41 @@ class SourceCampaignOperator:
                                         False, campaign_created, post_created)
 
 
-_MISSION_TERMS = {"points", "miles", "bonus", "transfer", "award", "airline", "hotel", "travel", "loyalty", "credit card", "cash back", "cashback"}
+@dataclass(frozen=True)
+class SourceVocabulary:
+    """Niche vocabulary used to score and cluster source items.
+
+    The defaults are deliberately generic. A deployment can swap in its own
+    terms with ``configure_source_vocabulary`` without changing this module.
+    """
+
+    mission_terms: frozenset[str] = frozenset({
+        "launch", "release", "pricing", "price", "feature", "update", "integration",
+        "partnership", "announcement", "discount", "subscription", "plan"})
+    categories: tuple[tuple[str, tuple[str, ...]], ...] = (
+        ("pricing-change", ("price increase", "pricing change", "price cut", "price drop")),
+        ("promotion", ("discount", "promo code", "coupon", "sale")),
+        ("product-launch", ("launch", "introducing", "now available", "released")),
+        ("integration", ("integration", "partnership", "partner")),
+    )
+    # Optional (canonical, aliases) pairs. When both a vendor and a product
+    # line match, items cluster by content type plus that product family.
+    vendors: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    product_lines: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    product_context: tuple[str, ...] = ("product", "plan", "tier", "edition")
+    offer_units: tuple[str, ...] = ("credits", "seats", "users")
+    commercial_terms: tuple[str, ...] = ("pricing", "offer", "discount", "plan")
+    stop_words: frozenset[str] = frozenset({"with", "from", "this", "that", "your", "offer"})
+
+
+_VOCABULARY = SourceVocabulary()
+
+
+def configure_source_vocabulary(vocabulary: SourceVocabulary | None = None) -> SourceVocabulary:
+    """Replace the active vocabulary; ``None`` restores the generic defaults."""
+    global _VOCABULARY
+    _VOCABULARY = vocabulary or SourceVocabulary()
+    return _VOCABULARY
 
 
 def _decode_planning_context_row(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -741,41 +775,24 @@ def _decode_planning_context_row(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def semantic_cluster(title: str, summary: str) -> str:
+    vocab = _VOCABULARY
     text = f"{title} {summary}".casefold()
     normalized = re.sub(r"[^a-z0-9]+", " ", text).strip()
-    issuer = next((canonical for canonical, aliases in (
-        ("amex", ("american express", "amex")),
-        ("chase", ("chase",)), ("citi", ("citi",)),
-        ("capital-one", ("capital one",)), ("bank-of-america", ("bank of america",)),
-        ("wells-fargo", ("wells fargo",)),
-    ) if any(alias in normalized for alias in aliases)), None)
-    program = next((canonical for canonical, aliases in (
-        ("marriott-bonvoy", ("marriott bonvoy", "bonvoy")),
-        ("delta-skymiles", ("delta skymiles", "skymiles")),
-        ("american-aadvantage", ("american aadvantage", "aadvantage")),
-        ("hilton-honors", ("hilton honors",)),
-        ("united-mileageplus", ("united mileageplus", "mileageplus")),
-    ) if any(alias in normalized for alias in aliases)), None)
-    if program == "delta-skymiles" and issuer is None:
-        # Delta's named SkyMiles card family is Amex even when a headline
-        # shortens the product name and omits the issuer.
-        issuer = "amex"
-    card_context = bool(re.search(r"\b(?:card|amex|visa|mastercard)\b", normalized))
-    if program and card_context:
+    vendor = next((canonical for canonical, aliases in vocab.vendors
+                   if any(alias in normalized for alias in aliases)), None)
+    line = next((canonical for canonical, aliases in vocab.product_lines
+                 if any(alias in normalized for alias in aliases)), None)
+    context = "|".join(re.escape(word) for word in vocab.product_context)
+    if line and context and re.search(rf"\b(?:{context})\b", normalized):
         content_type = (
             "review" if re.search(r"\breview\b", normalized)
-            else "offer" if re.search(r"\b(?:sign ?up|welcome|bonus|offer|credit)\b", normalized)
-            else "card"
+            else "offer" if re.search(r"\b(?:sign ?up|welcome|bonus|offer|discount)\b", normalized)
+            else "product"
         )
-        family = "-".join(part for part in (issuer, program, "card") if part)
+        family = "-".join(part for part in (vendor, line, "product") if part)
         return f"{content_type}:{family}"
-    categories = (("transfer-bonus", ("transfer bonus", "transfer partner")),
-                  ("card-offer", ("credit card", "welcome bonus", "sign-up bonus", "signup bonus")),
-                  ("award-travel", ("award", "miles", "airline", "hotel")),
-                  ("cashback", ("cash back", "cashback")))
-    category = next((name for name, terms in categories if any(term in text for term in terms)), "general")
-    tokens = [token for token in re.findall(r"[a-z0-9]+", text) if len(token) > 3 and token not in
-              {"with", "from", "this", "that", "your", "offer", "bonus", "points"}]
+    category = next((name for name, terms in vocab.categories if any(term in text for term in terms)), "general")
+    tokens = [token for token in re.findall(r"[a-z0-9]+", text) if len(token) > 3 and token not in vocab.stop_words]
     # Known editorial topics intentionally share a broad key so syndicated or
     # differently worded coverage competes for one cluster representative.
     return category if category != "general" else f"general:{'-'.join(sorted(set(tokens))[:3]) or 'uncategorized'}"
@@ -785,8 +802,9 @@ def extract_source_intelligence(*, title: str, summary: str, payload: Mapping[st
                                 event: ConnectorEvent, observed_at: str, publisher_name: str) -> dict[str, Any]:
     text = plain_text(f"{title} {summary}")
     entities = sorted(set(re.findall(r"\b[A-Z][A-Za-z0-9&.-]+(?:\s+[A-Z][A-Za-z0-9&.-]+){0,2}\b", text)))[:12]
+    units = "|".join(re.escape(unit) for unit in _VOCABULARY.offer_units)
     offers = sorted(set(re.findall(
-        r"(?<!\w)(?:\$[\d,]+|[\d,]+(?:\.\d+)?%|[\d,]+\s+(?:points|miles))(?!\w)",
+        rf"(?<!\w)(?:\$[\d,]+|[\d,]+(?:\.\d+)?%|[\d,]+\s+(?:{units}))(?!\w)",
         text, re.I,
     )))
     deadlines = sorted(set(re.findall(r"\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,\s*\d{4})?\b", text, re.I)))
@@ -863,7 +881,7 @@ def candidate_dimensions(event: ConnectorEvent, *, title: str = "", summary: str
                          has_summary: bool | None = None) -> dict[str, float]:
     intelligence = intelligence or {}
     text = f"{title} {summary}".casefold()
-    hits = sum(term in text for term in _MISSION_TERMS)
+    hits = sum(term in text for term in _VOCABULARY.mission_terms)
     urgency_hits = sum(term in text for term in ("ends", "deadline", "limited", "today", "new", "launch", "increased"))
     freshness = float(((intelligence.get("freshness") or {}).get("score") or 0.35))
     offers, terms = intelligence.get("offers") or [], intelligence.get("terms") or []
@@ -874,7 +892,7 @@ def candidate_dimensions(event: ConnectorEvent, *, title: str = "", summary: str
             "novelty": freshness, "confidence": min(1.0, .38 + (.2 if has_url else 0) + (.17 if summary else 0) + (.18 if owned else 0)),
             "search_opportunity": min(1.0, .25 + hits * .08),
             "social_potential": min(1.0, .3 + len(offers) * .18 + urgency_hits * .08),
-            "commercial_relevance": min(1.0, .18 + sum(term in text for term in ("card", "offer", "bonus", "cash")) * .12),
+            "commercial_relevance": min(1.0, .18 + sum(term in text for term in _VOCABULARY.commercial_terms) * .12),
             "differentiation": min(1.0, .3 + (.18 if terms else 0) + (.12 if offers else 0))}
 
 
@@ -900,4 +918,5 @@ def _stable_id(namespace: str, identity: str) -> str:
 
 __all__ = ["SourceCampaignOperator", "SourceCampaignProjection", "candidate_dimensions",
            "extract_source_intelligence", "source_evidence_gate", "semantic_cluster",
+           "SourceVocabulary", "configure_source_vocabulary",
            "source_grounded_x_draft", "source_identity"]

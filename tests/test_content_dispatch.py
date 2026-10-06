@@ -18,7 +18,7 @@ from app.dispatch import (
 )
 
 
-def canonical_post(tmp_path, *, body="A useful points insight", channel="x"):
+def canonical_post(tmp_path, *, body="A useful pricing insight", channel="x"):
     store.DATA_PATH = tmp_path / "content.db"
     store.init_db()
     brand = store.get_brand("demo-brand")
@@ -150,7 +150,7 @@ def test_existing_canonical_dispatch_cancels_matching_legacy_duplicate(tmp_path)
 
 def test_attributed_payload_linked_duplicate_preserves_tracking_and_invalidates_approval(tmp_path):
     brand, post, dispatcher = canonical_post(
-        tmp_path, body="A useful points insight https://example.test/story",
+        tmp_path, body="A useful pricing insight https://example.test/story",
     )
     service = CanonicalPostDispatchService(dispatcher)
     canonical = service.create_from_post(post["id"])
@@ -160,7 +160,7 @@ def test_attributed_payload_linked_duplicate_preserves_tracking_and_invalidates_
         "https://example.test/story?utm_source=x&utm_medium=organic-social&utm_campaign="
         + post["campaign_id"] + "&utm_content=" + post["id"] + "&utm_cta=read"
     )
-    tracked = "A useful points insight " + tracked_url
+    tracked = "A useful pricing insight " + tracked_url
     legacy = dispatcher.create("x", {
         "body": tracked, "tracked_url": tracked_url,
         "canonical_post_id": post["id"], "campaign_id": post["campaign_id"],

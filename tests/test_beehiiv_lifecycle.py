@@ -23,7 +23,7 @@ def setup_exported(tmp_path, monkeypatch, *, assisted: bool = False):
     brand = store.get_brand("demo-brand")
     editorial = EditorialStore(database, clock=lambda: "2026-09-02T10:00:00+00:00")
     issue = editorial.create_issue(brand["id"], {
-        "editorial_thesis": "Help readers decide", "target_reader": "Points collectors",
+        "editorial_thesis": "Help readers decide", "target_reader": "Readers",
         "intended_outcome": "Make a sound choice", "subject": "A useful decision",
         "final_title": "A useful decision", "sections": [{"body": "Canonical body"}],
         "content_basis": {"kind": "original_analysis", "statement": "Canonical analysis"},

@@ -91,7 +91,7 @@ def test_assisted_measurement_ingest_is_aggregate_replay_safe_and_drops_pii(tmp_
     brand = store.get_brand("demo-brand")
     mission = store.ensure_demo_brand_growth_mission()
     store.upsert_connector_account(
-        brand["id"], "beehiiv", "pub_points", "DemoBrand Beehiiv",
+        brand["id"], "beehiiv", "pub_demo", "DemoBrand Beehiiv",
         status="connected", configuration={"delivery_mode": "mcp_assisted"},
     )
     payload = {

@@ -197,7 +197,7 @@ def test_demo_brand_mission_connectors_and_deduplicated_gaps(tmp_path, monkeypat
         assert next(item for item in connectors if item["id"] == first["id"])["scopes"] == ["tweet.read"]
 
         gap = {
-            "reporter": "points-agent", "summary": "Missing read permission",
+            "reporter": "demo-agent", "summary": "Missing read permission",
             "details": "X metrics unavailable", "component": "x.sync",
             "severity": "high", "fingerprint": "x:missing-read",
         }
@@ -224,12 +224,12 @@ def test_editorial_issue_and_canonical_dispatch_integration():
 
         content = {
             "editorial_thesis": "Brand OS should own the issue.",
-            "target_reader": "Points collectors", "intended_outcome": "Subscribe",
-            "working_title": "A better points decision", "final_title": "A better points decision",
-            "subject": "Make one better points decision", "preview_text": "The useful math.",
+            "target_reader": "Readers", "intended_outcome": "Subscribe",
+            "working_title": "A better pricing decision", "final_title": "A better pricing decision",
+            "subject": "Make one better pricing decision", "preview_text": "The useful math.",
             "sections": [{"heading": "The decision", "body": "Details"}],
             "cta": {"label": "Start", "url": "https://demo.example/start"},
-            "seo": {"title": "Points decision", "description": "Practical guidance"},
+            "seo": {"title": "Pricing decision", "description": "Practical guidance"},
             "content_basis": {"kind": "original_analysis", "statement": "DemoBrand decision framework."},
             "claims": [], "source_provenance": [],
         }
@@ -255,7 +255,7 @@ def test_newsletter_rejection_is_revision_exact_and_returns_work_for_changes():
     token = base64.b64encode(b"operator:test-only-password").decode()
     content = {
         "editorial_thesis": "Make a useful decision.",
-        "target_reader": "Points collectors", "intended_outcome": "Review the offer",
+        "target_reader": "Readers", "intended_outcome": "Review the offer",
         "working_title": "Offer review", "final_title": "Offer review",
         "subject": "Review this offer", "preview_text": "The useful details.",
         "sections": [{"heading": "The offer", "body": "Current details"}],
