@@ -36,29 +36,29 @@ def setup(tmp_path: Path):
 def content_with_words(target: int, *, thumbnail: bool = True) -> dict:
     paragraphs = [
         "Hey,",
-        "I have one thesis: a transfer bonus is useful only when it improves a trip you can book.",
-        "The move is to verify award space before moving points. This matters because transfers cannot be reversed.",
-        "A good fit has a specific route, date, cash price, and backup plan. The play is to compare 26,000 points with a 30% bonus: 26,000 divided by 1.30 equals 20,000 transferable points.",
-        "The traps include phantom space, fees, expiration, and transferring speculatively. My checklist is availability, ratio, taxes, cash price, and cancellation rules.",
-        "Use the Demo Brand transfer bonus alerts tool: https://demo.example/tools/transfer-bonus-alerts",
-        "Bottom line: protect optionality until the booking is ready. Reply and tell me which transfer bonus you are evaluating.",
+        "I have one thesis: a pricing change is useful only when it improves a decision you can act on.",
+        "The move is to verify the numbers before announcing. This matters because announcements cannot be unsent.",
+        "A good fit has a specific audience, date, price, and backup plan. The play is to compare 26,000 units with a 30% discount: 26,000 divided by 1.30 equals 20,000 units.",
+        "The traps include hidden fees, expiration, and acting speculatively. My checklist is availability, ratio, taxes, price, and cancellation rules.",
+        "Use the Demo Brand pricing calculator: https://demo.example/tools/pricing-calculator",
+        "Bottom line: protect optionality until the booking is ready. Reply and tell me which pricing change you are evaluating.",
     ]
     while len(__import__("re").findall(r"\b[\w’'-]+\b", "\n\n".join(paragraphs))) < target - 3:
-        paragraphs.append("I compare the real booking, cash cost, taxes, flexibility, and downside before I move points.")
+        paragraphs.append("I compare the real cost, taxes, flexibility, and downside before I act.")
     paragraphs.append("— The Team")
     return {
-        "editorial_thesis": "Transfer only when a bonus improves a verified booking.",
-        "target_reader": "Points collectors evaluating a transfer bonus",
-        "intended_outcome": "Make a verified transfer decision",
-        "final_title": "The Transfer Bonus Decision",
-        "subject": "Should you transfer for this bonus?",
-        "preview_text": "Run the booking math before moving points.",
+        "editorial_thesis": "Act on a pricing change only when it improves a verified decision.",
+        "target_reader": "Readers evaluating a pricing change",
+        "intended_outcome": "Make a verified decision",
+        "final_title": "The Pricing Change Decision",
+        "subject": "Should you act on this pricing change?",
+        "preview_text": "Run the math before acting.",
         "sections": [{"heading": "The decision", "body": "\n\n".join(paragraphs)}],
         "cta": {"type": "reply", "text": "Reply with the bonus you are evaluating"},
         "seo": {},
         "content_basis": {"kind": "original_analysis", "statement": "The team's decision framework."},
         "delivery_metadata": ({
-            "thumbnail_url": "https://images.demo.example/transfer-decision.jpg",
+            "thumbnail_url": "https://images.demo.example/pricing-decision.jpg",
             "web_settings": {"display_thumbnail_on_web": True},
         } if thumbnail else {}),
         "claims": [],
@@ -134,7 +134,7 @@ def test_quick_hit_override_is_explicit_reasoned_revision_bound_and_audited(tmp_
 
     authorized = guidelines.authorize_quick_hit(
         issue_id=issue["id"], revision=1, actor="Chris",
-        reason="Urgent transfer bonus expiration alert requires a concise same-day issue.",
+        reason="Urgent pricing change expiration alert requires a concise same-day issue.",
     )
     approved, _ = approve(editorial, snapshots, issue)
 

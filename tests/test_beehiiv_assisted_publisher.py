@@ -18,22 +18,22 @@ EXISTING_BEEHIIV_DRAFT_ID = "32dcf1b3-8180-49c4-b50c-39da517010f6"
 def approved_export(tmp_path: Path):
     editorial = EditorialStore(tmp_path / "publisher.db", clock=lambda: "2026-09-02T20:00:00+00:00")
     issue = editorial.create_issue("brand-1", {
-        "editorial_thesis": "Teach the trip decision from the desired outcome backward.",
-        "target_reader": "Points collectors", "intended_outcome": "Evaluate a Madrid trip",
-        "final_title": "Madrid Is Calling: Turn 20K Amex Points Into 26K Avios",
-        "subject": "Madrid is calling", "preview_text": "The transfer math and the traps.",
+        "editorial_thesis": "Teach the decision from the desired outcome backward.",
+        "target_reader": "Readers", "intended_outcome": "Evaluate a launch",
+        "final_title": "Launch Day Is Coming: Turn 20K Signups Into 26K",
+        "subject": "Launch day is coming", "preview_text": "The math and the traps.",
         "sections": [
             {"heading": "Start with the trip", "body": (
-                "Hey,\n\nMadrid is the goal—not a raw points balance.\n\n"
-                "1. Search the airline program first\n2. Confirm the flight\n3. Transfer only then\n\n"
-                "- Availability can change\n- Transfers are final\n\n"
-                "Use the [transfer alerts](https://demo.example/tools/transfer-bonus-alerts).\n\n"
+                "Hey,\n\nLaunch day is the goal—not a raw signup count.\n\n"
+                "1. Check the pricing page first\n2. Confirm the date\n3. Announce only then\n\n"
+                "- Availability can change\n- Announcements are final\n\n"
+                "Use the [pricing calculator](https://demo.example/tools/pricing-calculator).\n\n"
                 "— The Team"
             )},
         ],
-        "cta": {"label": "Check transfer alerts", "url": "https://demo.example/tools/transfer-bonus-alerts"},
+        "cta": {"label": "Check the pricing calculator", "url": "https://demo.example/tools/pricing-calculator"},
         "seo": {}, "delivery_metadata": {"display_thumbnail_on_web": True},
-        "claims": [], "source_provenance": [{"source_id": "amex-source"}],
+        "claims": [], "source_provenance": [{"source_id": "vendor-source"}],
     }, created_by="codex-house-style")
     editorial.transition(issue["id"], IssueLifecycle.OUTLINE)
     editorial.transition(issue["id"], IssueLifecycle.DRAFT)
@@ -43,7 +43,7 @@ def approved_export(tmp_path: Path):
 
 
 def manifest(tmp_path: Path):
-    asset = tmp_path / "avios-madrid-transfer-bonus-2026.png"
+    asset = tmp_path / "launch-pricing-2026.png"
     asset.write_bytes(b"approved-png-fixture")
     return build_private_draft_manifest(
         approved_export(tmp_path), asset_path=asset,
@@ -92,9 +92,9 @@ def test_manifest_preserves_rich_structure_and_binds_exact_asset(tmp_path):
     result = manifest(tmp_path)
     html = result["body"]["content"]
     assert "<h2>Start with the trip</h2>" in html
-    assert "<ol><li>Search the airline program first</li>" in html
+    assert "<ol><li>Check the pricing page first</li>" in html
     assert "<ul><li>Availability can change</li>" in html
-    assert '<a href="https://demo.example/tools/transfer-bonus-alerts">transfer alerts</a>' in html
+    assert '<a href="https://demo.example/tools/pricing-calculator">pricing calculator</a>' in html
     assert "<p>— The Team</p>" in html
     assert result["reconciliation"] == {
         "existing_draft_id": EXISTING_BEEHIIV_DRAFT_ID,

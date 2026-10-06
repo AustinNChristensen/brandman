@@ -43,7 +43,7 @@ def event(
             "referenced_tweets": [{"type": "replied_to", "id": "190"}],
             "parent_context": [{"id": "190", "text": parent_text}],
             "public_metrics": {"reply_count": 0},
-            "source_query": "points and miles" if kind == "search" else None,
+            "source_query": "product launch" if kind == "search" else None,
             "target_user_id": author_id if kind == "target_account" else None,
             "requires_approval": True,
             "external_url": f"https://x.com/i/web/status/{post_id}",

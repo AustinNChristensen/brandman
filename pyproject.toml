@@ -1,5 +1,5 @@
 [project]
-name = "brand-os"
+name = "brandman"
 version = "0.1.0"
 description = "AI-native canonical brand and content control plane"
 requires-python = ">=3.11"
@@ -18,6 +18,13 @@ brand-os-bootstrap = "app.bootstrap_cli:main"
 brand-os-ops = "app.ops_cli:main"
 brand-os-supervisor = "app.launchd_supervisor:main"
 brand-os-api-supervisor = "app.api_supervisor:main"
+# brandman-* are the primary names; brand-os-* remain as aliases for existing setups.
+brandman-mcp = "app.mcp_server:main"
+brandman-worker = "app.worker_cli:main"
+brandman-bootstrap = "app.bootstrap_cli:main"
+brandman-ops = "app.ops_cli:main"
+brandman-supervisor = "app.launchd_supervisor:main"
+brandman-api-supervisor = "app.api_supervisor:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "httpx>=0.27"]

@@ -14,13 +14,11 @@ from uuid import uuid4
 
 DEMO_BRAND_GUIDELINE_SOURCE = "skill:demo-brand-content-house-style"
 DEMO_BRAND_TOOLS = (
-    "https://demo.example/tools/points-valuation",
-    "https://demo.example/tools/fee-breakeven",
-    "https://demo.example/tools/transfer-bonus-alerts",
-    "https://demo.example/tools/bilt-calculator",
-    "https://demo.example/tools/delta-status-calculator",
+    "https://demo.example/tools/pricing-calculator",
+    "https://demo.example/tools/comparison",
+    "https://demo.example/tools/changelog",
 )
-DEMO_BRAND_NEWSLETTER_INSTRUCTIONS = """Write in the brand voice, in direct first person, with one concrete thesis and useful decision support—not as an expanded social post or generic points blog. Open with “Hey,”. Explain the move, why it matters, who is a good fit, the practical play, traps, a quick checklist, and the bottom line; headings may vary naturally. Use current verified numbers, fees, dates, ratios, point values, or example math when applicable. Include a natural Demo Brand tool backlink and a soft topic-specific invitation to reply. Close the editorial body exactly with “— The Team”. Normal issues must be at least 750 words and should land between 750 and 900 words without filler. A shorter quick hit is never inferred by AI: it requires a revision-specific reason and explicit operator authorization. Before approval, include a 16:9 editorial finance/travel thumbnail, avoid readable text/logos/fake marks/people/distorted hands, and enable web thumbnail display. Volatile loyalty and award-program facts require current governed provenance and fact checking."""
+DEMO_BRAND_NEWSLETTER_INSTRUCTIONS = """Write in the brand voice, in direct first person, with one concrete thesis and useful decision support—not as an expanded social post or generic blog post. Open with “Hey,”. Explain the move, why it matters, who is a good fit, the practical play, traps, a quick checklist, and the bottom line; headings may vary naturally. Use current verified numbers, fees, dates, ratios, or example math when applicable. Include a natural Demo Brand tool backlink and a soft topic-specific invitation to reply. Close the editorial body exactly with “— The Team”. Normal issues must be at least 750 words and should land between 750 and 900 words without filler. A shorter quick hit is never inferred by AI: it requires a revision-specific reason and explicit operator authorization. Before approval, include a 16:9 editorial thumbnail, avoid readable text/logos/fake marks/people/distorted hands, and enable web thumbnail display. Volatile facts require current governed provenance and fact checking."""
 DEMO_BRAND_NEWSLETTER_RULES: dict[str, Any] = {
     "minimum_words": 750,
     "preferred_words": {"minimum": 750, "maximum": 900},
@@ -28,9 +26,8 @@ DEMO_BRAND_NEWSLETTER_RULES: dict[str, Any] = {
     "required_opening": "Hey,",
     "required_signoff": "— The Team",
     "approved_tool_backlinks": list(DEMO_BRAND_TOOLS),
-    "transfer_bonus_tool_backlinks": [
-        "https://demo.example/tools/transfer-bonus-alerts",
-        "https://demo.example/tools/points-valuation",
+    "pricing_tool_backlinks": [
+        "https://demo.example/tools/pricing-calculator",
     ],
     "thumbnail": {"required": True, "display_on_web": True},
     "require_one_thesis": True,
@@ -421,10 +418,10 @@ class BrandGuidelineStore:
         if not links:
             add("policy_tool_backlink", "Include at least one approved Demo Brand tool backlink naturally in the issue.")
         topic_text = " ".join((str(content.get("editorial_thesis") or ""), text)).casefold()
-        if "transfer bonus" in topic_text and not any(
-            url in text for url in rules.get("transfer_bonus_tool_backlinks") or []
+        if "pricing" in topic_text and not any(
+            url in text for url in rules.get("pricing_tool_backlinks") or []
         ):
-            add("policy_transfer_bonus_tool", "Transfer-bonus coverage must naturally link to transfer bonus alerts or points valuation.")
+            add("policy_pricing_tool", "Pricing coverage must naturally link to the pricing calculator.")
         metadata = content.get("delivery_metadata") or {}
         thumbnail = rules.get("thumbnail") or {}
         if thumbnail.get("required") and not str(metadata.get("thumbnail_url") or "").strip():

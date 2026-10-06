@@ -165,19 +165,19 @@ def test_mentions_retain_author_thread_and_parent_context():
 def test_replies_search_and_configured_search_target_endpoints_advance_cursor():
     transport = Transport([
         response({"data": []}),
-        response({"data": [{"id": "301", "text": "transfer bonus", "author_id": "80"}]}),
+        response({"data": [{"id": "301", "text": "pricing change", "author_id": "80"}]}),
         response({"data": [{"id": "302", "text": "target account post", "author_id": "99"}]}),
     ])
     reader = connector(
         transport, include_profile_metrics=False, include_tweet_metrics=False,
-        include_mentions=False, searches=["credit card points -is:retweet"],
+        include_mentions=False, searches=["product launch -is:retweet"],
         target_user_ids=["99"],
     )
     replies = reader.sync()
     assert transport.calls[0][2]["params"]["query"] == "to:demobrand -from:demobrand"
     searched = reader.sync(replies.next_cursor)
     assert searched.events[0].payload["opportunity_type"] == "search"
-    assert searched.events[0].payload["source_query"] == "credit card points -is:retweet"
+    assert searched.events[0].payload["source_query"] == "product launch -is:retweet"
     targeted = reader.sync(searched.next_cursor)
     assert targeted.events[0].payload["opportunity_type"] == "target_account"
     assert targeted.events[0].payload["target_user_id"] == "99"

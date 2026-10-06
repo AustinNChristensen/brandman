@@ -47,6 +47,7 @@ uv sync
 
 # Copy .env.example for the full list of settings. A minimal local run:
 export BRAND_OS_DB="$PWD/brand_os.db"
+export BRAND_OS_DATABASE_PROFILE=development
 export BRAND_OS_PREVIEW_PASSWORD="choose-a-long-random-password"
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
@@ -75,7 +76,7 @@ Local (stdio), for example with Claude Code:
   "mcpServers": {
     "brandman": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/brandman", "brand-os-mcp"],
+      "args": ["run", "--directory", "/path/to/brandman", "brandman-mcp"],
       "env": { "BRAND_OS_DB": "/path/to/brand_os.db" }
     }
   }

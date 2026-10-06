@@ -61,8 +61,8 @@ describe('governed mutation contracts', () => {
     const lane = { lane: 'beehiiv_read', provider: 'beehiiv' as const, title: 'Beehiiv insights', purpose: 'Read metrics', scopes: ['posts.read'], capabilities: ['posts.read', 'metrics.read'], credential_inputs: [{ key: 'api_key', label: 'API token', secret: true }], can_read: true, can_write: false, write_boundary: 'Read only.' }
     await integrations.prepareLane('demo brand', lane, 'pub/id', 'Insights')
     await integrations.connect('demo brand', lane, 'pub/id', 'Insights', { api_key: 'write-only' })
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/brands/points%20mafia/connectors', expect.objectContaining({ body: JSON.stringify({ connector_type: 'beehiiv', account_key: 'pub/id', display_name: 'Insights', status: 'disconnected', scopes: ['posts.read'], capabilities: ['posts.read', 'metrics.read'], configuration: { connection_role: 'beehiiv_read', delivery_mode: 'api' } }) }))
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/brands/points%20mafia/connections/beehiiv/pub%2Fid', expect.objectContaining({ method: 'PUT', body: JSON.stringify({ display_name: 'Insights', credentials: { api_key: 'write-only' }, required_scopes: ['posts.read'], granted_scopes: ['posts.read'] }) }))
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/brands/demo%20brand/connectors', expect.objectContaining({ body: JSON.stringify({ connector_type: 'beehiiv', account_key: 'pub/id', display_name: 'Insights', status: 'disconnected', scopes: ['posts.read'], capabilities: ['posts.read', 'metrics.read'], configuration: { connection_role: 'beehiiv_read', delivery_mode: 'api' } }) }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/brands/demo%20brand/connections/beehiiv/pub%2Fid', expect.objectContaining({ method: 'PUT', body: JSON.stringify({ display_name: 'Insights', credentials: { api_key: 'write-only' }, required_scopes: ['posts.read'], granted_scopes: ['posts.read'] }) }))
   })
 
   it('exposes every newsletter completion boundary with exact encoded identity and payload', async () => {
@@ -123,11 +123,11 @@ describe('governed mutation contracts', () => {
     await publishingPlan.undo('demo brand', 'commit/1')
 
     expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method, init?.body])).toEqual([
-      ['/api/brands/points%20mafia/publishing-plan/settings', 'PUT', JSON.stringify({ timezone: 'America/Denver', windows: [{ weekday: 0, start: '09:00', end: '17:00' }], cadence_minutes: { x: 120, newsletter: 1440 } })],
-      ['/api/brands/points%20mafia/publishing-plan/items/post/post%2F1', 'PUT', JSON.stringify({ initiative_id: 'initiative-1', planned_for: null, pinned: true, locked: false })],
-      ['/api/brands/points%20mafia/publishing-plan/reflow/preview', 'POST', JSON.stringify({ start_at: '2026-09-07T15:00:00.000Z' })],
-      ['/api/brands/points%20mafia/publishing-plan/reflow/commit', 'POST', JSON.stringify({ preview_id: 'preview/1' })],
-      ['/api/brands/points%20mafia/publishing-plan/reflow/undo', 'POST', JSON.stringify({ commit_id: 'commit/1' })],
+      ['/api/brands/demo%20brand/publishing-plan/settings', 'PUT', JSON.stringify({ timezone: 'America/Denver', windows: [{ weekday: 0, start: '09:00', end: '17:00' }], cadence_minutes: { x: 120, newsletter: 1440 } })],
+      ['/api/brands/demo%20brand/publishing-plan/items/post/post%2F1', 'PUT', JSON.stringify({ initiative_id: 'initiative-1', planned_for: null, pinned: true, locked: false })],
+      ['/api/brands/demo%20brand/publishing-plan/reflow/preview', 'POST', JSON.stringify({ start_at: '2026-09-07T15:00:00.000Z' })],
+      ['/api/brands/demo%20brand/publishing-plan/reflow/commit', 'POST', JSON.stringify({ preview_id: 'preview/1' })],
+      ['/api/brands/demo%20brand/publishing-plan/reflow/undo', 'POST', JSON.stringify({ commit_id: 'commit/1' })],
     ])
     expect(fetchMock.mock.calls.map(([url]) => String(url)).join(' ')).not.toMatch(/publish$|\/schedule/)
   })
@@ -144,9 +144,9 @@ describe('governed mutation contracts', () => {
     await performance.planning('demo brand', 'newsletter', 'award travel')
 
     expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method, init?.body])).toEqual([
-      ['/api/brands/points%20mafia/third-party-sources', 'POST', JSON.stringify({ publisher_name: 'Public publisher', feed_url: 'https://publisher.test/rss', feed_format: 'rss', polling_interval_seconds: 1800, reason: 'Relevant public reporting' })],
-      ['/api/brands/points%20mafia/sources/source%2F1/canonical-revalidations', 'POST', JSON.stringify({ idempotency_key: 'operator:source/1:2026-09-03' })],
-      ['/api/brands/points%20mafia/performance-planning?stage=portfolio&channel=newsletter&topic=award%20travel', 'GET', undefined],
+      ['/api/brands/demo%20brand/third-party-sources', 'POST', JSON.stringify({ publisher_name: 'Public publisher', feed_url: 'https://publisher.test/rss', feed_format: 'rss', polling_interval_seconds: 1800, reason: 'Relevant public reporting' })],
+      ['/api/brands/demo%20brand/sources/source%2F1/canonical-revalidations', 'POST', JSON.stringify({ idempotency_key: 'operator:source/1:2026-09-03' })],
+      ['/api/brands/demo%20brand/performance-planning?stage=portfolio&channel=newsletter&topic=award%20travel', 'GET', undefined],
     ])
     expect(fetchMock.mock.calls.map(([, init]) => String(init?.body ?? '')).join(' ')).not.toMatch(/"credentials"|"subscriber|"publish"|"send"/)
   })
@@ -160,11 +160,11 @@ describe('governed mutation contracts', () => {
     await newsletters.create('demo brand', { working_title: 'Issue' }, 'candidate/1')
     await editorialCandidates.create('demo brand', { title: 'Idea', summary: 'Useful', dimensions: { relevance: 1 }, recommended_treatment: 'newsletter' })
     expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method, init?.body])).toEqual([
-      ['/api/brands/points%20mafia/dispatch-items', 'POST', JSON.stringify({ connector: 'x', payload: { body: 'Draft' } })],
+      ['/api/brands/demo%20brand/dispatch-items', 'POST', JSON.stringify({ connector: 'x', payload: { body: 'Draft' } })],
       ['/api/dispatch-items/draft%2F1', 'PATCH', JSON.stringify({ payload: { body: 'Revision' } })],
       ['/api/dispatch-items/draft%2F1/submit', 'POST', JSON.stringify({})],
-      ['/api/brands/points%20mafia/newsletter-issues', 'POST', JSON.stringify({ content: { working_title: 'Issue' }, candidate_id: 'candidate/1' })],
-      ['/api/brands/points%20mafia/editorial-candidates', 'POST', JSON.stringify({ title: 'Idea', summary: 'Useful', dimensions: { relevance: 1 }, recommended_treatment: 'newsletter' })],
+      ['/api/brands/demo%20brand/newsletter-issues', 'POST', JSON.stringify({ content: { working_title: 'Issue' }, candidate_id: 'candidate/1' })],
+      ['/api/brands/demo%20brand/editorial-candidates', 'POST', JSON.stringify({ title: 'Idea', summary: 'Useful', dimensions: { relevance: 1 }, recommended_treatment: 'newsletter' })],
     ])
     expect(JSON.stringify(fetchMock.mock.calls)).not.toMatch(/actor|created_by|publish|schedule|send/)
   })
@@ -177,10 +177,10 @@ describe('governed mutation contracts', () => {
     await settings.setSchedule('demo brand', 'connector/bee/posts', false)
     await settings.tick('demo brand', 25)
     expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method, init?.body])).toEqual([
-      ['/api/brands/points%20mafia/settings', 'PATCH', JSON.stringify({ mission: 'Mission', voice: 'Voice', compliance_rules: 'Rules', approval_policy: 'human_approval_required', reason: 'Reviewed change' })],
-      ['/api/brands/points%20mafia/provider-rate-cards', 'POST', JSON.stringify({ version: 'customer-1', operation: 'beehiiv_read', unit_price: '0.002', currency: 'USD', effective_at: '2026-09-03T00:00:00Z' })],
-      ['/api/brands/points%20mafia/orchestration/schedules/connector%2Fbee%2Fposts', 'PUT', JSON.stringify({ enabled: false })],
-      ['/api/brands/points%20mafia/orchestration/tick', 'POST', JSON.stringify({ max_decisions: 25 })],
+      ['/api/brands/demo%20brand/settings', 'PATCH', JSON.stringify({ mission: 'Mission', voice: 'Voice', compliance_rules: 'Rules', approval_policy: 'human_approval_required', reason: 'Reviewed change' })],
+      ['/api/brands/demo%20brand/provider-rate-cards', 'POST', JSON.stringify({ version: 'customer-1', operation: 'beehiiv_read', unit_price: '0.002', currency: 'USD', effective_at: '2026-09-03T00:00:00Z' })],
+      ['/api/brands/demo%20brand/orchestration/schedules/connector%2Fbee%2Fposts', 'PUT', JSON.stringify({ enabled: false })],
+      ['/api/brands/demo%20brand/orchestration/tick', 'POST', JSON.stringify({ max_decisions: 25 })],
     ])
     expect(fetchMock.mock.calls.map(([url]) => String(url)).join(' ')).not.toMatch(/^\/api\/orchestration\/tick|publish|send/)
   })
@@ -196,13 +196,13 @@ describe('governed mutation contracts', () => {
     await productFeedback.verify('demo brand', 'failure/1', 'Verified in browser')
     await productFeedback.reopen('demo brand', 'failure/1', 'Failure recurred')
     expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method, init?.body])).toEqual([
-      ['/api/brands/points%20mafia/product-feedback/failure%2F1', 'GET', undefined],
-      ['/api/brands/points%20mafia/product-feedback/failure%2F1/history', 'GET', undefined],
-      ['/api/brands/points%20mafia/product-feedback/failure%2F1/comments', 'POST', JSON.stringify({ body: 'Reproduced by operator' })],
-      ['/api/brands/points%20mafia/product-feedback/failure%2F1/start', 'POST', JSON.stringify({ assignee: 'builder' })],
-      ['/api/brands/points%20mafia/product-feedback/failure%2F1/resolve', 'POST', JSON.stringify({ resolution_evidence: 'Regression passes' })],
-      ['/api/brands/points%20mafia/product-feedback/failure%2F1/verify', 'POST', JSON.stringify({ evidence: 'Verified in browser' })],
-      ['/api/brands/points%20mafia/product-feedback/failure%2F1/reopen', 'POST', JSON.stringify({ reason: 'Failure recurred' })],
+      ['/api/brands/demo%20brand/product-feedback/failure%2F1', 'GET', undefined],
+      ['/api/brands/demo%20brand/product-feedback/failure%2F1/history', 'GET', undefined],
+      ['/api/brands/demo%20brand/product-feedback/failure%2F1/comments', 'POST', JSON.stringify({ body: 'Reproduced by operator' })],
+      ['/api/brands/demo%20brand/product-feedback/failure%2F1/start', 'POST', JSON.stringify({ assignee: 'builder' })],
+      ['/api/brands/demo%20brand/product-feedback/failure%2F1/resolve', 'POST', JSON.stringify({ resolution_evidence: 'Regression passes' })],
+      ['/api/brands/demo%20brand/product-feedback/failure%2F1/verify', 'POST', JSON.stringify({ evidence: 'Verified in browser' })],
+      ['/api/brands/demo%20brand/product-feedback/failure%2F1/reopen', 'POST', JSON.stringify({ reason: 'Failure recurred' })],
     ])
     expect(JSON.stringify(fetchMock.mock.calls)).not.toContain('actor')
   })
@@ -223,7 +223,7 @@ describe('governed mutation contracts', () => {
       ['/api/posts/post%2F1', 'PATCH', JSON.stringify({ body: 'Canonical revision' })],
       ['/api/posts/post%2F1/audit', 'GET', undefined],
       ['/api/posts/post%2F1/dispatch', 'POST', JSON.stringify({})],
-      ['/api/brands/points%20mafia/editorial-candidates/candidate%2F1/campaign-post', 'POST', JSON.stringify({ campaign_id: null, campaign_name: 'Draft campaign', objective: 'Help readers decide', channel: 'x', body: 'Candidate-grounded draft' })],
+      ['/api/brands/demo%20brand/editorial-candidates/candidate%2F1/campaign-post', 'POST', JSON.stringify({ campaign_id: null, campaign_name: 'Draft campaign', objective: 'Help readers decide', channel: 'x', body: 'Candidate-grounded draft' })],
     ])
     expect(JSON.stringify(fetchMock.mock.calls)).not.toMatch(/actor|approve|schedule[^d]|send|publish|provider/)
   })

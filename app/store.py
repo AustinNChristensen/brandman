@@ -305,7 +305,7 @@ def init_db(*, profile: str | None = None) -> None:
         existing = conn.execute("SELECT 1 FROM brands LIMIT 1").fetchone()
         if existing:
             return
-        seed_brand(conn, "demo-brand", "Demo Brand", "Make points and miles practical, clear, and useful.", "Clear, financially literate, no generic points-blog fluff.", "Verify benefits, deadlines, and transfer partners before publishing.")
+        seed_brand(conn, "demo-brand", "Demo Brand", "Explain the product clearly and consistently.", "Clear, specific, no generic marketing fluff.", "Verify claims, dates, and sources before publishing.")
         seed_brand(conn, "demo-personal", "Demo Personal", "Share useful founder, operator, and builder perspectives.", "Direct, specific, practical, and lightly opinionated.", "No confidential employer/client information. Human approval required.")
 
 
