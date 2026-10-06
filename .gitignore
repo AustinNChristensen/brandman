@@ -1,0 +1,16 @@
+.venv/
+*.db
+*.bak
+__pycache__/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+.runtime/
+*.key
+*.pem
+.DS_Store
+
+# dashboard build tooling
+web/node_modules/
+web/dist/

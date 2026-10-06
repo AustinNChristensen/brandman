@@ -1,0 +1,25 @@
+{
+  "name": "Brand OS — Beehiiv source ingested",
+  "nodes": [
+    {
+      "parameters": {"httpMethod": "POST", "path": "brand-os/beehiiv-source", "responseMode": "onReceived"},
+      "id": "webhook", "name": "Beehiiv event", "type": "n8n-nodes-base.webhook", "typeVersion": 2,
+      "position": [280, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BRAND_OS_API_URL + '/api/brands/demo-brand/sources' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { title: $json.body.title, url: $json.body.url, source_type: 'beehiiv', body_summary: $json.body.summary, lifecycle_state: $json.body.status === 'published' ? 'published' : 'scheduled', scheduled_for: $json.body.publish_at } }}"
+      },
+      "id": "create-source", "name": "Create canonical source", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {"Beehiiv event": {"main": [[{"node": "Create canonical source", "type": "main", "index": 0}]]}},
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "brand-os-mvp"
+}

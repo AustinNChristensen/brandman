@@ -1,0 +1,31 @@
+@font-face { font-family: "Geist"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("../fonts/Geist-Variable.woff2") format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/GeistMono-Regular.woff2") format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("../fonts/GeistMono-Medium.woff2") format("woff2"); }
+
+:root {
+  color-scheme: light;
+  --bg: #F6F5F1;
+  --surface: #FFFFFF;
+  --line: #E6E3DC;
+  --line-2: #EFEDE8;
+  --text: #1C1B18;
+  --muted: #66625A;
+  --faint: #9A958B;
+  --accent: #0E7C7B;
+  --accent-soft: #E2F2F1;
+  --accent-ink: #0A5F5E;
+  --human: #B5690B;
+  --human-soft: #FBEFDB;
+  --ok: #2E7D4F;
+  --ok-soft: #E3F2E9;
+  --bad: #B23A32;
+  --bad-soft: #F8E4E2;
+  --info: #3B5BDB;
+  --info-soft: #E6EBFA;
+  --violet: #6B4FBB;
+  --violet-soft: #ECE7F7;
+  --font: "Geist", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
