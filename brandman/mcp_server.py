@@ -1089,6 +1089,12 @@ def get_beehiiv_assisted_pull_audit(task_id: str) -> list[dict]:
     return beehiiv_assisted_pull_store.audit(task_id)
 
 
+# Installed ``brandman.plugins`` may add MCP tools.
+from .extensions import load_plugins  # noqa: E402
+
+load_plugins("mcp", mcp)
+
+
 def main() -> None:
     _initialize_runtime()
     mcp.run(transport="stdio")

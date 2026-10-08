@@ -33,7 +33,8 @@ def build_secretless_assisted_runtime(
 ) -> tuple[BrandOSRuntime, PeriodicOrchestrator, dict]:
     """Compose only public-feed/internal jobs when no credential key is present."""
     database = Path(database)
-    store.DATA_PATH = database
+    if store.database_override() is None:
+        store.DATA_PATH = database
     store.init_db()
     editorial = EditorialStore(database)
     runtime = BrandOSRuntime(
@@ -94,7 +95,12 @@ def _rss_with_canonical(account: dict, transport) -> RssConnector:
     )
 
 
-def main() -> None:
+def run_once() -> dict:
+    """One bounded tick and job run against ``store.DATA_PATH``.
+
+    Hosts with one database per workspace call this inside
+    ``store.using_database(path)`` for each workspace.
+    """
     max_jobs = int(os.getenv("BRANDMAN_WORKER_MAX_JOBS", "100"))
     if max_jobs < 1 or max_jobs > 1000:
         raise SystemExit("BRANDMAN_WORKER_MAX_JOBS must be between 1 and 1000")
@@ -127,7 +133,7 @@ def main() -> None:
     tick_result = tick_runner.tick(max_decisions=max_decisions)
     tick = tick_result.as_dict() if hasattr(tick_result, "as_dict") else tick_result
     result = runtime.run_until_idle(max_jobs=max_jobs)
-    print(json.dumps({
+    return {
         "tick": tick,
         "run": result.as_dict(),
         "configuration": configuration,
@@ -138,11 +144,15 @@ def main() -> None:
             "database_profile": store.database_profile(store.DATA_PATH),
             "worker_mode": mode,
         },
-    }, sort_keys=True))
+    }
+
+
+def main() -> None:
+    print(json.dumps(run_once(), sort_keys=True))
 
 
 if __name__ == "__main__":
     main()
 
 
-__all__ = ["build_secretless_assisted_runtime", "main"]
+__all__ = ["build_secretless_assisted_runtime", "main", "run_once"]

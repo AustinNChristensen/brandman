@@ -164,7 +164,8 @@ def _build_with_credential_store(
     """Avoid decrypting or extracting a master key from an existing store."""
     # The public keyed factory is the canonical implementation. This helper
     # mirrors its composition while accepting an already validated store.
-    store.DATA_PATH = database
+    if store.database_override() is None:
+        store.DATA_PATH = database
     store.init_db()
     accounts = _connector_accounts()
     editorial = EditorialStore(database)

@@ -298,6 +298,12 @@ class LazyMcpApplication:
         # process gets one production lifespan, while TestClient deliberately
         # opens several; reset only after the previous lifespan has closed.
         mcp._session_manager = None  # type: ignore[attr-defined]
+        # Stateless transport binds every MCP request to the context (principal
+        # and database) of the HTTP request that carries it. Hosts that serve
+        # several databases must enable it; stateful sessions are the default.
+        mcp.settings.stateless_http = os.environ.get(
+            "BRANDMAN_MCP_STATELESS", "",
+        ).strip().casefold() in {"1", "true", "yes"}
         self.application = mcp.streamable_http_app()
         stack = AsyncExitStack()
         await stack.enter_async_context(self.application.router.lifespan_context(self.application))  # type: ignore[union-attr]

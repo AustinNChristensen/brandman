@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import sys
+from types import ModuleType
 from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterator
@@ -14,6 +17,41 @@ from . import seed_packs
 
 DEFAULT_DATA_PATH = Path(__file__).parents[1] / "brand_os.db"
 DATA_PATH = Path(os.environ.get("BRANDMAN_DB", DEFAULT_DATA_PATH))
+
+# A host serving several isolated databases (one per workspace) binds the
+# database for the current request or job with ``using_database``. Code reads
+# ``store.DATA_PATH`` as before; the module class below resolves it per context.
+_DATABASE_OVERRIDE: ContextVar[Path | None] = ContextVar("brandman_database", default=None)
+
+
+class _StoreModule(ModuleType):
+    @property
+    def DATA_PATH(self) -> Path:  # noqa: N802 - long-standing public name
+        override = _DATABASE_OVERRIDE.get()
+        return override if override is not None else self.__dict__["_DEFAULT_DATA_PATH_BINDING"]
+
+    @DATA_PATH.setter
+    def DATA_PATH(self, value: str | Path) -> None:  # noqa: N802
+        self.__dict__["_DEFAULT_DATA_PATH_BINDING"] = Path(value)
+
+
+def _data_path() -> Path:
+    return sys.modules[__name__].DATA_PATH
+
+
+def database_override() -> Path | None:
+    """The database bound to the current context by ``using_database``, if any."""
+    return _DATABASE_OVERRIDE.get()
+
+
+@contextmanager
+def using_database(path: str | Path) -> Iterator[Path]:
+    """Bind every ``store.DATA_PATH`` read in this context to ``path``."""
+    token = _DATABASE_OVERRIDE.set(Path(path))
+    try:
+        yield Path(path)
+    finally:
+        _DATABASE_OVERRIDE.reset(token)
 
 # Agent context is an operating input, not a bulk-history export.  Terminal
 # records and forensic fixtures remain in canonical storage and on the
@@ -32,8 +70,9 @@ def now() -> str:
 
 @contextmanager
 def connection() -> Iterator[sqlite3.Connection]:
-    DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DATA_PATH)
+    path = _data_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     try:
@@ -205,9 +244,9 @@ def init_db(*, profile: str | None = None) -> None:
     requested = profile or os.environ.get("BRANDMAN_DATABASE_PROFILE")
     if requested is not None and requested not in DATABASE_PROFILES:
         raise ValueError("database profile must be operating, development, test, or proof")
-    database_path = Path(DATA_PATH)
+    database_path = _data_path()
     legacy_has_content = (
-        str(DATA_PATH) != ":memory:"
+        str(database_path) != ":memory:"
         and database_path.is_file()
         and database_path.stat().st_size > 0
     )
@@ -316,7 +355,7 @@ def init_db(*, profile: str | None = None) -> None:
 
 def database_profile(database: str | Path | None = None) -> str:
     """Return the persisted environment role; legacy databases fail safe as operating."""
-    path = Path(database or DATA_PATH)
+    path = Path(database or _data_path())
     if not path.is_file():
         raise ValueError("database file does not exist")
     with sqlite3.connect(path) as conn:
@@ -495,7 +534,7 @@ def brand_context(slug: str) -> dict[str, Any] | None:
     # Canonical context uses the same active/expiry/scope governance as every
     # generation path; it is not a parallel raw-status influence channel.
     from .learning_engine import BrandLearningEngine
-    brand["accepted_learnings"] = BrandLearningEngine(DATA_PATH).retrieve(
+    brand["accepted_learnings"] = BrandLearningEngine(_data_path()).retrieve(
         brand["id"], {"stage": "brand_context"}, audit=False,
     )["learnings"]
     return brand
@@ -1307,7 +1346,7 @@ def report_product_feedback(
     """Create or update a visible issue; equal fingerprints increment one record."""
     from .feedback import FeedbackStore
 
-    return FeedbackStore(DATA_PATH).report(
+    return FeedbackStore(_data_path()).report(
         reporter=reporter, summary=summary, details=details, component=component,
         severity=severity, brand_id=brand_id, fingerprint=fingerprint,
         reproduction=reproduction, expected_behavior=expected_behavior,
@@ -1321,3 +1360,8 @@ def _decode_json_columns(record: dict[str, Any], *columns: str) -> dict[str, Any
         if record.get(column) is not None and isinstance(record[column], str):
             record[column] = json.loads(record[column])
     return record
+
+
+# Install the context-aware ``DATA_PATH`` attribute (see ``using_database``).
+_DEFAULT_DATA_PATH_BINDING = globals().pop("DATA_PATH")
+sys.modules[__name__].__class__ = _StoreModule

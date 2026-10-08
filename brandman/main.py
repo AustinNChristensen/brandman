@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
 from dataclasses import dataclass
 from html import escape
 import os
@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
-from . import seed_packs, store
+from . import extensions, principals, seed_packs, store
 from .principals import operator_principal
 from .attribution_store import AttributionStore, AttributionStoreError
 from .approval_snapshots import ApprovalSnapshotStore
@@ -121,6 +121,9 @@ class ApplicationServices:
 
 
 _services: ApplicationServices | None = None
+# Hosts that bind a database per request (``store.using_database``) keep one
+# service set per database; a plain self-hosted process only ever has one.
+_tenant_services: dict[tuple[str, str], ApplicationServices] = {}
 _services_lock = RLock()
 hosted_mcp_application = LazyMcpApplication()
 
@@ -157,15 +160,20 @@ def initialize_application_services(
             "BRANDMAN_DATABASE_PROFILE must be operating, development, test, or proof"
         )
     key = (str(path.expanduser().resolve()), requested_profile)
+    context_bound = database is None and store.database_override() is not None
     with _services_lock:
-        if _services is not None and (
+        if context_bound and key in _tenant_services:
+            return _tenant_services[key]
+        if not context_bound and _services is not None and (
             str(_services.database.expanduser().resolve()), _services.profile
         ) == key:
             return _services
 
         # All store helpers use this process-wide binding.  Bind it before the
         # single guarded initializer, then construct schema-owning services.
-        store.DATA_PATH = path
+        # A context-bound database is already what ``store.DATA_PATH`` reads.
+        if not context_bound:
+            store.DATA_PATH = path
         store.init_db(profile=requested_profile)
         persisted_profile = store.database_profile(path)
         if persisted_profile != requested_profile:
@@ -183,7 +191,7 @@ def initialize_application_services(
                 seeded_brand = store.get_brand(seed["slug"])
                 if seeded_brand is not None:
                     guidelines.seed_guidelines(seeded_brand["id"], seed["slug"])
-        _services = ApplicationServices(
+        services = ApplicationServices(
             database=path,
             profile=requested_profile,
             dispatch_store=dispatch,
@@ -205,7 +213,11 @@ def initialize_application_services(
             publishing_planner=PublishingPlanner(path),
             operator_proposal_store=OperatorProposalStore(path, guidelines),
         )
-        return _services
+        if context_bound:
+            _tenant_services[key] = services
+        else:
+            _services = services
+        return services
 
 
 T = TypeVar("T")
@@ -277,6 +289,11 @@ async def preview_password_gate(request: Request, call_next):
     boundary_failure = enforce_request_boundary(request)
     if boundary_failure is not None:
         return harden_response(boundary_failure, request)
+    hosted = await extensions.authenticate(request)
+    if isinstance(hosted, Response):
+        return harden_response(hosted, request)
+    if hosted is not None:
+        return harden_response(await _call_as(hosted, request, call_next), request)
     password = os.getenv("BRANDMAN_PREVIEW_PASSWORD")
     if not password:
         response = JSONResponse(status_code=503, content={"detail": "Preview password is not configured."})
@@ -319,6 +336,21 @@ async def preview_password_gate(request: Request, call_next):
     # the authentication boundary and is never accepted from request content.
     request.state.principal = operator_principal()
     return harden_response(await call_next(request), request)
+
+
+async def _call_as(authentication: extensions.Authentication, request: Request, call_next):
+    """Run the request bound to a host-authenticated principal and database."""
+    if authentication.principal is not None:
+        request.state.principal = authentication.principal
+    privileged = principals.set_privileged_principal(
+        authentication.principal if authentication.privileged else None,
+    )
+    database = store.using_database(authentication.database) if authentication.database else nullcontext()
+    try:
+        with database:
+            return await call_next(request)
+    finally:
+        principals.reset_privileged_principal(privileged)
 
 
 def _is_operator_navigation(request: Request) -> bool:
@@ -2180,7 +2212,7 @@ def get_mission_scorecard(slug: str) -> dict:
 
 
 @app.post("/api/brands/{slug}/tracked-url")
-def create_tracked_url(slug: str, input: TrackedUrlInput) -> dict:
+def create_tracked_url(slug: str, input: TrackedUrlInput, request: Request) -> dict:
     brand = store.get_brand(slug)
     if not brand:
         raise HTTPException(status_code=404, detail="Brand not found")
@@ -2189,7 +2221,7 @@ def create_tracked_url(slug: str, input: TrackedUrlInput) -> dict:
             brand_id=brand["id"], campaign_id=input.campaign_id,
             artifact_id=input.artifact_id, cta_id=input.cta_id,
             source=input.source, medium=input.medium, destination=input.base_url,
-            brand_slug=slug, actor=operator_principal(),
+            brand_slug=slug, actor=request.state.principal,
         )
     except AttributionStoreError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
@@ -2205,7 +2237,7 @@ def list_tracked_links(slug: str) -> list[dict]:
 
 
 @app.post("/api/brands/{slug}/mission/kpis", status_code=201)
-def record_mission_kpi(slug: str, input: KpiSnapshotInput) -> dict:
+def record_mission_kpi(slug: str, input: KpiSnapshotInput, request: Request) -> dict:
     brand = store.get_brand(slug)
     if not brand:
         raise HTTPException(status_code=404, detail="Brand not found")
@@ -2222,11 +2254,11 @@ def record_mission_kpi(slug: str, input: KpiSnapshotInput) -> dict:
             connector_account_id=input.connector_account_id,
             connector_event_id=input.connector_event_id,
             human_manual=input.source == "manual",
-            human_verified_by=operator_principal() if input.source == "manual" else None,
+            human_verified_by=request.state.principal if input.source == "manual" else None,
             human_verification_note=input.verification_note or None,
             dimensions=input.dimensions,
         )
-        canonical = attribution_store.promote_kpi_evidence(evidence["id"], actor=operator_principal())
+        canonical = attribution_store.promote_kpi_evidence(evidence["id"], actor=request.state.principal)
     except AttributionStoreError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     store.record_kpi_snapshot(
@@ -3791,3 +3823,8 @@ def get_dispatch_audit(item_id: str) -> list[dict]:
 
 
 app.mount("/mcp", hosted_mcp_application)
+
+
+# Installed ``brandman.plugins`` may add routes. They register last, so core
+# routes keep precedence.
+extensions.load_plugins("app", app)
