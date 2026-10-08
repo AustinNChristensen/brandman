@@ -1,7 +1,7 @@
 import json
 
-from app.mission_artifacts import MissionArtifactStore
-from app.operating_plan import (
+from brandman.mission_artifacts import MissionArtifactStore
+from brandman.operating_plan import (
     OperatingPlanService,
     build_operating_eod_scorecard,
     build_operating_morning_plan,

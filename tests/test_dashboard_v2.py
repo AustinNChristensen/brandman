@@ -1,4 +1,4 @@
-"""The React dashboard (web/ → app/static/app) is served at /app behind the
+"""The React dashboard (web/ → brandman/static/app) is served at /app behind the
 same boundary and preview password as everything else."""
 import base64
 import os
@@ -9,9 +9,9 @@ os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
-BUILD = Path(__file__).parents[1] / "app" / "static" / "app"
+BUILD = Path(__file__).parents[1] / "brandman" / "static" / "app"
 
 
 def _client() -> TestClient:

@@ -4,7 +4,7 @@ import base64
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 def headers(password: str) -> dict[str, str]:

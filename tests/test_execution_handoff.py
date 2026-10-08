@@ -3,12 +3,12 @@ import json
 
 import pytest
 
-from app.approval_snapshots import ApprovalSnapshotStore
-from app.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
-from app.editorial import EditorialStore, IssueLifecycle
-from app.execution_handoff import ExecutionHandoffError, ExecutionHandoffStore
-from app.execution_agents import ExecutionAgentRegistry
-from app.readiness import LiveReadinessService
+from brandman.approval_snapshots import ApprovalSnapshotStore
+from brandman.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.execution_handoff import ExecutionHandoffError, ExecutionHandoffStore
+from brandman.execution_agents import ExecutionAgentRegistry
+from brandman.readiness import LiveReadinessService
 
 
 def issue_content():

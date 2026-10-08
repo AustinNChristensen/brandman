@@ -10,8 +10,8 @@ import pytest
 
 os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
 
-from app.main import app
-from app import store
+from brandman.main import app
+from brandman import store
 
 
 HEADERS = {
@@ -131,7 +131,7 @@ def test_health_reconnect_disconnect_and_authenticated_audit(monkeypatch):
 
 
 def test_connection_management_is_not_exposed_to_mcp():
-    from app.mcp_server import mcp
+    from brandman.mcp_server import mcp
 
     tools = set(mcp._tool_manager._tools)
     assert not any("credential" in name or name.startswith("connect_account") for name in tools)

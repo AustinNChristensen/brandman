@@ -6,8 +6,8 @@ import stat
 from cryptography.fernet import Fernet
 import pytest
 
-from app import store
-from app.bootstrap_cli import PROJECT_ROOT, bootstrap, generate_master_key_file, main
+from brandman import store
+from brandman.bootstrap_cli import PROJECT_ROOT, bootstrap, generate_master_key_file, main
 
 
 def test_bootstrap_without_secrets_initializes_safe_internal_cycle(tmp_path):

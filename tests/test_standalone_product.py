@@ -4,10 +4,10 @@ from datetime import UTC, datetime
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
-from app import store
-from app.connection_product import CONNECTION_LANES, onboarding_manifest
-from app.main import app
-from app.provider_usage import ProviderUsageLedger
+from brandman import store
+from brandman.connection_product import CONNECTION_LANES, onboarding_manifest
+from brandman.main import app
+from brandman.provider_usage import ProviderUsageLedger
 
 
 HEADERS = {

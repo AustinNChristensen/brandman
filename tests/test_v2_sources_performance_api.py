@@ -7,8 +7,8 @@ os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.main import app
+from brandman import store
+from brandman.main import app
 
 
 def _headers() -> dict[str, str]:

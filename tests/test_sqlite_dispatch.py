@@ -5,8 +5,8 @@ from threading import Event, Thread
 
 import pytest
 
-from app.dispatch import DispatchBlocked, DuplicateDispatch, Lifecycle, PublishResult
-from app.sqlite_dispatch import SQLiteDispatchStore, SQLiteGovernedDispatcher
+from brandman.dispatch import DispatchBlocked, DuplicateDispatch, Lifecycle, PublishResult
+from brandman.sqlite_dispatch import SQLiteDispatchStore, SQLiteGovernedDispatcher
 
 
 class Publisher:

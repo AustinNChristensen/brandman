@@ -26,7 +26,7 @@ if not password or not os.environ.get("BRAND_OS_DB"):
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app.main import app  # noqa: E402
+from brandman.main import app  # noqa: E402
 
 NOW = datetime.now(timezone.utc)
 

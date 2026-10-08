@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.campaign_templates import CampaignTemplateError, CampaignTemplateStore
-from app.main import app
+from brandman import store
+from brandman.campaign_templates import CampaignTemplateError, CampaignTemplateStore
+from brandman.main import app
 
 
 def answers():

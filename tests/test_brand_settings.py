@@ -1,7 +1,7 @@
-from app import store
-from app.brand_settings import BrandSettingsError, BrandSettingsStore
-from app.provider_usage import ProviderUsageLedger
-from app.main import app
+from brandman import store
+from brandman.brand_settings import BrandSettingsError, BrandSettingsStore
+from brandman.provider_usage import ProviderUsageLedger
+from brandman.main import app
 from fastapi.testclient import TestClient
 import base64
 import pytest
@@ -117,7 +117,7 @@ def test_settings_api_orchestration_status_is_brand_scoped(tmp_path, monkeypatch
             other["id"], "rss", "https://other.test/feed", "Other feed",
             status="healthy", scopes=[], capabilities=["content.read"],
         )
-        scheduler = __import__("app.main", fromlist=["periodic_orchestrator"]).periodic_orchestrator
+        scheduler = __import__("brandman.main", fromlist=["periodic_orchestrator"]).periodic_orchestrator
         scheduler.ensure_schedule(
             "other-only", name="Other only", action_type="connector_sync",
             interval_seconds=900,

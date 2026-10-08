@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from app.ops_cli import main
-from app.supervisor_proof import (
+from brandman.ops_cli import main
+from brandman.supervisor_proof import (
     run_supervisor_proof, verify_supervisor_evidence, verify_supervisor_report,
 )
 

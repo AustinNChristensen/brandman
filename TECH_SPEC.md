@@ -47,8 +47,8 @@ auth/RBAC.
 ## Architecture
 
 FastAPI and SQLite (replaceable with Postgres) own canonical state and the policy
-gate. A small dashboard consumes REST. `app/mcp_server.py` exposes governed agent
-tools. `app/workflows.py` is LangChain provider-neutral and requires structured
+gate. A small dashboard consumes REST. `brandman/mcp_server.py` exposes governed agent
+tools. `brandman/workflows.py` is LangChain provider-neutral and requires structured
 output. n8n initiates connector events but is never the system of record.
 FastAPI and MCP imports are database-inert. Their runtime composition boundary
 requires an explicit database path/profile, validates the persisted profile

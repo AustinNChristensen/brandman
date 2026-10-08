@@ -4,8 +4,8 @@ import base64
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.main import app
+from brandman import store
+from brandman.main import app
 
 
 def auth(password: str) -> dict[str, str]:

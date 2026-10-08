@@ -2,7 +2,7 @@ import base64
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(monkeypatch):

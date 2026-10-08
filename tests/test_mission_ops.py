@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from app.mission_ops import (
+from brandman.mission_ops import (
     AttributionConfidence,
     attribution_confidence,
     build_end_of_day_scorecard,

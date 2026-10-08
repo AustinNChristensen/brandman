@@ -1,8 +1,8 @@
 import pytest
 
-from app import store
-from app.experiments import ExperimentError, ExperimentStore
-from app.learning_engine import BrandLearningEngine
+from brandman import store
+from brandman.experiments import ExperimentError, ExperimentStore
+from brandman.learning_engine import BrandLearningEngine
 
 
 def setup_experiment(tmp_path):

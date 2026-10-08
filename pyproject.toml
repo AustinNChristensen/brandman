@@ -12,19 +12,19 @@ dependencies = [
 ]
 
 [project.scripts]
-brand-os-mcp = "app.mcp_server:main"
-brand-os-worker = "app.worker_cli:main"
-brand-os-bootstrap = "app.bootstrap_cli:main"
-brand-os-ops = "app.ops_cli:main"
-brand-os-supervisor = "app.launchd_supervisor:main"
-brand-os-api-supervisor = "app.api_supervisor:main"
+brand-os-mcp = "brandman.mcp_server:main"
+brand-os-worker = "brandman.worker_cli:main"
+brand-os-bootstrap = "brandman.bootstrap_cli:main"
+brand-os-ops = "brandman.ops_cli:main"
+brand-os-supervisor = "brandman.launchd_supervisor:main"
+brand-os-api-supervisor = "brandman.api_supervisor:main"
 # brandman-* are the primary names; brand-os-* remain as aliases for existing setups.
-brandman-mcp = "app.mcp_server:main"
-brandman-worker = "app.worker_cli:main"
-brandman-bootstrap = "app.bootstrap_cli:main"
-brandman-ops = "app.ops_cli:main"
-brandman-supervisor = "app.launchd_supervisor:main"
-brandman-api-supervisor = "app.api_supervisor:main"
+brandman-mcp = "brandman.mcp_server:main"
+brandman-worker = "brandman.worker_cli:main"
+brandman-bootstrap = "brandman.bootstrap_cli:main"
+brandman-ops = "brandman.ops_cli:main"
+brandman-supervisor = "brandman.launchd_supervisor:main"
+brandman-api-supervisor = "brandman.api_supervisor:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "httpx>=0.27"]
@@ -34,11 +34,11 @@ pythonpath = ["."]
 testpaths = ["tests"]
 
 [tool.fastapi]
-entrypoint = "app.main:app"
+entrypoint = "brandman.main:app"
 
 [build-system]
 requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["app"]
+packages = ["brandman"]

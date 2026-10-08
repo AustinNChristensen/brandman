@@ -4,10 +4,10 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app.attribution_store import AttributionStore
-from app.content_dispatch import CanonicalPostDispatchService, CanonicalPostNotFound
-from app.dispatch import (
+from brandman import store
+from brandman.attribution_store import AttributionStore
+from brandman.content_dispatch import CanonicalPostDispatchService, CanonicalPostNotFound
+from brandman.dispatch import (
     DispatchItem,
     DispatchValidationError,
     GovernedDispatcher,

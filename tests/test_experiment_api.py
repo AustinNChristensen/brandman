@@ -3,8 +3,8 @@ import os
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.main import app
+from brandman import store
+from brandman.main import app
 
 
 HEADERS = {
@@ -79,7 +79,7 @@ def test_rest_drafts_recommends_and_human_accepts_without_publishing(tmp_path, m
 
 
 def test_mcp_can_draft_and_recommend_but_has_no_acceptance_authority():
-    from app.mcp_server import mcp
+    from brandman.mcp_server import mcp
 
     tools = set(mcp._tool_manager._tools)
     assert {

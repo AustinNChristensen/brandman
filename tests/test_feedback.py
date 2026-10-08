@@ -3,7 +3,7 @@ import base64
 import pytest
 from fastapi.testclient import TestClient
 
-from app.feedback import FeedbackError, FeedbackStore
+from brandman.feedback import FeedbackError, FeedbackStore
 
 
 def report(store: FeedbackStore, **overrides):
@@ -148,9 +148,9 @@ def test_reconciliation_attaches_evidence_to_already_classified_gap(tmp_path):
 
 
 def test_rest_lifecycle_uses_authenticated_human_and_mcp_is_agent_only(tmp_path, monkeypatch):
-    from app import store as brand_store
-    from app.main import app
-    from app.mcp_server import mcp
+    from brandman import store as brand_store
+    from brandman.main import app
+    from brandman.mcp_server import mcp
 
     brand_store.DATA_PATH = tmp_path / "api-feedback.db"
     monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "feedback-test-password")

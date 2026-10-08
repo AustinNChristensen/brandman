@@ -5,7 +5,7 @@ os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 HEADERS = {
@@ -191,7 +191,7 @@ def test_rejection_and_batch_approval_use_principal_not_request_text():
 
 
 def test_mcp_exposes_drafting_but_no_human_review_or_queue_authority():
-    from app.mcp_server import mcp
+    from brandman.mcp_server import mcp
 
     tools = set(mcp._tool_manager._tools)
     assert {"list_dispatch_items", "create_dispatch_item", "edit_dispatch_item",

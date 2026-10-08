@@ -7,13 +7,13 @@ from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.credentials import CredentialStore
-from app.connector_health import ConnectorHealthStore, make_connector_health_handler
-from app.connectors import ConnectorResult
-from app.main import app
-from app.readiness import LiveReadinessService
-from app.scheduler import PeriodicOrchestrator
+from brandman import store
+from brandman.credentials import CredentialStore
+from brandman.connector_health import ConnectorHealthStore, make_connector_health_handler
+from brandman.connectors import ConnectorResult
+from brandman.main import app
+from brandman.readiness import LiveReadinessService
+from brandman.scheduler import PeriodicOrchestrator
 
 
 NOW = datetime(2026, 9, 2, 12, tzinfo=UTC)
@@ -222,7 +222,7 @@ def test_rest_preflight_is_authenticated_and_mcp_helper_is_read_only(tmp_path, m
     assert response.json()["brand"]["slug"] == "demo-brand"
     assert missing.status_code == 404
     before = store.rows("SELECT id FROM connector_accounts")
-    from app.mcp_server import get_live_readiness
+    from brandman.mcp_server import get_live_readiness
     mcp_report = get_live_readiness("demo-brand")
     assert mcp_report["brand"]["slug"] == "demo-brand"
     assert store.rows("SELECT id FROM connector_accounts") == before

@@ -49,7 +49,7 @@ uv sync
 export BRAND_OS_DB="$PWD/brand_os.db"
 export BRAND_OS_DATABASE_PROFILE=development
 export BRAND_OS_PREVIEW_PASSWORD="choose-a-long-random-password"
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+uv run uvicorn brandman.main:app --host 127.0.0.1 --port 8000
 ```
 
 Open http://127.0.0.1:8000. The home page is public; the dashboard, API and

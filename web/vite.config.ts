@@ -1,14 +1,14 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// Built output is served by FastAPI at /app (see app/main.py). Assets are
-// hashed and emitted under app/static/app/assets so the CSP's `'self'` rule
+// Built output is served by FastAPI at /app (see brandman/main.py). Assets are
+// hashed and emitted under brandman/static/app/assets so the CSP's `'self'` rule
 // covers everything; nothing is loaded from a third-party origin.
 export default defineConfig({
   plugins: [react()],
   base: '/app/',
   build: {
-    outDir: '../app/static/app',
+    outDir: '../brandman/static/app',
     emptyOutDir: true,
     sourcemap: false,
   },

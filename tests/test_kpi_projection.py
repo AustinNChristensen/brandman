@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from app import store
-from app.attribution_store import AttributionStore
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.kpi_projection import MissionKpiProjector
-from app.sync import SyncOrchestrator
+from brandman import store
+from brandman.attribution_store import AttributionStore
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.kpi_projection import MissionKpiProjector
+from brandman.sync import SyncOrchestrator
 
 
 import pytest

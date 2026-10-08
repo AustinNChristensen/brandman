@@ -4,11 +4,11 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
-from app.approval_snapshots import ApprovalSnapshotStore
-from app.dispatch import GovernedDispatcher, SQLiteDispatchStore
-from app.editorial import EditorialStore, IssueLifecycle
-from app.main import app
+from brandman import store
+from brandman.approval_snapshots import ApprovalSnapshotStore
+from brandman.dispatch import GovernedDispatcher, SQLiteDispatchStore
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.main import app
 
 
 def content():
@@ -179,7 +179,7 @@ def test_newsletter_snapshot_and_backfill_are_idempotent(tmp_path):
 
 
 def test_rest_approval_snapshot_is_readable_and_edit_invalidation_is_visible(tmp_path, monkeypatch):
-    from app.mcp_server import list_approval_snapshots, mcp
+    from brandman.mcp_server import list_approval_snapshots, mcp
 
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "api.db")
     monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test")

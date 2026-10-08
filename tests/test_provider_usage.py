@@ -3,11 +3,11 @@ import sqlite3
 
 import pytest
 
-from app.connectors import HttpResponse
-from app.provider_usage import (
+from brandman.connectors import HttpResponse
+from brandman.provider_usage import (
     MeteredTransport, ProviderUsageLedger, classify_request, safe_endpoint,
 )
-from app import store
+from brandman import store
 
 
 NOW = datetime(2026, 9, 2, 12, tzinfo=UTC)
@@ -189,8 +189,8 @@ def test_legacy_rate_card_unique_constraint_is_safely_upgraded(tmp_path):
 def test_rest_and_mcp_usage_reports_are_read_only(tmp_path, monkeypatch):
     import base64
     from fastapi.testclient import TestClient
-    from app.main import app
-    from app.mcp_server import get_provider_api_usage
+    from brandman.main import app
+    from brandman.mcp_server import get_provider_api_usage
 
     database = tmp_path / "api-usage.db"
     monkeypatch.setattr(store, "DATA_PATH", database)

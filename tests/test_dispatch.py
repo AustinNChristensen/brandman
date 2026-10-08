@@ -4,7 +4,7 @@ from threading import Event, Thread
 
 import pytest
 
-from app.dispatch import (
+from brandman.dispatch import (
     ApprovalRequired,
     DispatchBlocked,
     DuplicateDispatch,

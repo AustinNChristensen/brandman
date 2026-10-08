@@ -3,20 +3,20 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
-from app.approval_snapshots import ApprovalSnapshotStore
-from app.dispatch import (
+from brandman import store
+from brandman.approval_snapshots import ApprovalSnapshotStore
+from brandman.dispatch import (
     GovernedDispatcher, Lifecycle, RevisionMismatch, SQLiteDispatchStore,
 )
-from app.distribution_package import DistributionPackageError, DistributionPackageStore
-from app.editorial import EditorialStore, IssueLifecycle
-from app.execution_handoff import ExecutionHandoffStore
-from app.execution_handoff import ExecutionHandoffError
-from app.execution_agents import ExecutionAgentRegistry
-from app.attribution_store import AttributionStore
-from app.campaign_graph import CampaignGraphStore
-from app.canonical_revalidation import CanonicalSourceRevalidationStore
-from app.main import app, editorial_store
+from brandman.distribution_package import DistributionPackageError, DistributionPackageStore
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.execution_handoff import ExecutionHandoffStore
+from brandman.execution_handoff import ExecutionHandoffError
+from brandman.execution_agents import ExecutionAgentRegistry
+from brandman.attribution_store import AttributionStore
+from brandman.campaign_graph import CampaignGraphStore
+from brandman.canonical_revalidation import CanonicalSourceRevalidationStore
+from brandman.main import app, editorial_store
 
 
 def setup_package(tmp_path, monkeypatch):
@@ -438,7 +438,7 @@ def test_distribution_rest_and_mcp_surfaces_are_draft_only(tmp_path, monkeypatch
             f"/api/distribution-packages/{package['id']}/membership-audit"
         ).json()
 
-        from app.mcp_server import (
+        from brandman.mcp_server import (
             get_distribution_campaign_measurement,
             get_distribution_membership_audit,
             get_newsletter_distribution_package,

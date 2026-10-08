@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 PASSWORD = "migration-test-password"
@@ -170,7 +170,7 @@ def test_consent_screen_describes_write_capable_access(monkeypatch):
 
 
 def test_authorize_password_attempts_are_rate_limited(monkeypatch):
-    from app import hosted_mcp
+    from brandman import hosted_mcp
 
     hosted_mcp._auth_failures.clear()
     verifier = "a-long-enough-pkce-verifier-value-for-the-test"

@@ -28,7 +28,7 @@ def _refuse_protected_sqlite_connection(event, arguments):
     """Make accidental operating-path access impossible inside pytest.
 
     Python's SQLite audit event occurs before the connection is opened, which
-    protects direct repository constructors as well as ``app.store`` helpers.
+    protects direct repository constructors as well as ``brandman.store`` helpers.
     The guard is deliberately path-based: tests may create temporary databases
     profiled as operating to test policy, but never access the inherited or
     project operating files.
@@ -55,7 +55,7 @@ os.environ["BRAND_OS_DB"] = str(_COLLECTION_SCRATCH)
 os.environ["BRAND_OS_DATABASE_PROFILE"] = "test"
 
 # This is intentionally the first application import in the pytest process.
-from app import store  # noqa: E402
+from brandman import store  # noqa: E402
 
 store.DATA_PATH = _COLLECTION_SCRATCH
 
@@ -71,7 +71,7 @@ def pytest_collection_finish(session):
 def isolated_test_database(tmp_path, monkeypatch):
     """Bind every test to a fresh, explicitly profiled scratch database.
 
-    This fixture runs before any TestClient lifespan, which is where app.main
+    This fixture runs before any TestClient lifespan, which is where brandman.main
     composes its lazy service set. Tests remain free to replace DATA_PATH with
     another tmp_path database, but can never inherit the operating path.
     """

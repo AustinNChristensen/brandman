@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from app.beehiiv_delivery import BeehiivDeliveryError, BeehiivDraftDelivery, render_safe_body
-from app.connectors import HttpResponse
-from app.editorial import EditorialStore, IssueLifecycle
+from brandman.beehiiv_delivery import BeehiivDeliveryError, BeehiivDraftDelivery, render_safe_body
+from brandman.connectors import HttpResponse
+from brandman.editorial import EditorialStore, IssueLifecycle
 
 
 class FakeTransport:

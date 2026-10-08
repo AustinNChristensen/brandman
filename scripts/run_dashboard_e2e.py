@@ -27,9 +27,9 @@ def main() -> None:
     # Application startup creates the standard development brands. UI tests add
     # only reversible scratch records in this disposable database.
     from fastapi.testclient import TestClient
-    from app.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
-    from app.main import app, engagement_store
-    from app import store
+    from brandman.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
+    from brandman.main import app, engagement_store
+    from brandman import store
 
     with TestClient(app) as client:
         response = client.get("/api/brands", auth=("operator", PASSWORD))
@@ -53,7 +53,7 @@ def main() -> None:
             ),
         )
     os.execve(sys.executable, [
-        sys.executable, "-m", "uvicorn", "app.main:app",
+        sys.executable, "-m", "uvicorn", "brandman.main:app",
         "--host", "127.0.0.1", "--port", "8011",
     ], environment)
 

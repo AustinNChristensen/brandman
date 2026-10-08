@@ -4,7 +4,7 @@ from dataclasses import asdict
 import pytest
 from cryptography.fernet import Fernet
 
-from app.credentials import (
+from brandman.credentials import (
     ConnectionMetadata,
     CredentialConfigurationError,
     CredentialDecryptionError,

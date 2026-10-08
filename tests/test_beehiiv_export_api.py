@@ -3,10 +3,10 @@ import base64
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
-from app import store
-from app.beehiiv_runtime import BEEHIIV_NEWSLETTER_EXPORT_JOB
-from app.credentials import CredentialStore
-from app.main import app
+from brandman import store
+from brandman.beehiiv_runtime import BEEHIIV_NEWSLETTER_EXPORT_JOB
+from brandman.credentials import CredentialStore
+from brandman.main import app
 
 
 def auth_headers(password: str) -> dict[str, str]:

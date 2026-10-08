@@ -6,8 +6,8 @@ from uuid import uuid4
 os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
-from app.main import app
-from app import store
+from brandman.main import app
+from brandman import store
 
 
 def newsletter_review_token(client, issue_id):

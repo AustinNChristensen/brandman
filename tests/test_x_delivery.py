@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from app import store
-from app.connectors import DispatchReceipt, HttpResponse, ConnectorKind, dedup_identity
-from app.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
-from app.jobs import JobWorker
-from app.x_delivery import (
+from brandman import store
+from brandman.connectors import DispatchReceipt, HttpResponse, ConnectorKind, dedup_identity
+from brandman.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
+from brandman.jobs import JobWorker
+from brandman.x_delivery import (
     XDeliveryJobHandler,
     XPublisherAdapter,
     X_DELIVERY_JOB_TYPE,

@@ -1,8 +1,8 @@
 import pytest
 
-from app import store
-from app.campaign_templates import CampaignTemplateError, CampaignTemplateStore
-from app.learning_engine import BrandLearningEngine, LearningError
+from brandman import store
+from brandman.campaign_templates import CampaignTemplateError, CampaignTemplateStore
+from brandman.learning_engine import BrandLearningEngine, LearningError
 
 
 ANSWERS = {"goal": "Explain the offer", "audience": "Readers",
@@ -104,7 +104,7 @@ def test_malformed_or_expired_rows_are_inert_in_retrieval_and_brand_context(tmp_
 
 def test_mcp_proposal_uses_structured_engine_and_audit(tmp_path, monkeypatch):
     _, brand, _, _ = setup(tmp_path, monkeypatch)
-    from app.mcp_server import propose_brand_learning
+    from brandman.mcp_server import propose_brand_learning
     result = propose_brand_learning("demo-brand", "MCP hypothesis", "Outcome evidence", "Try a hook",
         evidence_for=[{"id": "outcome-7", "summary": "Observed outcome"}],
         effect={"metric": "clicks"}, uncertainty={"confidence": "low"},

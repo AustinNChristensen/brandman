@@ -5,25 +5,25 @@ import json
 import pytest
 from cryptography.fernet import Fernet
 
-from app import store
-from app.experiments import (
+from brandman import store
+from brandman.experiments import (
     EXPERIMENT_WINDOW_COLLECT_JOB_TYPE, EXPERIMENT_WINDOW_EVALUATE_JOB_TYPE,
 )
-from app.connectors import HttpResponse
-from app.campaign_graph import CampaignGraphStore
-from app.credentials import CredentialConfigurationError, CredentialStore
-from app.editorial import EditorialStore, IssueLifecycle
-from app.beehiiv_runtime import (
+from brandman.connectors import HttpResponse
+from brandman.campaign_graph import CampaignGraphStore
+from brandman.credentials import CredentialConfigurationError, CredentialStore
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.beehiiv_runtime import (
     BEEHIIV_NEWSLETTER_EXPORT_JOB,
     enqueue_newsletter_export,
 )
-from app.service_runtime import (
+from brandman.service_runtime import (
     ServiceRuntimeConfigurationError,
     build_service_runtime,
 )
-from app.sync import enqueue_sync_job
-from app.connector_health import HEALTH_CHECK_JOB_TYPE
-from app.x_delivery import enqueue_x_delivery
+from brandman.sync import enqueue_sync_job
+from brandman.connector_health import HEALTH_CHECK_JOB_TYPE
+from brandman.x_delivery import enqueue_x_delivery
 
 
 pytestmark = pytest.mark.usefixtures("launch_window_clock")
@@ -155,7 +155,7 @@ def test_periodic_native_beehiiv_sync_projects_subscribers_and_issue_metrics(tmp
     # The seeded mission window ends 2026-10-01, so pin the connector clock inside
     # it. Otherwise KPI projection is skipped as outside_mission_window.
     monkeypatch.setattr(
-        "app.connectors.BeehiivConnector._now", lambda self: "2026-09-15T12:00:00+00:00",
+        "brandman.connectors.BeehiivConnector._now", lambda self: "2026-09-15T12:00:00+00:00",
     )
     database, key, brand, beehiiv, _, _ = configured_database(tmp_path)
     store.ensure_demo_brand_growth_mission()

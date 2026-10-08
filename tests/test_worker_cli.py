@@ -5,15 +5,15 @@ import json
 
 from cryptography.fernet import Fernet
 
-from app import store
-from app.beehiiv_assisted_pull import (
+from brandman import store
+from brandman.beehiiv_assisted_pull import (
     ASSISTED_BEEHIIV_PULL_JOB_TYPE,
     BeehiivAssistedPullStore,
 )
-from app.experiments import (
+from brandman.experiments import (
     EXPERIMENT_WINDOW_COLLECT_JOB_TYPE, EXPERIMENT_WINDOW_EVALUATE_JOB_TYPE,
 )
-from app.worker_cli import build_secretless_assisted_runtime, main
+from brandman.worker_cli import build_secretless_assisted_runtime, main
 
 
 def test_bounded_worker_cli_reports_safe_empty_run(tmp_path, monkeypatch, capsys):

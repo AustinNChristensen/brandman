@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from app import store
-from app.beehiiv_metrics import BeehiivCampaignMetricProjector
-from app.beehiiv_assisted_sync import BeehiivAssistedSyncError, ingest_beehiiv_measurements
-from app.campaign_graph import CampaignGraphStore
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.editorial import EditorialStore
-from app.sync import SyncOrchestrator
+from brandman import store
+from brandman.beehiiv_metrics import BeehiivCampaignMetricProjector
+from brandman.beehiiv_assisted_sync import BeehiivAssistedSyncError, ingest_beehiiv_measurements
+from brandman.campaign_graph import CampaignGraphStore
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.editorial import EditorialStore
+from brandman.sync import SyncOrchestrator
 
 
 pytestmark = pytest.mark.usefixtures("launch_window_clock")

@@ -6,12 +6,12 @@ import threading
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.connector_health import (
+from brandman import store
+from brandman.connector_health import (
     ConnectorHealthStore, HEALTH_CHECK_JOB_TYPE, make_connector_health_handler,
 )
-from app.connectors import ConnectorError, ConnectorKind, ConnectorResult
-from app.main import app
+from brandman.connectors import ConnectorError, ConnectorKind, ConnectorResult
+from brandman.main import app
 
 
 HEADERS = {"Authorization": "Basic " + base64.b64encode(
@@ -158,6 +158,6 @@ def test_rest_trigger_is_authenticated_and_mcp_surface_will_be_status_only(tmp_p
     assert triggered.json()[0]["requested_by"] == "chris"
     assert listed.json()[0]["id"] == triggered.json()[0]["id"]
     assert "credential" not in json.dumps(listed.json()).lower()
-    from app.mcp_server import list_connector_health_checks
+    from brandman.mcp_server import list_connector_health_checks
     mcp_status = list_connector_health_checks("demo-brand")
     assert mcp_status[0]["id"] == triggered.json()[0]["id"]

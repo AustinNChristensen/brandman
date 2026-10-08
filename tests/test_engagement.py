@@ -5,10 +5,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app import store
-from app.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
-from app.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
-from app.engagement import (
+from brandman import store
+from brandman.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
+from brandman.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
+from brandman.engagement import (
     AntiSpamBlocked,
     AntiSpamPolicy,
     EngagementInbox,

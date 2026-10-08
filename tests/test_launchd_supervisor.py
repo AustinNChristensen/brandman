@@ -9,12 +9,12 @@ import sys
 
 import pytest
 
-from app import store
-from app.launchd_supervisor import (
+from brandman import store
+from brandman.launchd_supervisor import (
     _unload_temporary_job, build_launchd_plist, install, status, uninstall, validate_launchd_plist,
     verify_target_host_proof, write_plist,
 )
-from app.worker_cli import main as worker_main
+from brandman.worker_cli import main as worker_main
 
 
 def _database(tmp_path: Path, monkeypatch, profile: str = "test") -> Path:
@@ -48,7 +48,7 @@ def test_plist_is_secret_free_explicit_bounded_and_create_only(tmp_path, monkeyp
     assert payload["KeepAlive"] is False
     assert payload["ProgramArguments"][1:] == [
         "run", "--project", str(Path(__file__).parents[1].resolve()),
-        "--no-sync", "python", "-m", "app.worker_cli",
+        "--no-sync", "python", "-m", "brandman.worker_cli",
     ]
     assert set(payload["EnvironmentVariables"]) == {
         "BRAND_OS_DB", "BRAND_OS_DATABASE_PROFILE", "BRAND_OS_WORKER_MODE",
@@ -125,7 +125,7 @@ def test_install_status_uninstall_are_idempotent_and_managed(tmp_path, monkeypat
             loaded.discard(label)
         return subprocess.CompletedProcess(arguments, 0, "", "")
 
-    monkeypatch.setattr("app.launchd_supervisor._launchctl", fake_launchctl)
+    monkeypatch.setattr("brandman.launchd_supervisor._launchctl", fake_launchctl)
     first = install(source)
     assert first["status"] == "installed"
     assert first["installed_plist"].startswith(str(home))
@@ -153,7 +153,7 @@ def test_uninstall_preserves_configuration_when_bootout_fails(tmp_path, monkeypa
             raise subprocess.CalledProcessError(5, arguments)
         return subprocess.CompletedProcess(arguments, 0, "", "")
 
-    monkeypatch.setattr("app.launchd_supervisor._launchctl", fake_launchctl)
+    monkeypatch.setattr("brandman.launchd_supervisor._launchctl", fake_launchctl)
     installed = Path(install(source)["installed_plist"])
     with pytest.raises(subprocess.CalledProcessError):
         uninstall(payload["Label"])
@@ -173,7 +173,7 @@ def test_temporary_cleanup_preserves_private_recovery_plist_after_both_failures(
         calls.append(arguments)
         return subprocess.CompletedProcess(arguments, 0, "", "")
 
-    monkeypatch.setattr("app.launchd_supervisor._launchctl", always_loaded)
+    monkeypatch.setattr("brandman.launchd_supervisor._launchctl", always_loaded)
     with pytest.raises(ValueError, match="management plist preserved") as failure:
         _unload_temporary_job(payload["Label"], plist, recovery)
     assert recovery.read_bytes() == plist.read_bytes()
@@ -191,7 +191,7 @@ def test_cleanup_collision_preserves_exact_plist_at_new_private_path(
     recovery = tmp_path / "recovery.plist"
     recovery.write_bytes(b"unrelated existing bytes"); recovery.chmod(0o600)
     monkeypatch.setattr(
-        "app.launchd_supervisor._launchctl",
+        "brandman.launchd_supervisor._launchctl",
         lambda *args, **kwargs: subprocess.CompletedProcess(args, 0, "", ""),
     )
     with pytest.raises(ValueError, match="management plist preserved") as caught:
@@ -238,7 +238,7 @@ def test_proof_verifier_binds_report_and_database(tmp_path, monkeypatch):
     report.chmod(0o600); database.chmod(0o600)
     expected = __import__("hashlib").sha256(report.read_bytes()).hexdigest()
     monkeypatch.setattr(
-        "app.launchd_supervisor._launchctl",
+        "brandman.launchd_supervisor._launchctl",
         lambda *args, **kwargs: subprocess.CompletedProcess(args, 113, "", ""),
     )
     assert verify_target_host_proof(
@@ -289,7 +289,7 @@ def test_recomputed_inner_digest_cannot_authenticate_forged_proof(tmp_path, monk
     ).hexdigest()
     report.write_text(json.dumps(evidence)); report.chmod(0o600)
     monkeypatch.setattr(
-        "app.launchd_supervisor._launchctl",
+        "brandman.launchd_supervisor._launchctl",
         lambda *args, **kwargs: subprocess.CompletedProcess(args, 113, "", ""),
     )
     result = verify_target_host_proof(

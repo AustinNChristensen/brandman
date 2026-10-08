@@ -6,15 +6,15 @@ import base64
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.approval_snapshots import ApprovalSnapshotStore
-from app.brand_guidelines import (
+from brandman import store
+from brandman.approval_snapshots import ApprovalSnapshotStore
+from brandman.brand_guidelines import (
     BrandGuidelineError,
     BrandGuidelineStore,
     DEMO_BRAND_NEWSLETTER_RULES,
 )
-from app.editorial import ApprovalBlocked, EditorialStore, IssueLifecycle
-from app.main import app, brand_guideline_store
+from brandman.editorial import ApprovalBlocked, EditorialStore, IssueLifecycle
+from brandman.main import app, brand_guideline_store
 
 
 NOW = "2026-09-02T12:00:00+00:00"

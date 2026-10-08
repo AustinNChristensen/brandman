@@ -3,14 +3,14 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.campaign_templates import CampaignTemplateStore
-from app.campaign_graph import CampaignGraphStore
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.editorial import EditorialStore
-from app.performance_planning import PerformancePlanningEngine
-from app.source_campaign import SourceCampaignOperator
-from app.sync import SyncOrchestrator
+from brandman import store
+from brandman.campaign_templates import CampaignTemplateStore
+from brandman.campaign_graph import CampaignGraphStore
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.editorial import EditorialStore
+from brandman.performance_planning import PerformancePlanningEngine
+from brandman.source_campaign import SourceCampaignOperator
+from brandman.sync import SyncOrchestrator
 
 
 NOW = "2026-09-02T12:00:00+00:00"
@@ -329,8 +329,8 @@ def test_source_content_drift_withholds_an_otherwise_positive_prior(tmp_path):
 def test_rest_and_mcp_expose_read_only_planning_and_audit(tmp_path, monkeypatch):
     brand, _ = setup(tmp_path)
     monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-password")
-    from app.main import app
-    from app.mcp_server import get_performance_planning
+    from brandman.main import app
+    from brandman.mcp_server import get_performance_planning
 
     headers = {"Authorization": "Basic b3BlcmF0b3I6dGVzdC1wYXNzd29yZA=="}
     with TestClient(app, headers=headers) as client:

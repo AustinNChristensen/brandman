@@ -8,13 +8,13 @@ import subprocess
 
 import pytest
 
-from app import store
-from app.api_server import load_preview_password, main as api_main
-from app.api_supervisor import (
+from brandman import store
+from brandman.api_server import load_preview_password, main as api_main
+from brandman.api_supervisor import (
     DEFAULT_LABEL, api_status, build_api_launchd_plist, install_api,
     uninstall_api, validate_api_launchd_plist, write_api_plist,
 )
-from app.launchd_supervisor import build_launchd_plist, validate_launchd_plist
+from brandman.launchd_supervisor import build_launchd_plist, validate_launchd_plist
 
 
 def setup_files(tmp_path: Path, monkeypatch):
@@ -57,7 +57,7 @@ def test_api_plist_is_secret_free_and_enforces_exact_origin_boundary(tmp_path, m
     assert "BRAND_OS_PREVIEW_PASSWORD" not in value["EnvironmentVariables"]
     assert value["EnvironmentVariables"]["BRAND_OS_ALLOWED_HOSTS"] == "usebrandman.com"
     assert value["EnvironmentVariables"]["BRAND_OS_REQUIRE_HTTPS"] == "true"
-    assert value["ProgramArguments"][-2:] == ["-m", "app.api_server"]
+    assert value["ProgramArguments"][-2:] == ["-m", "brandman.api_server"]
     result = write_api_plist(value, private / "api.plist")
     assert result["mode"] == "0600"
     assert (private / "api.plist").stat().st_mode & 0o777 == 0o600
@@ -96,12 +96,12 @@ def test_api_launcher_reads_secret_then_trusts_only_loopback_proxy(tmp_path, mon
     monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD_FILE", str(secret))
     previous_password = os.environ.get("BRAND_OS_PREVIEW_PASSWORD")
     observed = {}
-    monkeypatch.setattr("app.api_server.uvicorn.run", lambda app, **kwargs: observed.update(
+    monkeypatch.setattr("brandman.api_server.uvicorn.run", lambda app, **kwargs: observed.update(
         {"app": app, **kwargs, "password": os.environ.get("BRAND_OS_PREVIEW_PASSWORD")}
     ))
     api_main()
     assert observed == {
-        "app": "app.main:app", "host": "127.0.0.1", "port": 8008,
+        "app": "brandman.main:app", "host": "127.0.0.1", "port": 8008,
         "proxy_headers": True, "forwarded_allow_ips": "127.0.0.1,::1",
         "password": "strong-runtime-password",
     }
@@ -178,7 +178,7 @@ def test_install_status_uninstall_are_idempotent_and_managed(tmp_path, monkeypat
         if arguments[0] == "bootout": loaded.discard(DEFAULT_LABEL)
         return subprocess.CompletedProcess(arguments, 0, "", "")
 
-    monkeypatch.setattr("app.api_supervisor._launchctl", fake_launchctl)
+    monkeypatch.setattr("brandman.api_supervisor._launchctl", fake_launchctl)
     assert install_api(source)["status"] == "installed"
     assert install_api(source)["status"] == "already_installed"
     assert api_status()["loaded"] is True

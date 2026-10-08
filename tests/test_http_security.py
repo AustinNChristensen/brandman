@@ -4,14 +4,14 @@ import base64
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.http_security import (
+from brandman import store
+from brandman.http_security import (
     PREVIEW_SESSION_COOKIE,
     create_preview_session,
     deployment_boundary_status,
     validate_preview_session,
 )
-from app.main import app
+from brandman.main import app
 
 
 PASSWORD = "test-only-password"

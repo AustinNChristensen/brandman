@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from app import store
+from brandman import store
 
 
 def _init(tmp_path):

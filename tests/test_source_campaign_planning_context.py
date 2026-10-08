@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 
-from app import store
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.editorial import EditorialStore
-from app.learning_engine import BrandLearningEngine
-from app.source_campaign import SourceCampaignOperator
-from app.sync import SyncOrchestrator
+from brandman import store
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.editorial import EditorialStore
+from brandman.learning_engine import BrandLearningEngine
+from brandman.source_campaign import SourceCampaignOperator
+from brandman.sync import SyncOrchestrator
 
 
 def _setup(tmp_path, *, mission: bool = True):

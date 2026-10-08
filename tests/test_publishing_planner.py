@@ -6,10 +6,10 @@ from datetime import UTC, datetime
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
-from app.main import app
-from app.editorial import EditorialStore
-from app.publishing_planner import PublishingPlanner, PublishingPlannerError
+from brandman import store
+from brandman.main import app
+from brandman.editorial import EditorialStore
+from brandman.publishing_planner import PublishingPlanner, PublishingPlannerError
 
 
 NOW = datetime(2026, 9, 3, 12, tzinfo=UTC)
