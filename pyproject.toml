@@ -11,7 +11,12 @@ dependencies = [
   "cryptography>=43,<51",
 ]
 
+[project.optional-dependencies]
+# Optional built-in drafting (brandman/drafting.py). Agents over MCP need none of it.
+anthropic = ["anthropic>=1.12,<2"]
+
 [project.scripts]
+brandman = "brandman.cli:main"
 brand-os-mcp = "brandman.mcp_server:main"
 brand-os-worker = "brandman.worker_cli:main"
 brand-os-bootstrap = "brandman.bootstrap_cli:main"
