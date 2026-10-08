@@ -4,8 +4,6 @@ const PALETTE = ['#3F6B3A', '#B23A32', '#2F5FA8', '#6B4FBB', '#B5690B', '#0E7C7B
 const KNOWN: Record<string, string> = {
   'demo-brand': '#B23A32',
   'demo-personal': '#2F5FA8',
-  'backcountry-hunter': '#3F6B3A',
-  'trailbooks': '#2F5FA8',
 }
 
 export function brandColor(slug: string): string {

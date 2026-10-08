@@ -15,13 +15,15 @@ interface BrandState {
   select: (slug: string | null) => void
   bySlug: (slug: string) => Brand | undefined
   byId: (id: string) => Brand | undefined
+  /** Re-read the brand list, e.g. after creating a brand. */
+  reload: () => void
 }
 
 const Ctx = createContext<BrandState | null>(null)
 
 export function BrandProvider({ children }: { children: ReactNode }) {
   const [params, setParams] = useSearchParams()
-  const { data, loading, error } = useLoad(() => brandsApi.list(), [])
+  const { data, loading, error, reload } = useLoad(() => brandsApi.list(), [])
   const brands = useMemo(() => data ?? [], [data])
   const selected = params.get('brand')
   const value = useMemo<BrandState>(() => {
@@ -37,8 +39,9 @@ export function BrandProvider({ children }: { children: ReactNode }) {
       },
       bySlug: (slug) => brands.find((b) => b.slug === slug),
       byId: (id) => brands.find((b) => b.id === id),
+      reload,
     }
-  }, [brands, loading, error, selected, params, setParams])
+  }, [brands, loading, error, selected, params, setParams, reload])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

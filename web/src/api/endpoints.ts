@@ -13,8 +13,14 @@ import type {
   BrandGuideline, BrandGuidelineAudit, OperatorContentProposal,
 } from './types'
 
+export interface NewBrandInput {
+  slug: string; name: string; mission: string; voice: string; compliance_rules: string
+  approval_policy: 'human_approval_required' | 'standing_approval'
+}
+
 export const brands = {
   list: () => api.get<Brand[]>('/api/brands'),
+  create: (body: NewBrandInput) => api.post<Brand>('/api/brands', body),
   context: (slug: string) => api.get<BrandContext>(`/api/brands/${enc(slug)}/context`),
   calendar: (slug: string) => api.get<CalendarItem[]>(`/api/brands/${enc(slug)}/calendar`),
   workflow: (slug: string) => api.get<OperatorWorkflow>(`/api/brands/${enc(slug)}/operator-workflow`),
