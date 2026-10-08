@@ -19,9 +19,9 @@ def _challenge(verifier: str) -> str:
 
 
 def _client(monkeypatch) -> TestClient:
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
-    monkeypatch.setenv("BRAND_OS_ALLOWED_HOSTS", "usebrandman.com")
-    monkeypatch.setenv("BRAND_OS_REQUIRE_HTTPS", "true")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_ALLOWED_HOSTS", "usebrandman.com")
+    monkeypatch.setenv("BRANDMAN_REQUIRE_HTTPS", "true")
     return TestClient(app, base_url="https://usebrandman.com")
 
 

@@ -11,13 +11,14 @@ from brandman.approval_snapshots import ApprovalSnapshotStore
 from brandman.brand_guidelines import (
     BrandGuidelineError,
     BrandGuidelineStore,
-    DEMO_BRAND_NEWSLETTER_RULES,
 )
+from brandman import seed_packs
 from brandman.editorial import ApprovalBlocked, EditorialStore, IssueLifecycle
 from brandman.main import app, brand_guideline_store
 
 
 NOW = "2026-09-02T12:00:00+00:00"
+DEMO_BRAND_NEWSLETTER_RULES = seed_packs.brand("demo-brand")["guidelines"][0]["rules"]
 AUTH = "Basic " + base64.b64encode(b"operator:guideline-test").decode()
 
 
@@ -29,7 +30,7 @@ def setup(tmp_path: Path):
     snapshots = ApprovalSnapshotStore(database)
     guidelines = editorial.guidelines
     brand = store.get_brand("demo-brand")
-    seeded = guidelines.seed_demo_brand(brand["id"], actor="test-seed")
+    seeded = guidelines.seed_guidelines(brand["id"], "demo-brand", actor="test-seed")[0]
     return database, brand, editorial, snapshots, guidelines, seeded
 
 
@@ -202,7 +203,7 @@ def test_other_brands_and_channels_are_unaffected(tmp_path):
 
 
 def test_authenticated_guideline_and_policy_operator_apis(tmp_path, monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "guideline-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "guideline-test")
     with TestClient(app, headers={"Authorization": AUTH}) as client:
         brand = store.get_brand("demo-brand")
         created = client.post("/api/brands/demo-brand/guidelines", json={

@@ -194,7 +194,7 @@ def test_rest_and_mcp_usage_reports_are_read_only(tmp_path, monkeypatch):
 
     database = tmp_path / "api-usage.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     store.init_db()
     brand = store.get_brand("demo-brand")
     ledger = ProviderUsageLedger(database, clock=lambda: NOW)

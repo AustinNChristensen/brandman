@@ -91,12 +91,12 @@ def build_launchd_plist(
         ],
         "WorkingDirectory": str(root),
         "EnvironmentVariables": {
-            "BRAND_OS_DB": str(database_path),
-            "BRAND_OS_DATABASE_PROFILE": profile,
-            "BRAND_OS_WORKER_MODE": "assisted_secretless",
-            "BRAND_OS_WORKER_MAX_JOBS": str(max_jobs),
-            "BRAND_OS_SCHEDULER_MAX_DECISIONS": str(max_decisions),
-            "BRAND_OS_SUPERVISOR_MANAGED": MANAGED_MARKER,
+            "BRANDMAN_DB": str(database_path),
+            "BRANDMAN_DATABASE_PROFILE": profile,
+            "BRANDMAN_WORKER_MODE": "assisted_secretless",
+            "BRANDMAN_WORKER_MAX_JOBS": str(max_jobs),
+            "BRANDMAN_SCHEDULER_MAX_DECISIONS": str(max_decisions),
+            "BRANDMAN_SUPERVISOR_MANAGED": MANAGED_MARKER,
         },
         "StartInterval": interval_seconds,
         "ThrottleInterval": 10,
@@ -139,25 +139,25 @@ def validate_launchd_plist(
     if not isinstance(environment, dict):
         raise ValueError("managed environment is missing")
     expected_environment = {
-        "BRAND_OS_DB", "BRAND_OS_DATABASE_PROFILE", "BRAND_OS_WORKER_MODE",
-        "BRAND_OS_WORKER_MAX_JOBS", "BRAND_OS_SCHEDULER_MAX_DECISIONS",
-        "BRAND_OS_SUPERVISOR_MANAGED",
+        "BRANDMAN_DB", "BRANDMAN_DATABASE_PROFILE", "BRANDMAN_WORKER_MODE",
+        "BRANDMAN_WORKER_MAX_JOBS", "BRANDMAN_SCHEDULER_MAX_DECISIONS",
+        "BRANDMAN_SUPERVISOR_MANAGED",
     }
     if set(environment) != expected_environment:
         raise ValueError("managed environment contains missing or unexpected values")
-    if environment["BRAND_OS_WORKER_MODE"] != "assisted_secretless":
+    if environment["BRANDMAN_WORKER_MODE"] != "assisted_secretless":
         raise ValueError("managed job must be forced into assisted_secretless mode")
-    if environment["BRAND_OS_SUPERVISOR_MANAGED"] != MANAGED_MARKER:
+    if environment["BRANDMAN_SUPERVISOR_MANAGED"] != MANAGED_MARKER:
         raise ValueError("managed marker is missing")
-    profile = str(environment["BRAND_OS_DATABASE_PROFILE"])
+    profile = str(environment["BRANDMAN_DATABASE_PROFILE"])
     permitted = allowed_profiles if allowed_profiles is not None else set(ALLOWED_PROFILES)
     if profile not in permitted:
         raise ValueError("database profile is not permitted for this operation")
-    database = _resolved_file(environment["BRAND_OS_DB"], description="database")
+    database = _resolved_file(environment["BRANDMAN_DB"], description="database")
     if store.database_profile(database) != profile:
         raise ValueError("database profile does not match managed environment")
-    max_jobs = int(environment["BRAND_OS_WORKER_MAX_JOBS"])
-    max_decisions = int(environment["BRAND_OS_SCHEDULER_MAX_DECISIONS"])
+    max_jobs = int(environment["BRANDMAN_WORKER_MAX_JOBS"])
+    max_decisions = int(environment["BRANDMAN_SCHEDULER_MAX_DECISIONS"])
     interval = int(payload.get("StartInterval", 0))
     if not (1 <= max_jobs <= 1000 and 1 <= max_decisions <= 500):
         raise ValueError("managed bounds are invalid")

@@ -158,7 +158,7 @@ def test_periodic_native_beehiiv_sync_projects_subscribers_and_issue_metrics(tmp
         "brandman.connectors.BeehiivConnector._now", lambda self: "2026-09-15T12:00:00+00:00",
     )
     database, key, brand, beehiiv, _, _ = configured_database(tmp_path)
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     scopes = ["posts.read", "posts.write", "publications.read"]
     store.upsert_connector_account(
         brand["id"], "beehiiv", "pub_demo", "Demo Brand Beehiiv",
@@ -365,7 +365,7 @@ def test_multiple_writable_x_accounts_fail_closed(tmp_path):
 
 def test_production_composes_separate_x_read_for_metrics_and_engagement(tmp_path):
     database, key, brand, _, x_write, _ = configured_database(tmp_path)
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     x_read = store.upsert_connector_account(
         brand["id"], "x", "demobrand-read", "DemoBrand X read",
         status="healthy", scopes=["tweet.read", "users.read", "offline.access"],
@@ -435,7 +435,7 @@ def test_production_composes_separate_x_read_for_metrics_and_engagement(tmp_path
 
 def test_production_composes_website_analytics_and_promotes_evidence(tmp_path):
     database, key, brand, _, _, _ = configured_database(tmp_path)
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     website = store.upsert_connector_account(
         brand["id"], "website", "demobrand-analytics", "DemoBrand analytics",
         status="healthy", scopes=["analytics.read"],

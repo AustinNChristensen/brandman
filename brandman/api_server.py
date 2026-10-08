@@ -7,7 +7,7 @@ from pathlib import Path
 import uvicorn
 
 
-PASSWORD_FILE_ENV = "BRAND_OS_PREVIEW_PASSWORD_FILE"
+PASSWORD_FILE_ENV = "BRANDMAN_PREVIEW_PASSWORD_FILE"
 
 
 def load_preview_password(path: str | Path) -> str:
@@ -34,7 +34,7 @@ def main() -> None:
         password = load_preview_password(password_file)
     except (OSError, UnicodeError, ValueError) as error:
         raise SystemExit(f"brand-os-api: {error}") from None
-    variable = "BRAND_OS_PREVIEW_PASSWORD"
+    variable = "BRANDMAN_PREVIEW_PASSWORD"
     previous = os.environ.get(variable)
     os.environ[variable] = password
     try:

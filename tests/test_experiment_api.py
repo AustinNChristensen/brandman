@@ -14,7 +14,7 @@ HEADERS = {
 
 def test_rest_drafts_recommends_and_human_accepts_without_publishing(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "experiment-api.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app, headers=HEADERS) as client:
         source = client.post("/api/brands/demo-brand/sources", json={
             "title": "Offer update", "source_type": "rss", "body_summary": "The source reports 80,000 credits.",

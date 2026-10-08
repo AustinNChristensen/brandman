@@ -17,7 +17,7 @@ def setup_database(tmp_path):
     database = tmp_path / "scheduler.db"
     store.DATA_PATH = database
     store.init_db()
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     brand = store.get_brand("demo-brand")
     account = store.upsert_connector_account(
         brand["id"], "rss", "https://example.test/feed", "Example feed",

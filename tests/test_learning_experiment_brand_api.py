@@ -11,7 +11,7 @@ HEADERS = {"Authorization": "Basic " + base64.b64encode(b"operator:test-only-pas
 
 def test_brand_scoped_learning_lifecycle_uses_authenticated_actor_and_refuses_cross_brand(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "learning-brand-api.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app, headers=HEADERS) as client:
         assert client.post("/api/brands/demo-brand/learnings", json={
             "hypothesis": "Spoof attempt", "evidence": "Evidence",
@@ -77,7 +77,7 @@ def test_brand_scoped_learning_lifecycle_uses_authenticated_actor_and_refuses_cr
 
 def test_brand_scoped_experiment_detail_and_decisions_never_publish(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "experiment-brand-api.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app, headers=HEADERS) as client:
         source = client.post("/api/brands/demo-brand/sources", json={
             "title": "Verified offer", "source_type": "rss", "body_summary": "The source reports 80,000 credits.",

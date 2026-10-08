@@ -95,18 +95,18 @@ def _rss_with_canonical(account: dict, transport) -> RssConnector:
 
 
 def main() -> None:
-    max_jobs = int(os.getenv("BRAND_OS_WORKER_MAX_JOBS", "100"))
+    max_jobs = int(os.getenv("BRANDMAN_WORKER_MAX_JOBS", "100"))
     if max_jobs < 1 or max_jobs > 1000:
-        raise SystemExit("BRAND_OS_WORKER_MAX_JOBS must be between 1 and 1000")
-    mode = os.getenv("BRAND_OS_WORKER_MODE", "auto")
+        raise SystemExit("BRANDMAN_WORKER_MAX_JOBS must be between 1 and 1000")
+    mode = os.getenv("BRANDMAN_WORKER_MODE", "auto")
     if mode not in {"auto", "assisted_secretless", "native_api"}:
         raise SystemExit(
-            "BRAND_OS_WORKER_MODE must be auto, assisted_secretless, or native_api"
+            "BRANDMAN_WORKER_MODE must be auto, assisted_secretless, or native_api"
         )
-    master_key = os.getenv("BRAND_OS_CREDENTIAL_MASTER_KEY")
+    master_key = os.getenv("BRANDMAN_CREDENTIAL_MASTER_KEY")
     if mode == "native_api" and not master_key:
         raise SystemExit(
-            "BRAND_OS_WORKER_MODE=native_api requires BRAND_OS_CREDENTIAL_MASTER_KEY"
+            "BRANDMAN_WORKER_MODE=native_api requires BRANDMAN_CREDENTIAL_MASTER_KEY"
         )
     if mode == "native_api" or (mode == "auto" and master_key):
         service = build_service_runtime_from_environment(
@@ -120,9 +120,9 @@ def main() -> None:
         runtime, tick_runner, configuration = build_secretless_assisted_runtime(
             "brand-os-worker", store.DATA_PATH,
         )
-    max_decisions = int(os.getenv("BRAND_OS_SCHEDULER_MAX_DECISIONS", "50"))
+    max_decisions = int(os.getenv("BRANDMAN_SCHEDULER_MAX_DECISIONS", "50"))
     if max_decisions < 1 or max_decisions > 500:
-        raise SystemExit("BRAND_OS_SCHEDULER_MAX_DECISIONS must be between 1 and 500")
+        raise SystemExit("BRANDMAN_SCHEDULER_MAX_DECISIONS must be between 1 and 500")
     tick_runner.ensure_defaults() if isinstance(tick_runner, PeriodicOrchestrator) else None
     tick_result = tick_runner.tick(max_decisions=max_decisions)
     tick = tick_result.as_dict() if hasattr(tick_result, "as_dict") else tick_result

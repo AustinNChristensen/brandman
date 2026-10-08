@@ -9,9 +9,11 @@ from pathlib import Path
 from typing import Any, Iterator
 from uuid import uuid4
 
+from . import seed_packs
+
 
 DEFAULT_DATA_PATH = Path(__file__).parents[1] / "brand_os.db"
-DATA_PATH = Path(os.environ.get("BRAND_OS_DB", DEFAULT_DATA_PATH))
+DATA_PATH = Path(os.environ.get("BRANDMAN_DB", DEFAULT_DATA_PATH))
 
 # Agent context is an operating input, not a bulk-history export.  Terminal
 # records and forensic fixtures remain in canonical storage and on the
@@ -200,7 +202,7 @@ DATABASE_PROFILES = frozenset({"operating", "development", "test", "proof"})
 
 
 def init_db(*, profile: str | None = None) -> None:
-    requested = profile or os.environ.get("BRAND_OS_DATABASE_PROFILE")
+    requested = profile or os.environ.get("BRANDMAN_DATABASE_PROFILE")
     if requested is not None and requested not in DATABASE_PROFILES:
         raise ValueError("database profile must be operating, development, test, or proof")
     database_path = Path(DATA_PATH)
@@ -212,7 +214,7 @@ def init_db(*, profile: str | None = None) -> None:
     with connection() as conn:
         # Check identity before any schema or migration write. Legacy databases
         # are treated as operating, so a test/proof process cannot migrate one
-        # merely by pointing BRAND_OS_DB at it.
+        # merely by pointing BRANDMAN_DB at it.
         metadata_exists = conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='database_metadata'"
         ).fetchone()
@@ -305,8 +307,11 @@ def init_db(*, profile: str | None = None) -> None:
         existing = conn.execute("SELECT 1 FROM brands LIMIT 1").fetchone()
         if existing:
             return
-        seed_brand(conn, "demo-brand", "Demo Brand", "Explain the product clearly and consistently.", "Clear, specific, no generic marketing fluff.", "Verify claims, dates, and sources before publishing.")
-        seed_brand(conn, "demo-personal", "Demo Personal", "Share useful founder, operator, and builder perspectives.", "Direct, specific, practical, and lightly opinionated.", "No confidential employer/client information. Human approval required.")
+        for seed in seed_packs.brands():
+            seed_brand(
+                conn, seed["slug"], seed["name"], seed["mission"], seed["voice"],
+                seed["compliance_rules"], personas=seed.get("personas"),
+            )
 
 
 def database_profile(database: str | Path | None = None) -> str:
@@ -380,17 +385,22 @@ def recover_database_profile(
     return database_profile(path)
 
 
-def seed_brand(conn: sqlite3.Connection, slug: str, name: str, mission: str, voice: str, rules: str) -> None:
+def seed_brand(
+    conn: sqlite3.Connection, slug: str, name: str, mission: str, voice: str, rules: str,
+    *, personas: list[dict[str, Any]] | None = None,
+) -> None:
     brand_id = str(uuid4())
     timestamp = now()
     conn.execute(
         "INSERT INTO brands VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (brand_id, slug, name, mission, voice, rules, "human_approval_required", timestamp, timestamp),
     )
-    conn.execute(
-        "INSERT INTO personas VALUES (?, ?, ?, ?, ?, ?)",
-        (str(uuid4()), brand_id, "Core audience", "People seeking practical, high-confidence guidance.", json.dumps(["save time", "avoid costly mistakes", "make a confident next move"]), timestamp),
-    )
+    for persona in personas or [seed_packs.DEFAULT_PERSONA]:
+        conn.execute(
+            "INSERT INTO personas VALUES (?, ?, ?, ?, ?, ?)",
+            (str(uuid4()), brand_id, persona["name"], persona["audience"],
+             json.dumps(list(persona.get("angles") or [])), timestamp),
+        )
 
 
 def rows(query: str, parameters: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
@@ -1095,16 +1105,12 @@ def create_mission(
     })
 
 
-DEMO_BRAND_MISSION_NAME = "Demo Brand 30-day growth"
-# Bootstrap numbers for a database that has never had a mission (the original
-# September launch).  A rollover never reuses them; it seeds from observed data.
-_BOOTSTRAP_GOALS = {"x_followers": (0, 100), "active_beehiiv_subscribers": (0, 25)}
-
-
-def _rollover_goals(previous: dict[str, Any] | None) -> dict[str, tuple[float, float]]:
+def _rollover_goals(
+    previous: dict[str, Any] | None, bootstrap: dict[str, tuple[float, float]],
+) -> dict[str, tuple[float, float]]:
     """Goals for a new cycle: baseline = latest real observation, same growth step."""
     if not previous:
-        return dict(_BOOTSTRAP_GOALS)
+        return dict(bootstrap)
     goals: dict[str, tuple[float, float]] = {}
     for goal in rows("SELECT * FROM mission_goals WHERE mission_id=?", (previous["id"],)):
         latest = row(
@@ -1115,26 +1121,35 @@ def _rollover_goals(previous: dict[str, Any] | None) -> dict[str, tuple[float, f
         baseline = float(latest["value"]) if latest else float(goal["baseline"])
         step = float(goal["target"]) - float(goal["baseline"])
         goals[goal["metric"]] = (baseline, baseline + step)
-    return goals or dict(_BOOTSTRAP_GOALS)
+    return goals or dict(bootstrap)
 
 
-def ensure_demo_brand_growth_mission() -> dict[str, Any]:
-    """Ensure Demo Brand has one current 30-day growth mission.
+def ensure_growth_mission(slug: str) -> dict[str, Any]:
+    """Ensure a brand has one current rolling growth mission from its seed pack.
 
     An expired active mission is marked completed (its history is untouched) and a
-    new rolling 30-day mission starts now.  Goals for the new cycle start from the
+    new rolling mission starts now.  Goals for the new cycle start from the
     last real connector observation, keeping the previous cycle's growth step.
     Goals are written only when a mission is created, so recorded progress and
     baselines are never rewritten on later calls.
     """
-    brand = get_brand("demo-brand")
+    definition = seed_packs.growth_mission(slug)
+    if not definition:
+        raise RuntimeError(f"no growth mission is defined for brand {slug!r}")
+    brand = get_brand(slug)
     if not brand:
-        raise RuntimeError("Demo Brand brand is not initialized")
+        raise RuntimeError(f"brand {slug!r} is not initialized")
+    name = definition["name"]
+    bootstrap = {
+        metric: (float(values[0]), float(values[1]))
+        for metric, values in (definition.get("goals") or {}).items()
+    }
+    window_days = int(definition.get("window_days", 30))
     observed = datetime.fromisoformat(now().replace("Z", "+00:00"))
     mission = row(
         """SELECT * FROM missions WHERE brand_id=? AND name=? AND status='active'
            ORDER BY starts_at DESC, created_at DESC LIMIT 1""",
-        (brand["id"], DEMO_BRAND_MISSION_NAME),
+        (brand["id"], name),
     )
     previous = mission
     if mission and datetime.fromisoformat(mission["ends_at"].replace("Z", "+00:00")) < observed:
@@ -1148,23 +1163,33 @@ def ensure_demo_brand_growth_mission() -> dict[str, Any]:
         if previous is None:
             previous = row(
                 "SELECT * FROM missions WHERE brand_id=? AND name=? ORDER BY starts_at DESC, created_at DESC LIMIT 1",
-                (brand["id"], DEMO_BRAND_MISSION_NAME),
+                (brand["id"], name),
             )
-        goals = _rollover_goals(previous)
-        launch_start = datetime.fromisoformat("2026-09-01T00:00:00-06:00")
-        launch_end = datetime.fromisoformat("2026-10-01T00:00:00-06:00")
-        if previous is None and launch_start <= observed < launch_end:
-            starts, ends = launch_start.isoformat(), launch_end.isoformat()
-        else:
-            starts, ends = observed.isoformat(), (observed + timedelta(days=30)).isoformat()
+        goals = _rollover_goals(previous, bootstrap)
+        first_window = definition.get("first_window")
+        starts, ends = observed.isoformat(), (observed + timedelta(days=window_days)).isoformat()
+        if previous is None and first_window:
+            first_start = datetime.fromisoformat(first_window[0])
+            first_end = datetime.fromisoformat(first_window[1])
+            if first_start <= observed < first_end:
+                starts, ends = first_start.isoformat(), first_end.isoformat()
         mission = create_mission(
-            brand["id"], DEMO_BRAND_MISSION_NAME, starts, ends,
-            description="Grow X followers and active Beehiiv subscribers over a rolling 30-day window.",
-            timezone="America/Denver",
+            brand["id"], name, starts, ends,
+            description=definition.get("description", ""),
+            timezone=definition.get("timezone", "UTC"),
         )
         for metric, (baseline, target) in goals.items():
             upsert_mission_goal(mission["id"], metric, baseline, target)
     return mission_progress(mission["id"]) or mission
+
+
+def ensure_seeded_growth_missions() -> list[dict[str, Any]]:
+    """Keep every seeded brand that defines a growth mission on a current cycle."""
+    return [
+        ensure_growth_mission(seed["slug"])
+        for seed in seed_packs.brands()
+        if seed.get("growth_mission") and get_brand(seed["slug"])
+    ]
 
 
 def upsert_mission_goal(

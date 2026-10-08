@@ -16,22 +16,22 @@ def _goals(mission_id):
 def test_fresh_database_inside_launch_window_keeps_the_launch_mission(tmp_path, monkeypatch):
     _init(tmp_path)
     monkeypatch.setattr(store, "now", lambda: "2026-09-15T12:00:00+00:00")
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
 
     assert mission["starts_at"].startswith("2026-09-01")
     assert _goals(mission["id"]) == {"x_followers": (0, 100), "active_beehiiv_subscribers": (0, 25)}
-    assert store.ensure_demo_brand_growth_mission()["id"] == mission["id"]
+    assert store.ensure_growth_mission("demo-brand")["id"] == mission["id"]
 
 
 def test_expired_mission_rolls_to_a_new_30_day_cycle_seeded_from_real_numbers(tmp_path, monkeypatch):
     _init(tmp_path)
     monkeypatch.setattr(store, "now", lambda: "2026-09-15T12:00:00+00:00")
-    old = store.ensure_demo_brand_growth_mission()
+    old = store.ensure_growth_mission("demo-brand")
     store.record_kpi_snapshot(old["id"], "x_followers", 40, "2026-09-30T00:00:00+00:00", "x")
     store.record_kpi_snapshot(old["id"], "active_beehiiv_subscribers", 21, "2026-09-30T00:00:00+00:00", "beehiiv")
 
     monkeypatch.setattr(store, "now", lambda: "2026-10-05T12:00:00+00:00")
-    new = store.ensure_demo_brand_growth_mission()
+    new = store.ensure_growth_mission("demo-brand")
 
     assert new["id"] != old["id"]
     assert store.row("SELECT status FROM missions WHERE id=?", (old["id"],))["status"] == "completed"
@@ -40,14 +40,14 @@ def test_expired_mission_rolls_to_a_new_30_day_cycle_seeded_from_real_numbers(tm
     # baseline = last real observation, target keeps the previous growth step (92 and 12)
     assert _goals(new["id"]) == {"x_followers": (40, 140), "active_beehiiv_subscribers": (21, 46)}
     # later calls neither roll again nor rewrite goals
-    assert store.ensure_demo_brand_growth_mission()["id"] == new["id"]
+    assert store.ensure_growth_mission("demo-brand")["id"] == new["id"]
     assert _goals(new["id"])["x_followers"] == (40, 140)
 
 
 def test_rollover_without_snapshots_falls_back_to_previous_baselines(tmp_path, monkeypatch):
     _init(tmp_path)
     monkeypatch.setattr(store, "now", lambda: "2026-09-15T12:00:00+00:00")
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     monkeypatch.setattr(store, "now", lambda: "2026-11-01T12:00:00+00:00")
-    new = store.ensure_demo_brand_growth_mission()
+    new = store.ensure_growth_mission("demo-brand")
     assert _goals(new["id"])["x_followers"] == (0, 100)

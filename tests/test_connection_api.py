@@ -8,7 +8,7 @@ from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 import pytest
 
-os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
+os.environ["BRANDMAN_PREVIEW_PASSWORD"] = "test-only-password"
 
 from brandman.main import app
 from brandman import store
@@ -23,24 +23,24 @@ HEADERS = {
 def isolated_connection_database(tmp_path, monkeypatch):
     database = tmp_path / "connection-api.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_DB", str(database))
+    monkeypatch.setenv("BRANDMAN_DB", str(database))
 
 
 def test_connection_writes_fail_closed_without_master_key(monkeypatch):
-    monkeypatch.delenv("BRAND_OS_CREDENTIAL_MASTER_KEY", raising=False)
+    monkeypatch.delenv("BRANDMAN_CREDENTIAL_MASTER_KEY", raising=False)
     with TestClient(app, headers=HEADERS) as client:
         response = client.put(
             "/api/connections/x/no-key",
             json={"display_name": "No key", "credentials": {"access_token": "must-not-leak"}},
         )
     assert response.status_code == 503
-    assert "BRAND_OS_CREDENTIAL_MASTER_KEY" in response.json()["detail"]
+    assert "BRANDMAN_CREDENTIAL_MASTER_KEY" in response.json()["detail"]
     assert "must-not-leak" not in response.text
 
 
 def test_connect_update_and_list_are_redacted(monkeypatch):
     key = Fernet.generate_key().decode()
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", key)
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", key)
     token = "x-secret-access-381174"
     refresh = "x-secret-refresh-921274"
     account = f"demo-brand-api-test-{uuid4()}"
@@ -81,7 +81,7 @@ def test_connect_update_and_list_are_redacted(monkeypatch):
         assert updated["credential_revision"] == 2
         assert updated["scope_status"] == "least_privilege"
 
-    database = Path(os.environ["BRAND_OS_DB"])
+    database = Path(os.environ["BRANDMAN_DB"])
     with sqlite3.connect(database) as connection:
         encrypted = connection.execute(
             "SELECT encrypted_payload FROM connector_credentials WHERE provider='x' AND account_id=?",
@@ -93,7 +93,7 @@ def test_connect_update_and_list_are_redacted(monkeypatch):
 
 
 def test_health_reconnect_disconnect_and_authenticated_audit(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
     account = f"demo-brand-beehiiv-api-test-{uuid4()}"
     with TestClient(app, headers=HEADERS) as client:
         client.put(
@@ -122,7 +122,7 @@ def test_health_reconnect_disconnect_and_authenticated_audit(monkeypatch):
             f"/api/connections/beehiiv/{account}/reconnect-status"
         ).json()["reconnect_required"] is True
 
-    with sqlite3.connect(os.environ["BRAND_OS_DB"]) as connection:
+    with sqlite3.connect(os.environ["BRANDMAN_DB"]) as connection:
         actors = [row[0] for row in connection.execute(
             "SELECT actor FROM credential_audit WHERE provider='beehiiv' AND account_id=? ORDER BY sequence",
             (account,),
@@ -138,7 +138,7 @@ def test_connection_management_is_not_exposed_to_mcp():
 
 
 def test_dashboard_x_writer_contract_is_separate_least_privilege_and_redacted(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
     account = f"demo-brand-x-writer-{uuid4()}"
     exact_scopes = ["tweet.read", "tweet.write", "users.read", "offline.access"]
     secret = "writer-secret-never-return"
@@ -186,7 +186,7 @@ def test_dashboard_x_writer_contract_is_separate_least_privilege_and_redacted(mo
 
 
 def test_browser_assisted_delivery_requires_no_api_credential(monkeypatch):
-    monkeypatch.delenv("BRAND_OS_CREDENTIAL_MASTER_KEY", raising=False)
+    monkeypatch.delenv("BRANDMAN_CREDENTIAL_MASTER_KEY", raising=False)
     account = f"demo-brand-assisted-x-{uuid4()}"
     with TestClient(app, headers=HEADERS) as client:
         connected = client.post("/api/brands/demo-brand/connectors", json={

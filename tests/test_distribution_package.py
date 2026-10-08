@@ -400,7 +400,7 @@ def test_x_artifact_edits_invalidate_approval_and_approval_is_revision_exact(tmp
 def test_distribution_rest_and_mcp_surfaces_are_draft_only(tmp_path, monkeypatch):
     database = tmp_path / "distribution-api.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-password")
     with TestClient(app, headers={"Authorization": "Basic b3BlcmF0b3I6dGVzdC1wYXNzd29yZA=="}) as client:
         brand = store.get_brand("demo-brand")
         source = store.insert("sources", {
@@ -475,7 +475,7 @@ def test_newsletter_completion_api_fails_closed_after_anchor_revision_changes(
     brand, source, _, issue, editorial, _, packages = setup_package(tmp_path, monkeypatch)
     package = packages.create(brand["id"], issue["id"], **package_input(source["id"]))
     fact_check_anchor(editorial, issue)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "completion-contract")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "completion-contract")
     auth = ("operator", "completion-contract")
 
     with TestClient(app) as client:

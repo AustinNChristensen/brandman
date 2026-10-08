@@ -46,9 +46,9 @@ cd brandman
 uv sync
 
 # Copy .env.example for the full list of settings. A minimal local run:
-export BRAND_OS_DB="$PWD/brand_os.db"
-export BRAND_OS_DATABASE_PROFILE=development
-export BRAND_OS_PREVIEW_PASSWORD="choose-a-long-random-password"
+export BRANDMAN_DB="$PWD/brand_os.db"
+export BRANDMAN_DATABASE_PROFILE=development
+export BRANDMAN_PREVIEW_PASSWORD="choose-a-long-random-password"
 uv run uvicorn brandman.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -59,8 +59,8 @@ Production notes:
 
 - Configure every value through your host's secret manager; `.env.example` is
   the non-secret contract. Never commit credentials or a database file.
-- Set `BRAND_OS_ALLOWED_HOSTS` to your public hostname and keep
-  `BRAND_OS_REQUIRE_HTTPS=true` behind TLS.
+- Set `BRANDMAN_ALLOWED_HOSTS` to your public hostname and keep
+  `BRANDMAN_REQUIRE_HTTPS=true` behind TLS.
 - The database must be durable. Do not ship a local SQLite file inside a
   container image.
 - OAuth state for the hosted MCP endpoint is stored in the same database.
@@ -77,7 +77,7 @@ Local (stdio), for example with Claude Code:
     "brandman": {
       "command": "uv",
       "args": ["run", "--directory", "/path/to/brandman", "brandman-mcp"],
-      "env": { "BRAND_OS_DB": "/path/to/brand_os.db" }
+      "env": { "BRANDMAN_DB": "/path/to/brand_os.db" }
     }
   }
 }

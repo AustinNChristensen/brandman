@@ -226,7 +226,7 @@ def local_soak(database: str | Path, *, cycles: int) -> dict[str, Any]:
     runs = []
     for _ in range(cycles):
         runs.append(bootstrap(
-            database=path, environment={"BRAND_OS_DATABASE_PROFILE": profile},
+            database=path, environment={"BRANDMAN_DATABASE_PROFILE": profile},
             max_jobs=25, max_decisions=25,
         ))
     audit = database_audit(path)

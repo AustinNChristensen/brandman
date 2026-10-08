@@ -23,7 +23,7 @@ from uuid import uuid4
 from cryptography.fernet import Fernet, InvalidToken
 
 
-MASTER_KEY_ENV = "BRAND_OS_CREDENTIAL_MASTER_KEY"
+MASTER_KEY_ENV = "BRANDMAN_CREDENTIAL_MASTER_KEY"
 _SAFE_ERROR_CODE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,99}$")
 _STATUSES = {"connected", "unhealthy", "reconnect_required", "disconnected"}
 

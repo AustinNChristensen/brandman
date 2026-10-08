@@ -22,7 +22,7 @@ def setup_files(tmp_path: Path, monkeypatch):
     private.mkdir(mode=0o700, parents=True)
     database = private / "brand_os.db"
     store.DATA_PATH = database
-    monkeypatch.setenv("BRAND_OS_DATABASE_PROFILE", "operating")
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "operating")
     store.init_db(profile="operating")
     database.chmod(0o600)
     password = private / "preview-password"
@@ -54,9 +54,9 @@ def test_api_plist_is_secret_free_and_enforces_exact_origin_boundary(tmp_path, m
     }
     serialized = plistlib.dumps(value).decode()
     assert "strong-test-preview-password" not in serialized
-    assert "BRAND_OS_PREVIEW_PASSWORD" not in value["EnvironmentVariables"]
-    assert value["EnvironmentVariables"]["BRAND_OS_ALLOWED_HOSTS"] == "usebrandman.com"
-    assert value["EnvironmentVariables"]["BRAND_OS_REQUIRE_HTTPS"] == "true"
+    assert "BRANDMAN_PREVIEW_PASSWORD" not in value["EnvironmentVariables"]
+    assert value["EnvironmentVariables"]["BRANDMAN_ALLOWED_HOSTS"] == "usebrandman.com"
+    assert value["EnvironmentVariables"]["BRANDMAN_REQUIRE_HTTPS"] == "true"
     assert value["ProgramArguments"][-2:] == ["-m", "brandman.api_server"]
     result = write_api_plist(value, private / "api.plist")
     assert result["mode"] == "0600"
@@ -93,11 +93,11 @@ def test_api_launcher_reads_secret_then_trusts_only_loopback_proxy(tmp_path, mon
     secret = tmp_path / "secret"
     secret.write_text("strong-runtime-password")
     secret.chmod(0o600)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD_FILE", str(secret))
-    previous_password = os.environ.get("BRAND_OS_PREVIEW_PASSWORD")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD_FILE", str(secret))
+    previous_password = os.environ.get("BRANDMAN_PREVIEW_PASSWORD")
     observed = {}
     monkeypatch.setattr("brandman.api_server.uvicorn.run", lambda app, **kwargs: observed.update(
-        {"app": app, **kwargs, "password": os.environ.get("BRAND_OS_PREVIEW_PASSWORD")}
+        {"app": app, **kwargs, "password": os.environ.get("BRANDMAN_PREVIEW_PASSWORD")}
     ))
     api_main()
     assert observed == {
@@ -105,16 +105,16 @@ def test_api_launcher_reads_secret_then_trusts_only_loopback_proxy(tmp_path, mon
         "proxy_headers": True, "forwarded_allow_ips": "127.0.0.1,::1",
         "password": "strong-runtime-password",
     }
-    assert os.environ.get("BRAND_OS_PREVIEW_PASSWORD") == previous_password
+    assert os.environ.get("BRANDMAN_PREVIEW_PASSWORD") == previous_password
 
 
 def test_validation_rejects_embedded_secret_host_drift_and_public_logs(tmp_path, monkeypatch):
     _, _, _, value = payload(tmp_path, monkeypatch)
-    value["EnvironmentVariables"]["BRAND_OS_PREVIEW_PASSWORD"] = "embedded"
+    value["EnvironmentVariables"]["BRANDMAN_PREVIEW_PASSWORD"] = "embedded"
     with pytest.raises(ValueError, match="unexpected"):
         validate_api_launchd_plist(value)
     _, _, _, value = payload(tmp_path / "second", monkeypatch)
-    value["EnvironmentVariables"]["BRAND_OS_ALLOWED_HOSTS"] = "*"
+    value["EnvironmentVariables"]["BRANDMAN_ALLOWED_HOSTS"] = "*"
     with pytest.raises(ValueError, match="one explicit public DNS hostname"):
         validate_api_launchd_plist(value)
     _, _, _, value = payload(tmp_path / "third", monkeypatch)

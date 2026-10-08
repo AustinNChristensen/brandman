@@ -38,8 +38,8 @@ def _operating_sentinel(path: Path) -> None:
 
 def _run(code: str, *, database: Path, profile: str) -> subprocess.CompletedProcess[str]:
     environment = os.environ.copy()
-    environment["BRAND_OS_DB"] = str(database)
-    environment["BRAND_OS_DATABASE_PROFILE"] = profile
+    environment["BRANDMAN_DB"] = str(database)
+    environment["BRANDMAN_DATABASE_PROFILE"] = profile
     return subprocess.run(
         [sys.executable, "-c", code], cwd=PROJECT, env=environment,
         text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30,
@@ -135,8 +135,8 @@ with TestClient(app):
 def test_new_database_startup_requires_explicit_profile(tmp_path):
     database = tmp_path / "must-not-be-created.db"
     environment = os.environ.copy()
-    environment["BRAND_OS_DB"] = str(database)
-    environment.pop("BRAND_OS_DATABASE_PROFILE", None)
+    environment["BRANDMAN_DB"] = str(database)
+    environment.pop("BRANDMAN_DATABASE_PROFILE", None)
     result = subprocess.run(
         [
             sys.executable, "-c",
@@ -149,7 +149,7 @@ def test_new_database_startup_requires_explicit_profile(tmp_path):
     )
 
     assert result.returncode != 0
-    assert "BRAND_OS_DATABASE_PROFILE must be explicitly configured" in result.stdout
+    assert "BRANDMAN_DATABASE_PROFILE must be explicitly configured" in result.stdout
     assert not database.exists()
 
 
@@ -157,8 +157,8 @@ def test_default_project_database_is_never_implicitly_initialized():
     operating_database = PROJECT / "brand_os.db"
     before = _sha256(operating_database)
     environment = os.environ.copy()
-    environment.pop("BRAND_OS_DB", None)
-    environment["BRAND_OS_DATABASE_PROFILE"] = "operating"
+    environment.pop("BRANDMAN_DB", None)
+    environment["BRANDMAN_DATABASE_PROFILE"] = "operating"
     result = subprocess.run(
         [
             sys.executable, "-c",
@@ -171,5 +171,5 @@ def test_default_project_database_is_never_implicitly_initialized():
     )
 
     assert result.returncode != 0
-    assert "BRAND_OS_DB must be explicitly configured" in result.stdout
+    assert "BRANDMAN_DB must be explicitly configured" in result.stdout
     assert _sha256(operating_database) == before

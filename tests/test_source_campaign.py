@@ -12,7 +12,7 @@ def setup_operator(tmp_path: Path):
     store.DATA_PATH = tmp_path / "source-campaign.db"
     store.init_db()
     brand = store.get_brand("demo-brand")
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     editorial = EditorialStore(store.DATA_PATH)
     return brand, SourceCampaignOperator(editorial)
 

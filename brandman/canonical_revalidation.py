@@ -18,7 +18,7 @@ import ssl
 from typing import Any, Mapping
 from uuid import uuid4
 
-from . import store
+from . import seed_packs, store
 from .connectors import (
     ConnectorError, HttpTransport, canonical_url, content_fingerprint, plain_text,
 )
@@ -284,7 +284,8 @@ class _MetadataParser(HTMLParser):
 
 def _claims(value: str) -> list[str]:
     patterns = (
-        r"(?<!\w)(?:\$[\d,]+|[\d,]+(?:\.\d+)?%|[\d,]+\s+(?:credits|seats|users))(?!\w)",
+        r"(?<!\w)(?:\$[\d,]+|[\d,]+(?:\.\d+)?%|[\d,]+\s+(?:"
+        + "|".join(re.escape(unit) for unit in seed_packs.claim_units()) + r"))(?!\w)",
         r"\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,\s*\d{4})?\b",
     )
     return sorted({match.casefold() for pattern in patterns for match in re.findall(pattern, value, re.I)})

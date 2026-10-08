@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from . import store
+from . import seed_packs, store
 from .beehiiv_runtime import (
     enqueue_newsletter_export,
     get_newsletter_export_job,
@@ -44,7 +44,7 @@ mcp = FastMCP(
     streamable_http_path="/",
     transport_security=TransportSecuritySettings(
         allowed_hosts=[
-            *[h.strip() for h in os.environ.get("BRAND_OS_ALLOWED_HOSTS", "").split(",") if h.strip()],
+            *[h.strip() for h in os.environ.get("BRANDMAN_ALLOWED_HOSTS", "").split(",") if h.strip()],
             "localhost", "testserver",
         ],
     ),
@@ -100,8 +100,8 @@ def heartbeat_execution_agent(slug: str, agent_id: str) -> dict:
 def get_active_mission(slug: str) -> dict:
     """Read current goals, progress, remaining time, and required pace."""
     _initialize_runtime()
-    if slug == "demo-brand":
-        return store.ensure_demo_brand_growth_mission()
+    if seed_packs.growth_mission(slug):
+        return store.ensure_growth_mission(slug)
     brand = store.get_brand(slug)
     if not brand:
         raise ValueError(f"Unknown brand: {slug}")
@@ -148,8 +148,8 @@ def record_mission_kpi(slug: str, metric: str, value: float, observed_at: str,
                        connector_event_id: str, dimensions: dict | None = None) -> dict:
     """Promote a KPI only when backed by an exact persisted connector event."""
     _initialize_runtime()
-    if slug == "demo-brand":
-        active = store.ensure_demo_brand_growth_mission()
+    if seed_packs.growth_mission(slug):
+        active = store.ensure_growth_mission(slug)
     else:
         brand = store.get_brand(slug)
         if not brand:

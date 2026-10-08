@@ -30,7 +30,7 @@ def setup(client: TestClient) -> tuple[dict, dict]:
 
 
 def test_preview_binds_evidence_and_guideline_then_confirmation_saves_inert_lineage(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "proposal-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "proposal-test")
     with TestClient(app, headers=auth("proposal-test")) as client:
         guideline, source = setup(client)
         candidate = client.post("/api/brands/demo-brand/editorial-candidates", json={
@@ -85,7 +85,7 @@ def test_preview_binds_evidence_and_guideline_then_confirmation_saves_inert_line
 
 
 def test_cross_brand_and_stale_evidence_fail_closed(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "proposal-stale-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "proposal-stale-test")
     with TestClient(app, headers=auth("proposal-stale-test")) as client:
         _, source = setup(client)
         other = client.post("/api/brands", json={
@@ -115,7 +115,7 @@ def test_cross_brand_and_stale_evidence_fail_closed(monkeypatch):
 
 
 def test_guideline_change_invalidates_preview(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "proposal-guideline-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "proposal-guideline-test")
     with TestClient(app, headers=auth("proposal-guideline-test")) as client:
         guideline, source = setup(client)
         proposal = client.post("/api/brands/demo-brand/operator-proposals/preview", json={

@@ -52,7 +52,7 @@ def test_periodic_source_to_approved_draft_to_evidence_backed_trajectory(tmp_pat
     monkeypatch.setattr(store, "DATA_PATH", database)
     store.init_db()
     brand = store.get_brand("demo-brand")
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     editorial = EditorialStore(database, clock=lambda: "2026-09-02T12:00:00+00:00")
     source_operator = SourceCampaignOperator(editorial)
     attribution = AttributionStore(database, clock=lambda: "2026-09-02T12:00:00+00:00")

@@ -82,7 +82,7 @@ def test_rate_card_exact_replay_is_idempotent_and_conflict_is_explicit(tmp_path,
 def test_settings_api_uses_authenticated_actor_and_rejects_cross_brand_schedule(tmp_path, monkeypatch):
     database = tmp_path / "settings-api.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "settings-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "settings-test")
     auth = {"Authorization": "Basic " + base64.b64encode(b"operator:settings-test").decode()}
     with TestClient(app, headers=auth) as client:
         assert client.patch("/api/brands/demo-brand/settings", json={
@@ -104,7 +104,7 @@ def test_settings_api_uses_authenticated_actor_and_rejects_cross_brand_schedule(
 def test_settings_api_orchestration_status_is_brand_scoped(tmp_path, monkeypatch):
     database = tmp_path / "settings-status.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "settings-status-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "settings-status-test")
     auth = {"Authorization": "Basic " + base64.b64encode(b"operator:settings-status-test").decode()}
     with TestClient(app, headers=auth) as client:
         points = store.get_brand("demo-brand")

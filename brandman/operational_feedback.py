@@ -105,7 +105,7 @@ def report_approval_dead_end(
         reproduction=f"Retry {operation} for {_safe_reference(resource_id)} only after exact approval.",
         expected_behavior="Only the current materially approved revision can advance toward execution.",
         actual_behavior="Policy rejected the transition before any provider action.",
-        workaround="Return the current revision to Chris for fact-check and explicit approval.",
+        workaround="Return the current revision to the operator for fact-check and explicit approval.",
         related_ids=_safe_references((resource_id,)),
     )
 

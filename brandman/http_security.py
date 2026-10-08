@@ -55,7 +55,7 @@ def enforce_request_boundary(
     if request.url.scheme != "https" and (require_https or not is_local):
         return _error(400, "HTTPS is required for this deployment.")
 
-    password = str(env.get("BRAND_OS_PREVIEW_PASSWORD") or "")
+    password = str(env.get("BRANDMAN_PREVIEW_PASSWORD") or "")
     if not is_local and not _strong_remote_password(password):
         return _error(
             503,
@@ -112,7 +112,7 @@ def harden_response(response: Response, request: Request) -> Response:
 def deployment_boundary_status(environment: Mapping[str, str]) -> dict[str, object]:
     """Return secret-free deployment readiness for the HTTP boundary."""
 
-    password = str(environment.get("BRAND_OS_PREVIEW_PASSWORD") or "")
+    password = str(environment.get("BRANDMAN_PREVIEW_PASSWORD") or "")
     allowed, host_error = _allowed_hosts(environment)
     require_https, https_error = _require_https(environment)
     remote_hosts = sorted(host for host in allowed if not _is_loopback(host))
@@ -121,11 +121,11 @@ def deployment_boundary_status(environment: Mapping[str, str]) -> dict[str, obje
     healthy = healthy and remote_password_ready and (not remote_hosts or require_https)
     actions: list[str] = []
     if not password:
-        actions.append("Set BRAND_OS_PREVIEW_PASSWORD in the deployed service environment.")
+        actions.append("Set BRANDMAN_PREVIEW_PASSWORD in the deployed service environment.")
     if host_error:
-        actions.append("Set BRAND_OS_ALLOWED_HOSTS to explicit hostnames without wildcards.")
+        actions.append("Set BRANDMAN_ALLOWED_HOSTS to explicit hostnames without wildcards.")
     if remote_hosts and not require_https:
-        actions.append("Set BRAND_OS_REQUIRE_HTTPS=true and terminate TLS before exposing a remote hostname.")
+        actions.append("Set BRANDMAN_REQUIRE_HTTPS=true and terminate TLS before exposing a remote hostname.")
     if not remote_password_ready:
         actions.append("Use a non-placeholder preview password of at least 16 characters for remote access.")
     return {
@@ -201,25 +201,25 @@ def _request_host(request: Request) -> str | None:
 
 
 def _allowed_hosts(environment: Mapping[str, str]) -> tuple[frozenset[str], str | None]:
-    configured = str(environment.get("BRAND_OS_ALLOWED_HOSTS") or "").strip()
+    configured = str(environment.get("BRANDMAN_ALLOWED_HOSTS") or "").strip()
     if not configured:
         return _LOCAL_HOSTS, None
     values: set[str] = set()
     for raw in configured.split(","):
         host = raw.strip().casefold().rstrip(".")
         if not host or host == "*" or (host not in _LOCAL_HOSTS and not _HOST.fullmatch(host)):
-            return frozenset(), "BRAND_OS_ALLOWED_HOSTS must contain explicit hostnames without wildcards."
+            return frozenset(), "BRANDMAN_ALLOWED_HOSTS must contain explicit hostnames without wildcards."
         values.add(host)
     return frozenset(values | set(_LOCAL_HOSTS)), None
 
 
 def _require_https(environment: Mapping[str, str]) -> tuple[bool, str | None]:
-    raw = str(environment.get("BRAND_OS_REQUIRE_HTTPS") or "").strip().casefold()
+    raw = str(environment.get("BRANDMAN_REQUIRE_HTTPS") or "").strip().casefold()
     if raw in _TRUE:
         return True, None
     if raw in _FALSE:
         return False, None
-    return False, "BRAND_OS_REQUIRE_HTTPS must be true or false."
+    return False, "BRANDMAN_REQUIRE_HTTPS must be true or false."
 
 
 def _is_loopback(host: str) -> bool:

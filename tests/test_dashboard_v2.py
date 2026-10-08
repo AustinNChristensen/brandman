@@ -5,7 +5,7 @@ import os
 import re
 from pathlib import Path
 
-os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
+os.environ["BRANDMAN_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 

@@ -17,7 +17,7 @@ def setup_loop(tmp_path: Path, kind: ConnectorKind = ConnectorKind.X, *, status=
     store.DATA_PATH = database
     store.init_db()
     brand = store.get_brand("demo-brand")
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     account = store.upsert_connector_account(
         brand["id"], kind.value, "primary", "Primary", status=status
     )

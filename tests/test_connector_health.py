@@ -142,7 +142,7 @@ def test_store_rejects_provider_health_claim_without_response(tmp_path):
 def test_rest_trigger_is_authenticated_and_mcp_surface_will_be_status_only(tmp_path, monkeypatch):
     database, brand, account, _ = setup_health(tmp_path)
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app) as client:
         denied = client.post(f"/api/brands/demo-brand/connector-health-checks")
         triggered = client.post(

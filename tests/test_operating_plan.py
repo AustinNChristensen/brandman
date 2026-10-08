@@ -42,7 +42,7 @@ def test_morning_plan_prioritizes_blockers_and_has_actionable_fields():
     assert plan["actions"][0]["related_ids"] == ["connector-x"]
     assert plan["actions"][0]["blocker"] == "token expired"
     assert plan["actions"][0]["expected_kpi_contribution"]["metric"] == "x_followers"
-    assert any(action["type"] == "review_approval" and action["owner"] == "Chris" for action in plan["actions"])
+    assert any(action["type"] == "review_approval" and action["owner"] == "chris" for action in plan["actions"])
     assert not any(action["type"] == "prepare_scheduled_work" for action in plan["actions"])
     assert any(action["type"] == "develop_editorial_candidate" and "source-1" in action["related_ids"] for action in plan["actions"])
     assert [action["rank"] for action in plan["actions"]] == list(range(1, len(plan["actions"]) + 1))

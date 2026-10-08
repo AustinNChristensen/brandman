@@ -387,7 +387,7 @@ class LiveReadinessService:
     def _credential_key_check(
         self, credential_rows: list[dict[str, Any]],
     ) -> tuple[dict[str, Any], dict[str, bool], dict[str, bool]]:
-        raw_key = self.environment.get("BRAND_OS_CREDENTIAL_MASTER_KEY")
+        raw_key = self.environment.get("BRANDMAN_CREDENTIAL_MASTER_KEY")
         decryptable = {row["id"]: False for row in credential_rows}
         refresh_capable = {row["id"]: False for row in credential_rows}
         configured = bool(raw_key)
@@ -422,11 +422,11 @@ class LiveReadinessService:
         actions: list[str] = []
         if not configured:
             actions.append(
-                "Set BRAND_OS_CREDENTIAL_MASTER_KEY to the deployment Fernet key."
+                "Set BRANDMAN_CREDENTIAL_MASTER_KEY to the deployment Fernet key."
             )
         elif not valid:
             actions.append(
-                "Replace BRAND_OS_CREDENTIAL_MASTER_KEY with a valid Fernet key."
+                "Replace BRANDMAN_CREDENTIAL_MASTER_KEY with a valid Fernet key."
             )
         elif not all_decryptable:
             actions.append(

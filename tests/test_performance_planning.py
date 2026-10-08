@@ -20,7 +20,7 @@ def setup(tmp_path: Path):
     store.DATA_PATH = tmp_path / "performance-planning.db"
     store.init_db()
     brand = store.get_brand("demo-brand")
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     SourceCampaignOperator(EditorialStore(store.DATA_PATH))
     return brand, PerformancePlanningEngine(store.DATA_PATH)
 
@@ -328,7 +328,7 @@ def test_source_content_drift_withholds_an_otherwise_positive_prior(tmp_path):
 
 def test_rest_and_mcp_expose_read_only_planning_and_audit(tmp_path, monkeypatch):
     brand, _ = setup(tmp_path)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-password")
     from brandman.main import app
     from brandman.mcp_server import get_performance_planning
 

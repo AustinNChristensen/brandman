@@ -13,7 +13,7 @@ def headers(password: str) -> dict[str, str]:
 
 
 def test_http_content_authorship_is_session_derived_and_resubmission_is_governed(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "content-authoring-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "content-authoring-test")
     with TestClient(app, headers=headers("content-authoring-test")) as client:
         spoofed_issue = client.post("/api/brands/demo-brand/newsletter-issues", json={
             "content": {"working_title": "Spoof attempt"}, "created_by": "mallory",
@@ -54,7 +54,7 @@ def test_http_content_authorship_is_session_derived_and_resubmission_is_governed
 
 
 def test_editorial_candidate_to_newsletter_preserves_brand_and_source_lineage(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "candidate-parity-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "candidate-parity-test")
     with TestClient(app, headers=headers("candidate-parity-test")) as client:
         brand = client.get("/api/brands/demo-brand/context").json()
         source = client.post("/api/brands/demo-brand/sources", json={
@@ -98,7 +98,7 @@ def test_editorial_candidate_to_newsletter_preserves_brand_and_source_lineage(mo
 
 
 def test_campaign_post_revision_dispatch_validation_and_audit_are_draft_only(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "campaign-post-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "campaign-post-test")
     with TestClient(app, headers=headers("campaign-post-test")) as client:
         campaign = client.post("/api/brands/demo-brand/campaigns", json={
             "name": "Decision support", "objective": "Help readers compare",
@@ -137,7 +137,7 @@ def test_campaign_post_revision_dispatch_validation_and_audit_are_draft_only(mon
 
 
 def test_candidate_promotes_atomically_to_brand_owned_draft_campaign_post(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "candidate-post-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "candidate-post-test")
     with TestClient(app, headers=headers("candidate-post-test")) as client:
         candidate = client.post("/api/brands/demo-brand/editorial-candidates", json={
             "title": "Transfer window", "summary": "Help readers decide",

@@ -111,7 +111,7 @@ def test_preview_stales_and_exact_undo_refuses_intervening_change(tmp_path):
 
 
 def test_planner_api_is_brand_scoped_and_uses_authenticated_principal(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "planner-api-secret")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "planner-api-secret")
     auth = base64.b64encode(b"operator:planner-api-secret").decode()
     headers = {"Authorization": f"Basic {auth}"}
     with TestClient(app, headers=headers) as client:

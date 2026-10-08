@@ -16,11 +16,11 @@ def main() -> None:
     DATABASE.unlink(missing_ok=True)
     environment = os.environ.copy()
     environment.update({
-        "BRAND_OS_DB": str(DATABASE),
-        "BRAND_OS_DATABASE_PROFILE": "development",
-        "BRAND_OS_PREVIEW_PASSWORD": PASSWORD,
-        "BRAND_OS_ALLOWED_HOSTS": "127.0.0.1,localhost",
-        "BRAND_OS_HTTPS": "false",
+        "BRANDMAN_DB": str(DATABASE),
+        "BRANDMAN_DATABASE_PROFILE": "development",
+        "BRANDMAN_PREVIEW_PASSWORD": PASSWORD,
+        "BRANDMAN_ALLOWED_HOSTS": "127.0.0.1,localhost",
+        "BRANDMAN_HTTPS": "false",
     })
     os.environ.update(environment)
     sys.path.insert(0, str(PROJECT))

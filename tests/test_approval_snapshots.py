@@ -182,7 +182,7 @@ def test_rest_approval_snapshot_is_readable_and_edit_invalidation_is_visible(tmp
     from brandman.mcp_server import list_approval_snapshots, mcp
 
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "api.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test")
     auth = ("operator", "test")
     with TestClient(app) as client:
         created = client.post(
@@ -228,7 +228,7 @@ def test_rest_approval_snapshot_is_readable_and_edit_invalidation_is_visible(tmp
 
 def test_displayed_scope_token_fails_closed_after_material_change(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "scope-token.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test")
     auth = ("operator", "test")
     with TestClient(app) as client:
         created = client.post(

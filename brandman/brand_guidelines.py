@@ -11,42 +11,25 @@ import sqlite3
 from typing import Any
 from uuid import uuid4
 
+from . import seed_packs
 
-DEMO_BRAND_GUIDELINE_SOURCE = "skill:demo-brand-content-house-style"
-DEMO_BRAND_TOOLS = (
-    "https://demo.example/tools/pricing-calculator",
-    "https://demo.example/tools/comparison",
-    "https://demo.example/tools/changelog",
-)
-DEMO_BRAND_NEWSLETTER_INSTRUCTIONS = """Write in the brand voice, in direct first person, with one concrete thesis and useful decision support—not as an expanded social post or generic blog post. Open with “Hey,”. Explain the move, why it matters, who is a good fit, the practical play, traps, a quick checklist, and the bottom line; headings may vary naturally. Use current verified numbers, fees, dates, ratios, or example math when applicable. Include a natural Demo Brand tool backlink and a soft topic-specific invitation to reply. Close the editorial body exactly with “— The Team”. Normal issues must be at least 750 words and should land between 750 and 900 words without filler. A shorter quick hit is never inferred by AI: it requires a revision-specific reason and explicit operator authorization. Before approval, include a 16:9 editorial thumbnail, avoid readable text/logos/fake marks/people/distorted hands, and enable web thumbnail display. Volatile facts require current governed provenance and fact checking."""
-DEMO_BRAND_NEWSLETTER_RULES: dict[str, Any] = {
-    "minimum_words": 750,
-    "preferred_words": {"minimum": 750, "maximum": 900},
-    "quick_hit": {"minimum_words": 250, "requires_operator_authorization": True},
-    "required_opening": "Hey,",
-    "required_signoff": "— The Team",
-    "approved_tool_backlinks": list(DEMO_BRAND_TOOLS),
-    "pricing_tool_backlinks": [
-        "https://demo.example/tools/pricing-calculator",
-    ],
-    "thumbnail": {"required": True, "display_on_web": True},
-    "require_one_thesis": True,
-    "require_reply_language": True,
-    "require_current_fact_check_and_provenance": True,
-    "operator_checklist": [
-        "direct_first_person_voice",
-        "one_thesis",
-        "move",
-        "why_it_matters",
-        "good_fit",
-        "play",
-        "traps",
-        "checklist",
-        "bottom_line",
-        "numbers_and_example_math_when_applicable",
-        "topic_specific_reply_cta",
-    ],
-}
+
+def _topic_backlinks(rules: Mapping[str, Any]) -> list[tuple[str, list[str]]]:
+    """Topic-specific link requirements.
+
+    ``topic_backlinks`` is the current form. Older guideline versions stored one
+    ``<topic>_tool_backlinks`` list per topic; those are still honoured so
+    existing versions keep their meaning without a data migration.
+    """
+    pairs = [
+        (str(item["topic"]), [str(url) for url in item.get("urls") or []])
+        for item in rules.get("topic_backlinks") or []
+        if isinstance(item, Mapping) and item.get("topic")
+    ]
+    for key, urls in rules.items():
+        if key.endswith("_tool_backlinks") and key != "approved_tool_backlinks" and isinstance(urls, list):
+            pairs.append((key[: -len("_tool_backlinks")].replace("_", " "), [str(url) for url in urls]))
+    return [(topic, urls) for topic, urls in pairs if urls]
 
 
 SCHEMA = """
@@ -414,14 +397,14 @@ class BrandGuidelineStore:
             add("policy_required_signoff", f"The editorial body must include the exact sign-off {signoff!r}.")
         if rules.get("require_one_thesis") and not str(content.get("editorial_thesis") or "").strip():
             add("policy_one_thesis", "State one concrete editorial thesis for this issue.")
-        links = [url for url in rules.get("approved_tool_backlinks") or [] if url in text]
-        if not links:
-            add("policy_tool_backlink", "Include at least one approved Demo Brand tool backlink naturally in the issue.")
+        approved_links = rules.get("approved_tool_backlinks") or []
+        if approved_links and not any(url in text for url in approved_links):
+            add("policy_tool_backlink", "Include at least one approved tool backlink naturally in the issue.")
         topic_text = " ".join((str(content.get("editorial_thesis") or ""), text)).casefold()
-        if "pricing" in topic_text and not any(
-            url in text for url in rules.get("pricing_tool_backlinks") or []
-        ):
-            add("policy_pricing_tool", "Pricing coverage must naturally link to the pricing calculator.")
+        for topic, urls in _topic_backlinks(rules):
+            if topic.casefold() in topic_text and not any(url in text for url in urls):
+                code = "policy_" + re.sub(r"[^a-z0-9]+", "_", topic.casefold()).strip("_") + "_tool"
+                add(code, f"{topic[:1].upper()}{topic[1:]} coverage must naturally link to one of: {', '.join(urls)}.")
         metadata = content.get("delivery_metadata") or {}
         thumbnail = rules.get("thumbnail") or {}
         if thumbnail.get("required") and not str(metadata.get("thumbnail_url") or "").strip():
@@ -453,18 +436,23 @@ class BrandGuidelineStore:
             "quick_hit_override": (dict(override_row) if override_row else None),
         }
 
-    def seed_demo_brand(self, brand_id: str, *, actor: str = "system:seed") -> dict[str, Any]:
-        existing = self.resolve(brand_id, "newsletter", "beehiiv")
-        if existing is not None:
-            return self.get(existing["id"])
-        return self.create(
-            brand_id=brand_id, content_type="newsletter", channel="beehiiv",
-            name="Demo Brand newsletter house style",
-            instructions=DEMO_BRAND_NEWSLETTER_INSTRUCTIONS,
-            rules=DEMO_BRAND_NEWSLETTER_RULES, actor=actor,
-            reason="Seed the governed Demo Brand house style with the operator's stricter 750-word minimum.",
-            source_ref=DEMO_BRAND_GUIDELINE_SOURCE, activate=True,
-        )
+    def seed_guidelines(
+        self, brand_id: str, slug: str, *, actor: str = "system:seed",
+    ) -> list[dict[str, Any]]:
+        """Create the seed pack's guidelines for a brand once; never overwrite edits."""
+        seeded = []
+        for item in (seed_packs.brand(slug) or {}).get("guidelines", []):
+            existing = self.resolve(brand_id, item["content_type"], item["channel"])
+            if existing is not None:
+                seeded.append(self.get(existing["id"]))
+                continue
+            seeded.append(self.create(
+                brand_id=brand_id, content_type=item["content_type"], channel=item["channel"],
+                name=item["name"], instructions=item["instructions"], rules=item.get("rules") or {},
+                actor=actor, reason=item.get("reason") or "Seed the brand's house style.",
+                source_ref=item.get("source_ref"), activate=True,
+            ))
+        return seeded
 
     @staticmethod
     def _validate_rules(rules: Mapping[str, Any]) -> dict[str, Any]:
@@ -582,6 +570,5 @@ class BrandGuidelineStore:
 
 
 __all__ = [
-    "BrandGuidelineError", "BrandGuidelineStore", "DEMO_BRAND_GUIDELINE_SOURCE",
-    "DEMO_BRAND_NEWSLETTER_INSTRUCTIONS", "DEMO_BRAND_NEWSLETTER_RULES",
+    "BrandGuidelineError", "BrandGuidelineStore",
 ]

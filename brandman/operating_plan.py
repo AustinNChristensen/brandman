@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from brandman.mission_artifacts import END_OF_DAY_SCORECARD, MORNING_PLAN
 from brandman.mission_ops import build_end_of_day_scorecard, build_morning_plan
+from brandman.principals import operator_principal
 
 
 class OperatingPlanRepository(Protocol):
@@ -118,7 +119,7 @@ def build_prioritized_actions(
         if status not in {"healthy", "connected", "ok", "active"}:
             name = str(connector.get("connector_type") or connector.get("name") or "connector")
             actions.append(_action(
-                action_type="restore_connector", title=f"Restore {name} connector", owner="Chris",
+                action_type="restore_connector", title=f"Restore {name} connector", owner=operator_principal(),
                 reason="Mission execution and measurement cannot be trusted while this connector is unhealthy.",
                 due_window="immediately", dependency="Valid least-privilege connection",
                 blocker=str(connector.get("last_error") or connector.get("detail") or status),
@@ -191,7 +192,7 @@ def build_prioritized_actions(
             actions.append(_action(
                 action_type="review_experiment_winner",
                 title="Review evidence-backed X experiment winner",
-                owner="Chris",
+                owner=operator_principal(),
                 reason="Brand OS recommends a pattern but cannot accept or apply the learning.",
                 due_window="this_morning",
                 dependency="Connector-backed performance and experiment guardrails",
@@ -209,7 +210,7 @@ def build_prioritized_actions(
             continue
         channel = str(approval.get("channel") or approval.get("connector") or "content")
         actions.append(_action(
-            action_type="review_approval", title=f"Review {channel} draft", owner="Chris",
+            action_type="review_approval", title=f"Review {channel} draft", owner=operator_principal(),
             reason="Nothing public can execute until the exact revision is explicitly approved or rejected.",
             due_window="this_morning", dependency="Current revision and source verification",
             blocker=None,

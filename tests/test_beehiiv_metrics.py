@@ -89,7 +89,7 @@ def test_assisted_measurement_ingest_is_aggregate_replay_safe_and_drops_pii(tmp_
     store.DATA_PATH = database
     store.init_db()
     brand = store.get_brand("demo-brand")
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     store.upsert_connector_account(
         brand["id"], "beehiiv", "pub_demo", "DemoBrand Beehiiv",
         status="connected", configuration={"delivery_mode": "mcp_assisted"},

@@ -81,12 +81,12 @@ def build_api_launchd_plist(
         ],
         "WorkingDirectory": str(root),
         "EnvironmentVariables": {
-            "BRAND_OS_DB": str(database_path),
-            "BRAND_OS_DATABASE_PROFILE": "operating",
-            "BRAND_OS_ALLOWED_HOSTS": allowed_host,
-            "BRAND_OS_REQUIRE_HTTPS": "true",
-            "BRAND_OS_PREVIEW_PASSWORD_FILE": str(secret_path),
-            "BRAND_OS_API_SUPERVISOR_MANAGED": MANAGED_MARKER,
+            "BRANDMAN_DB": str(database_path),
+            "BRANDMAN_DATABASE_PROFILE": "operating",
+            "BRANDMAN_ALLOWED_HOSTS": allowed_host,
+            "BRANDMAN_REQUIRE_HTTPS": "true",
+            "BRANDMAN_PREVIEW_PASSWORD_FILE": str(secret_path),
+            "BRANDMAN_API_SUPERVISOR_MANAGED": MANAGED_MARKER,
         },
         "RunAtLoad": True, "KeepAlive": True, "ThrottleInterval": 10,
         "ProcessType": "Background", "LowPriorityIO": False,
@@ -117,27 +117,27 @@ def validate_api_launchd_plist(payload: Mapping[str, Any]) -> dict[str, Any]:
     _file(arguments[0], "uv executable")
     environment = payload["EnvironmentVariables"]
     expected_environment = {
-        "BRAND_OS_DB", "BRAND_OS_DATABASE_PROFILE", "BRAND_OS_ALLOWED_HOSTS",
-        "BRAND_OS_REQUIRE_HTTPS", "BRAND_OS_PREVIEW_PASSWORD_FILE",
-        "BRAND_OS_API_SUPERVISOR_MANAGED",
+        "BRANDMAN_DB", "BRANDMAN_DATABASE_PROFILE", "BRANDMAN_ALLOWED_HOSTS",
+        "BRANDMAN_REQUIRE_HTTPS", "BRANDMAN_PREVIEW_PASSWORD_FILE",
+        "BRANDMAN_API_SUPERVISOR_MANAGED",
     }
     if not isinstance(environment, dict) or set(environment) != expected_environment:
         raise ValueError("managed API environment contains missing or unexpected values")
-    if "BRAND_OS_PREVIEW_PASSWORD" in environment:
+    if "BRANDMAN_PREVIEW_PASSWORD" in environment:
         raise ValueError("preview password must never be embedded in the plist")
-    if environment["BRAND_OS_DATABASE_PROFILE"] != "operating":
+    if environment["BRANDMAN_DATABASE_PROFILE"] != "operating":
         raise ValueError("managed API database profile must be operating")
-    database = _file(environment["BRAND_OS_DB"], "database")
+    database = _file(environment["BRANDMAN_DB"], "database")
     if store.database_profile(database) != "operating":
         raise ValueError("managed API database does not have the operating profile")
-    allowed_host = _public_hostname(environment["BRAND_OS_ALLOWED_HOSTS"])
-    if environment["BRAND_OS_ALLOWED_HOSTS"] != allowed_host:
+    allowed_host = _public_hostname(environment["BRANDMAN_ALLOWED_HOSTS"])
+    if environment["BRANDMAN_ALLOWED_HOSTS"] != allowed_host:
         raise ValueError("managed API host allowlist must use one normalized exact hostname")
-    if environment["BRAND_OS_REQUIRE_HTTPS"] != "true":
+    if environment["BRANDMAN_REQUIRE_HTTPS"] != "true":
         raise ValueError("managed API must require HTTPS")
-    password_file = _file(environment["BRAND_OS_PREVIEW_PASSWORD_FILE"], "preview password file")
+    password_file = _file(environment["BRANDMAN_PREVIEW_PASSWORD_FILE"], "preview password file")
     load_preview_password(password_file)
-    if environment["BRAND_OS_API_SUPERVISOR_MANAGED"] != MANAGED_MARKER:
+    if environment["BRANDMAN_API_SUPERVISOR_MANAGED"] != MANAGED_MARKER:
         raise ValueError("managed API marker is missing")
     if payload["RunAtLoad"] is not True or payload["KeepAlive"] is not True:
         raise ValueError("managed API must run at load and remain supervised")

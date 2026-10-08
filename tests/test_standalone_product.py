@@ -40,17 +40,17 @@ def test_connection_onboarding_preflights_actual_encryption_configuration(
 ):
     database = tmp_path / "onboarding.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_DB", str(database))
-    monkeypatch.setenv("BRAND_OS_DATABASE_PROFILE", "test")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", "not-a-fernet-key")
+    monkeypatch.setenv("BRANDMAN_DB", str(database))
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", "not-a-fernet-key")
     store.init_db(profile="test")
 
     with TestClient(app, headers=HEADERS) as client:
         malformed = client.get("/api/brands/demo-brand/connection-onboarding")
         assert malformed.status_code == 200
         assert malformed.json()["encryption"]["ready"] is False
-        monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
+        monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
         ready = client.get("/api/brands/demo-brand/connection-onboarding")
         assert ready.json()["encryption"]["ready"] is True
         assert "credential" not in ready.text.lower() or "credentials_stored" in ready.text
@@ -104,9 +104,9 @@ def test_rate_card_rejects_cross_provider_or_insecure_endpoint_patterns(tmp_path
 def test_rate_card_rest_uses_authenticated_brand_identity(tmp_path, monkeypatch):
     database = tmp_path / "rate-card-api.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_DB", str(database))
-    monkeypatch.setenv("BRAND_OS_DATABASE_PROFILE", "test")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_DB", str(database))
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     store.init_db(profile="test")
     brand = store.get_brand("demo-brand")
     with TestClient(app, headers=HEADERS) as client:
@@ -129,10 +129,10 @@ def test_brand_connection_surface_filters_metadata_and_rejects_shared_lane_ids(
 ):
     database = tmp_path / "connection-tenants.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_DB", str(database))
-    monkeypatch.setenv("BRAND_OS_DATABASE_PROFILE", "test")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
+    monkeypatch.setenv("BRANDMAN_DB", str(database))
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
     store.init_db(profile="test")
     other = store.create_brand({
         "slug": "other-brand", "name": "Other", "mission": "test",

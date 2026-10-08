@@ -20,7 +20,7 @@ from brandman.worker_cli import main as worker_main
 def _database(tmp_path: Path, monkeypatch, profile: str = "test") -> Path:
     database = tmp_path / "brand-os.db"
     store.DATA_PATH = database
-    monkeypatch.setenv("BRAND_OS_DATABASE_PROFILE", profile)
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", profile)
     store.init_db(profile=profile)
     return database
 
@@ -51,9 +51,9 @@ def test_plist_is_secret_free_explicit_bounded_and_create_only(tmp_path, monkeyp
         "--no-sync", "python", "-m", "brandman.worker_cli",
     ]
     assert set(payload["EnvironmentVariables"]) == {
-        "BRAND_OS_DB", "BRAND_OS_DATABASE_PROFILE", "BRAND_OS_WORKER_MODE",
-        "BRAND_OS_WORKER_MAX_JOBS", "BRAND_OS_SCHEDULER_MAX_DECISIONS",
-        "BRAND_OS_SUPERVISOR_MANAGED",
+        "BRANDMAN_DB", "BRANDMAN_DATABASE_PROFILE", "BRANDMAN_WORKER_MODE",
+        "BRANDMAN_WORKER_MAX_JOBS", "BRANDMAN_SCHEDULER_MAX_DECISIONS",
+        "BRANDMAN_SUPERVISOR_MANAGED",
     }
     destination = tmp_path / "worker.plist"
     result = write_plist(payload, destination)
@@ -68,15 +68,15 @@ def test_plist_is_secret_free_explicit_bounded_and_create_only(tmp_path, monkeyp
 def test_validation_rejects_secret_or_unbounded_or_profile_drift(tmp_path, monkeypatch):
     database = _database(tmp_path, monkeypatch)
     payload = _plist(tmp_path, database)
-    payload["EnvironmentVariables"]["BRAND_OS_CREDENTIAL_MASTER_KEY"] = "secret"
+    payload["EnvironmentVariables"]["BRANDMAN_CREDENTIAL_MASTER_KEY"] = "secret"
     with pytest.raises(ValueError, match="unexpected"):
         validate_launchd_plist(payload)
     payload = _plist(tmp_path, database)
-    payload["EnvironmentVariables"]["BRAND_OS_WORKER_MAX_JOBS"] = "1001"
+    payload["EnvironmentVariables"]["BRANDMAN_WORKER_MAX_JOBS"] = "1001"
     with pytest.raises(ValueError, match="bounds"):
         validate_launchd_plist(payload)
     payload = _plist(tmp_path, database)
-    payload["EnvironmentVariables"]["BRAND_OS_DATABASE_PROFILE"] = "operating"
+    payload["EnvironmentVariables"]["BRANDMAN_DATABASE_PROFILE"] = "operating"
     with pytest.raises(ValueError, match="profile"):
         validate_launchd_plist(payload)
 
@@ -85,11 +85,11 @@ def test_forced_secretless_worker_ignores_inherited_master_key(
     tmp_path, monkeypatch, capsys,
 ):
     database = _database(tmp_path, monkeypatch)
-    monkeypatch.setenv("BRAND_OS_DB", str(database))
-    monkeypatch.setenv("BRAND_OS_WORKER_MODE", "assisted_secretless")
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", "would-enable-native-auto-mode")
-    monkeypatch.setenv("BRAND_OS_WORKER_MAX_JOBS", "2")
-    monkeypatch.setenv("BRAND_OS_SCHEDULER_MAX_DECISIONS", "2")
+    monkeypatch.setenv("BRANDMAN_DB", str(database))
+    monkeypatch.setenv("BRANDMAN_WORKER_MODE", "assisted_secretless")
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", "would-enable-native-auto-mode")
+    monkeypatch.setenv("BRANDMAN_WORKER_MAX_JOBS", "2")
+    monkeypatch.setenv("BRANDMAN_SCHEDULER_MAX_DECISIONS", "2")
     worker_main()
     result = json.loads(capsys.readouterr().out)
     assert result["configuration"]["mode"] == "assisted_secretless"
@@ -99,8 +99,8 @@ def test_forced_secretless_worker_ignores_inherited_master_key(
 
 
 def test_native_mode_requires_key(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_WORKER_MODE", "native_api")
-    monkeypatch.delenv("BRAND_OS_CREDENTIAL_MASTER_KEY", raising=False)
+    monkeypatch.setenv("BRANDMAN_WORKER_MODE", "native_api")
+    monkeypatch.delenv("BRANDMAN_CREDENTIAL_MASTER_KEY", raising=False)
     with pytest.raises(SystemExit, match="requires"):
         worker_main()
 

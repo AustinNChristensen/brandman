@@ -203,7 +203,7 @@ async def authorize(request: Request) -> RedirectResponse | HTMLResponse:
         return HTMLResponse("Too many attempts. Try again later.", status_code=429, headers={"Retry-After": str(AUTH_FAILURE_WINDOW_SECONDS)})
     body = await request.body()
     supplied = parse_qs(body.decode("utf-8", errors="replace")).get("password", [""])[0]
-    expected = os.getenv("BRAND_OS_PREVIEW_PASSWORD", "")
+    expected = os.getenv("BRANDMAN_PREVIEW_PASSWORD", "")
     if not expected or not secrets.compare_digest(supplied, expected):
         _record_failure(throttle_key)
         return _authorization_page(request, error="That password was not accepted.")

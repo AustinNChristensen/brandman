@@ -172,7 +172,7 @@ def test_rest_enqueues_manual_revalidation_and_read_surface_labels_metadata_only
         "body_summary": "Terms", "lifecycle_state": "published",
         "scheduled_for": None, "external_source_id": "issuer-terms",
     })
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "canonical-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "canonical-test")
     token = base64.b64encode(b"operator:canonical-test").decode()
     with TestClient(app, headers={"Authorization": f"Basic {token}"}) as client:
         queued = client.post(

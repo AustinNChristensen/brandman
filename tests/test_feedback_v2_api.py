@@ -6,7 +6,7 @@ from brandman.main import app
 
 
 def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "feedback-v2-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "feedback-v2-test")
     headers = {"Authorization": "Basic " + base64.b64encode(b"operator:feedback-v2-test").decode()}
     with TestClient(app, headers=headers) as client:
         reported = client.post("/api/brands/demo-brand/product-feedback", json={

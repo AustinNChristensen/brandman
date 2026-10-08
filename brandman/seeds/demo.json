@@ -1,0 +1,122 @@
+{
+  "name": "demo",
+  "description": "Two sample brands so a fresh install has something to click through. Replace them with your own.",
+  "claim_units": [
+    "credits",
+    "seats",
+    "users"
+  ],
+  "brands": [
+    {
+      "slug": "demo-brand",
+      "name": "Demo Brand",
+      "mission": "Explain the product clearly and consistently.",
+      "voice": "Clear, specific, no generic marketing fluff.",
+      "compliance_rules": "Verify claims, dates, and sources before publishing.",
+      "personas": [
+        {
+          "name": "Core audience",
+          "audience": "People seeking practical, high-confidence guidance.",
+          "angles": [
+            "save time",
+            "avoid costly mistakes",
+            "make a confident next move"
+          ]
+        }
+      ],
+      "guidelines": [
+        {
+          "content_type": "newsletter",
+          "channel": "beehiiv",
+          "name": "Demo Brand newsletter house style",
+          "instructions": "Write in the brand voice, in direct first person, with one concrete thesis and useful decision support—not as an expanded social post or generic blog post. Open with “Hey,”. Explain the move, why it matters, who is a good fit, the practical play, traps, a quick checklist, and the bottom line; headings may vary naturally. Use current verified numbers, fees, dates, ratios, or example math when applicable. Include a natural Demo Brand tool backlink and a soft topic-specific invitation to reply. Close the editorial body exactly with “— The Team”. Normal issues must be at least 750 words and should land between 750 and 900 words without filler. A shorter quick hit is never inferred by AI: it requires a revision-specific reason and explicit operator authorization. Before approval, include a 16:9 editorial thumbnail, avoid readable text/logos/fake marks/people/distorted hands, and enable web thumbnail display. Volatile facts require current governed provenance and fact checking.",
+          "rules": {
+            "minimum_words": 750,
+            "preferred_words": {
+              "minimum": 750,
+              "maximum": 900
+            },
+            "quick_hit": {
+              "minimum_words": 250,
+              "requires_operator_authorization": true
+            },
+            "required_opening": "Hey,",
+            "required_signoff": "— The Team",
+            "approved_tool_backlinks": [
+              "https://demo.example/tools/pricing-calculator",
+              "https://demo.example/tools/comparison",
+              "https://demo.example/tools/changelog"
+            ],
+            "topic_backlinks": [
+              {
+                "topic": "pricing",
+                "urls": [
+                  "https://demo.example/tools/pricing-calculator"
+                ]
+              }
+            ],
+            "thumbnail": {
+              "required": true,
+              "display_on_web": true
+            },
+            "require_one_thesis": true,
+            "require_reply_language": true,
+            "require_current_fact_check_and_provenance": true,
+            "operator_checklist": [
+              "direct_first_person_voice",
+              "one_thesis",
+              "move",
+              "why_it_matters",
+              "good_fit",
+              "play",
+              "traps",
+              "checklist",
+              "bottom_line",
+              "numbers_and_example_math_when_applicable",
+              "topic_specific_reply_cta"
+            ]
+          },
+          "source_ref": "skill:demo-brand-content-house-style",
+          "reason": "Seed the governed Demo Brand house style with the operator's stricter 750-word minimum."
+        }
+      ],
+      "growth_mission": {
+        "name": "Demo Brand 30-day growth",
+        "description": "Grow X followers and active Beehiiv subscribers over a rolling 30-day window.",
+        "timezone": "America/Denver",
+        "goals": {
+          "x_followers": [
+            0,
+            100
+          ],
+          "active_beehiiv_subscribers": [
+            0,
+            25
+          ]
+        },
+        "first_window": [
+          "2026-09-01T00:00:00-06:00",
+          "2026-10-01T00:00:00-06:00"
+        ]
+      }
+    },
+    {
+      "slug": "demo-personal",
+      "name": "Demo Personal",
+      "mission": "Share useful founder, operator, and builder perspectives.",
+      "voice": "Direct, specific, practical, and lightly opinionated.",
+      "compliance_rules": "No confidential employer/client information. Human approval required.",
+      "personas": [
+        {
+          "name": "Core audience",
+          "audience": "People seeking practical, high-confidence guidance.",
+          "angles": [
+            "save time",
+            "avoid costly mistakes",
+            "make a confident next move"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -244,7 +244,7 @@ def test_channel_native_metrics_do_not_invent_cross_channel_reach_or_ctr(tmp_pat
 def test_generic_graph_rest_acceptance_and_template_instantiation(tmp_path, monkeypatch):
     database = tmp_path / "campaign-graph-api.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-password")
     headers = {"Authorization": "Basic b3BlcmF0b3I6dGVzdC1wYXNzd29yZA=="}
     with TestClient(app, headers=headers) as client:
         brand = store.get_brand("demo-brand")

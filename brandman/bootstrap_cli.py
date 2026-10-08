@@ -12,7 +12,7 @@ from typing import Any
 
 from cryptography.fernet import Fernet
 
-from brandman import store
+from brandman import seed_packs, store
 from brandman.connector_health import HEALTH_CHECK_JOB_TYPE, make_connector_health_handler
 from brandman.connectors import UrllibTransport
 from brandman.jobs import JobWorker
@@ -57,7 +57,7 @@ def bootstrap(
         raise ValueError("max_decisions must be between 1 and 500")
     env = dict(environment if environment is not None else os.environ)
     if generated_master_key is not None:
-        env["BRAND_OS_CREDENTIAL_MASTER_KEY"] = generated_master_key
+        env["BRANDMAN_CREDENTIAL_MASTER_KEY"] = generated_master_key
     if bool(execution_agent) != bool(execution_channel):
         raise ValueError("execution_agent and execution_channel must be provided together")
     database_path = Path(database).expanduser().resolve()
@@ -65,12 +65,12 @@ def bootstrap(
     # Bind schema initialization to the explicitly supplied runtime identity.
     # Pytest deliberately has a process-wide ``test`` profile, while smoke and
     # proof harnesses may safely operate on a development/proof scratch DB.
-    store.init_db(profile=env.get("BRAND_OS_DATABASE_PROFILE"))
+    store.init_db(profile=env.get("BRANDMAN_DATABASE_PROFILE"))
     brand = store.get_brand(slug)
     if brand is None:
         raise ValueError(f"unknown brand: {slug}")
-    if slug == "demo-brand":
-        store.ensure_demo_brand_growth_mission()
+    if seed_packs.growth_mission(slug):
+        store.ensure_growth_mission(slug)
     execution_agent_state = None
     if execution_agent and execution_channel:
         registry = ExecutionAgentRegistry(database_path)
@@ -89,7 +89,7 @@ def bootstrap(
         try:
             runtime = build_service_runtime(
                 "brand-os-bootstrap-runtime", database_path,
-                env["BRAND_OS_CREDENTIAL_MASTER_KEY"],
+                env["BRANDMAN_CREDENTIAL_MASTER_KEY"],
                 transport_factory or (lambda _account: UrllibTransport(timeout_seconds=20)),
             )
             # Deliberately construct a restricted worker. The production runtime
@@ -145,8 +145,8 @@ def bootstrap(
         "status": "ready" if after["ready"] else "needs_action",
         "database": str(database_path),
         "environment": {
-            "preview_password_configured": bool(env.get("BRAND_OS_PREVIEW_PASSWORD")),
-            "credential_master_key_configured": bool(env.get("BRAND_OS_CREDENTIAL_MASTER_KEY")),
+            "preview_password_configured": bool(env.get("BRANDMAN_PREVIEW_PASSWORD")),
+            "credential_master_key_configured": bool(env.get("BRANDMAN_CREDENTIAL_MASTER_KEY")),
         },
         "initialization": {
             "brand": slug,

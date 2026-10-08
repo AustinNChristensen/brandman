@@ -153,7 +153,7 @@ def test_rest_lifecycle_uses_authenticated_human_and_mcp_is_agent_only(tmp_path,
     from brandman.mcp_server import mcp
 
     brand_store.DATA_PATH = tmp_path / "api-feedback.db"
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "feedback-test-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "feedback-test-password")
     headers = {"Authorization": "Basic " + base64.b64encode(
         b"operator:feedback-test-password"
     ).decode()}

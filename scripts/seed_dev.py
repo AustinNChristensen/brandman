@@ -2,8 +2,8 @@
 
 Usage (from the repo root):
 
-    BRAND_OS_DB=./brand_os.dev.db BRAND_OS_DATABASE_PROFILE=development \
-    BRAND_OS_PREVIEW_PASSWORD=dev-only-password uv run python scripts/seed_dev.py
+    BRANDMAN_DB=./brand_os.dev.db BRANDMAN_DATABASE_PROFILE=development \
+    BRANDMAN_PREVIEW_PASSWORD=dev-only-password uv run python scripts/seed_dev.py
 
 Everything goes through the public REST API, so the seed can only create what
 an agent could create: campaigns, canonical posts, dispatch items awaiting
@@ -18,11 +18,11 @@ import os
 import sys
 from datetime import datetime, timedelta, timezone
 
-if os.environ.get("BRAND_OS_DATABASE_PROFILE") != "development":
-    sys.exit("seed_dev.py only runs with BRAND_OS_DATABASE_PROFILE=development")
-password = os.environ.get("BRAND_OS_PREVIEW_PASSWORD")
-if not password or not os.environ.get("BRAND_OS_DB"):
-    sys.exit("set BRAND_OS_DB and BRAND_OS_PREVIEW_PASSWORD first")
+if os.environ.get("BRANDMAN_DATABASE_PROFILE") != "development":
+    sys.exit("seed_dev.py only runs with BRANDMAN_DATABASE_PROFILE=development")
+password = os.environ.get("BRANDMAN_PREVIEW_PASSWORD")
+if not password or not os.environ.get("BRANDMAN_DB"):
+    sys.exit("set BRANDMAN_DB and BRANDMAN_PREVIEW_PASSWORD first")
 
 from fastapi.testclient import TestClient  # noqa: E402
 

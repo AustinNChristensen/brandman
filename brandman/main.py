@@ -17,7 +17,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
-from . import store
+from . import seed_packs, store
+from .principals import operator_principal
 from .attribution_store import AttributionStore, AttributionStoreError
 from .approval_snapshots import ApprovalSnapshotStore
 from .beehiiv_runtime import (
@@ -131,7 +132,7 @@ def initialize_application_services(
 
     Importing this module is deliberately inert.  Runtime entry points must
     supply the database identity through ``store.DATA_PATH`` (or ``database``)
-    and an explicit ``BRAND_OS_DATABASE_PROFILE`` (or ``profile``).  Profile
+    and an explicit ``BRANDMAN_DATABASE_PROFILE`` (or ``profile``).  Profile
     compatibility is checked by :func:`store.init_db` before any schema write.
     """
 
@@ -139,21 +140,21 @@ def initialize_application_services(
     path = Path(database if database is not None else store.DATA_PATH)
     if (
         database is None
-        and "BRAND_OS_DB" not in os.environ
+        and "BRANDMAN_DB" not in os.environ
         and path.expanduser().resolve() == store.DEFAULT_DATA_PATH.expanduser().resolve()
     ):
         raise RuntimeError(
-            "BRAND_OS_DB must be explicitly configured before Brand OS application startup"
+            "BRANDMAN_DB must be explicitly configured before Brand OS application startup"
         )
-    requested_profile = profile or os.environ.get("BRAND_OS_DATABASE_PROFILE")
+    requested_profile = profile or os.environ.get("BRANDMAN_DATABASE_PROFILE")
     if requested_profile is None:
         raise RuntimeError(
-            "BRAND_OS_DATABASE_PROFILE must be explicitly configured before "
+            "BRANDMAN_DATABASE_PROFILE must be explicitly configured before "
             "Brand OS application startup"
         )
     if requested_profile not in store.DATABASE_PROFILES:
         raise RuntimeError(
-            "BRAND_OS_DATABASE_PROFILE must be operating, development, test, or proof"
+            "BRANDMAN_DATABASE_PROFILE must be operating, development, test, or proof"
         )
     key = (str(path.expanduser().resolve()), requested_profile)
     with _services_lock:
@@ -178,9 +179,10 @@ def initialize_application_services(
         approval_snapshots = ApprovalSnapshotStore(path)
         guidelines = editorial.guidelines
         if requested_profile in {"operating", "development"}:
-            demo_brand = store.get_brand("demo-brand")
-            if demo_brand is not None:
-                guidelines.seed_demo_brand(demo_brand["id"])
+            for seed in seed_packs.brands():
+                seeded_brand = store.get_brand(seed["slug"])
+                if seeded_brand is not None:
+                    guidelines.seed_guidelines(seeded_brand["id"], seed["slug"])
         _services = ApplicationServices(
             database=path,
             profile=requested_profile,
@@ -235,7 +237,7 @@ async def lifespan(_: FastAPI):
     keeping initialization at lifespan entry preserves that isolation contract.
     """
     initialize_application_services()
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_seeded_growth_missions()
     await hosted_mcp_application.start()
     try:
         yield
@@ -266,7 +268,6 @@ beehiiv_assisted_pull_store: BeehiivAssistedPullStore = _LazyService("beehiiv_as
 beehiiv_lifecycle_projector: BeehiivNewsletterLifecycleProjector = _LazyService("beehiiv_lifecycle_projector")  # type: ignore[assignment]
 publishing_planner: PublishingPlanner = _LazyService("publishing_planner")  # type: ignore[assignment]
 operator_proposal_store: OperatorProposalStore = _LazyService("operator_proposal_store")  # type: ignore[assignment]
-PREVIEW_PRINCIPAL = "chris"
 SYSTEM_QUEUE_ACTOR = "system:rest-queue"
 
 
@@ -276,7 +277,7 @@ async def preview_password_gate(request: Request, call_next):
     boundary_failure = enforce_request_boundary(request)
     if boundary_failure is not None:
         return harden_response(boundary_failure, request)
-    password = os.getenv("BRAND_OS_PREVIEW_PASSWORD")
+    password = os.getenv("BRANDMAN_PREVIEW_PASSWORD")
     if not password:
         response = JSONResponse(status_code=503, content={"detail": "Preview password is not configured."})
         return harden_response(response, request)
@@ -298,7 +299,8 @@ async def preview_password_gate(request: Request, call_next):
             return harden_response(response, request)
         return harden_response(await call_next(request), request)
     authorization = request.headers.get("authorization", "")
-    expected = base64.b64encode(f"operator:{password}".encode()).decode()
+    basic_user = os.getenv("BRANDMAN_BASIC_USER", "").strip() or "operator"
+    expected = base64.b64encode(f"{basic_user}:{password}".encode()).decode()
     basic_authenticated = secrets.compare_digest(authorization, f"Basic {expected}")
     session_authenticated = validate_preview_session(
         request.cookies.get(PREVIEW_SESSION_COOKIE, ""), password,
@@ -313,9 +315,9 @@ async def preview_password_gate(request: Request, call_next):
                 headers={"WWW-Authenticate": 'Basic realm="Brand OS preview"'},
             )
         return harden_response(response, request)
-    # The preview credential is provisioned for Chris. Approval identity is set by
+    # The preview credential is provisioned for the operator. Approval identity is set by
     # the authentication boundary and is never accepted from request content.
-    request.state.principal = PREVIEW_PRINCIPAL
+    request.state.principal = operator_principal()
     return harden_response(await call_next(request), request)
 
 
@@ -353,7 +355,7 @@ async def create_login_session(request: Request) -> Response:
         return HTMLResponse(_login_page(error="The sign-in request was too large."), status_code=413)
     fields = parse_qs(body.decode("utf-8", errors="replace"), keep_blank_values=True)
     supplied = fields.get("password", [""])[0]
-    password = os.getenv("BRAND_OS_PREVIEW_PASSWORD", "")
+    password = os.getenv("BRANDMAN_PREVIEW_PASSWORD", "")
     if not password or not secrets.compare_digest(supplied, password):
         return HTMLResponse(_login_page(error="That preview password was not accepted."), status_code=401)
     response = RedirectResponse(_safe_login_destination(fields.get("next", ["/"])[0]), status_code=303)
@@ -1172,7 +1174,7 @@ def get_connection_onboarding(slug: str) -> dict:
         raise HTTPException(status_code=404, detail="Brand not found")
     configured = False
     try:
-        CredentialStore._cipher(os.getenv("BRAND_OS_CREDENTIAL_MASTER_KEY"))
+        CredentialStore._cipher(os.getenv("BRANDMAN_CREDENTIAL_MASTER_KEY"))
         configured = True
     except CredentialConfigurationError:
         pass
@@ -1406,13 +1408,13 @@ def trigger_brand_orchestration_tick(slug: str, input: OrchestrationTickInput) -
 def _credential_store() -> CredentialStore:
     """Construct the encrypted store only when deployment supplied its key."""
 
-    master_key = os.getenv("BRAND_OS_CREDENTIAL_MASTER_KEY")
+    master_key = os.getenv("BRANDMAN_CREDENTIAL_MASTER_KEY")
     if not master_key:
         raise HTTPException(
             status_code=503,
             detail=(
                 "Connector credential encryption is not configured. "
-                "Set BRAND_OS_CREDENTIAL_MASTER_KEY before managing connections."
+                "Set BRANDMAN_CREDENTIAL_MASTER_KEY before managing connections."
             ),
         )
     try:
@@ -2187,7 +2189,7 @@ def create_tracked_url(slug: str, input: TrackedUrlInput) -> dict:
             brand_id=brand["id"], campaign_id=input.campaign_id,
             artifact_id=input.artifact_id, cta_id=input.cta_id,
             source=input.source, medium=input.medium, destination=input.base_url,
-            brand_slug=slug, actor=PREVIEW_PRINCIPAL,
+            brand_slug=slug, actor=operator_principal(),
         )
     except AttributionStoreError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
@@ -2220,11 +2222,11 @@ def record_mission_kpi(slug: str, input: KpiSnapshotInput) -> dict:
             connector_account_id=input.connector_account_id,
             connector_event_id=input.connector_event_id,
             human_manual=input.source == "manual",
-            human_verified_by=PREVIEW_PRINCIPAL if input.source == "manual" else None,
+            human_verified_by=operator_principal() if input.source == "manual" else None,
             human_verification_note=input.verification_note or None,
             dimensions=input.dimensions,
         )
-        canonical = attribution_store.promote_kpi_evidence(evidence["id"], actor=PREVIEW_PRINCIPAL)
+        canonical = attribution_store.promote_kpi_evidence(evidence["id"], actor=operator_principal())
     except AttributionStoreError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     store.record_kpi_snapshot(

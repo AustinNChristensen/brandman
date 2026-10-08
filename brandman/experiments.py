@@ -11,6 +11,7 @@ from typing import Any, Mapping
 from uuid import uuid4
 
 from brandman import store
+from brandman.principals import is_privileged
 from brandman.learning_engine import BrandLearningEngine
 from brandman.source_campaign import source_grounded_x_draft
 
@@ -468,7 +469,7 @@ class ExperimentStore:
         return next(item for item in self.get(experiment_id)["recommendations"] if item["id"] == recommendation_id)
 
     def accept(self, experiment_id: str, recommendation_id: str, *, actor: str) -> dict[str, Any]:
-        if actor != "chris":
+        if not is_privileged(actor):
             raise PermissionError("only the authenticated human principal may accept an experiment winner")
         timestamp = store.now()
         learning_engine = BrandLearningEngine(self.database)
