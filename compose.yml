@@ -1,0 +1,33 @@
+# Local self-hosting:  cp .env.example .env  (set BRANDMAN_PREVIEW_PASSWORD)
+#                      docker compose up -d   then open http://localhost:8000/app
+# The port is published on the host's loopback only. For a public deployment,
+# put a TLS proxy in front and set BRANDMAN_ALLOWED_HOSTS / REQUIRE_HTTPS.
+services:
+  brandman:
+    build: .
+    image: ghcr.io/austinnchristensen/brandman:latest
+    env_file: .env
+    environment:
+      BRANDMAN_DB: /data/brandman.db
+      # Docker forwards host-loopback requests from the bridge gateway.
+      BRANDMAN_TRUSTED_LOCAL_NETWORKS: 172.16.0.0/12,192.168.0.0/16
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - brandman-data:/data
+    restart: unless-stopped
+
+  # Bounded scheduler tick plus connector jobs, every five minutes.
+  worker:
+    image: ghcr.io/austinnchristensen/brandman:latest
+    depends_on: [brandman]
+    env_file: .env
+    environment:
+      BRANDMAN_DB: /data/brandman.db
+    volumes:
+      - brandman-data:/data
+    command: ["sh", "-c", "while true; do brandman-worker || true; sleep 300; done"]
+    restart: unless-stopped
+
+volumes:
+  brandman-data:

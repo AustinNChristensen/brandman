@@ -74,7 +74,7 @@ def test_operator_navigation_gets_clear_login_page_and_cookie_session(monkeypatc
 
     assert redirect.status_code == 303 and redirect.headers["location"] == "/login"
     assert login.status_code == 200
-    assert "The BrandOS service is running" in login.text
+    assert "The BrandMan service is running" in login.text
     assert wrong.status_code == 401 and "not accepted" in wrong.text
     assert PASSWORD not in wrong.text
     assert accepted.status_code == 303 and accepted.headers["location"] == "/"
@@ -210,3 +210,14 @@ def test_secret_free_deployment_readiness_distinguishes_local_and_remote_boundar
     assert any("HTTPS" in action for action in unsafe_remote["actions"])
     assert safe_remote["healthy"] is True and safe_remote["local_only"] is False
     assert "a-strong-remote-preview-password" not in repr(safe_remote)
+
+
+def test_trusted_local_networks_admit_container_gateway_only(monkeypatch):
+    from types import SimpleNamespace
+    from brandman.http_security import _client_is_loopback
+    request = lambda host: SimpleNamespace(client=SimpleNamespace(host=host))  # noqa: E731
+    assert not _client_is_loopback(request("172.17.0.1"))
+    monkeypatch.setenv("BRANDMAN_TRUSTED_LOCAL_NETWORKS", "172.16.0.0/12, 8.8.8.0/24, nonsense")
+    assert _client_is_loopback(request("172.17.0.1"))
+    assert not _client_is_loopback(request("8.8.8.8"))
+    assert not _client_is_loopback(request("10.0.0.5"))

@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+.pytest_cache
+**/__pycache__
+*.db
+*.db-*
+.env
+.env.*
+web
+tests
+scripts
+n8n

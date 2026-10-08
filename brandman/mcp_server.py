@@ -40,7 +40,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 # The stdio transport ignores this path.  The hosted application mounts this
 # ASGI app at ``/mcp``, so its inner Streamable HTTP route must be root-relative.
 mcp = FastMCP(
-    "Brand OS",
+    "BrandMan",
     streamable_http_path="/",
     transport_security=TransportSecuritySettings(
         allowed_hosts=[

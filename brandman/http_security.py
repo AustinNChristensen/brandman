@@ -238,9 +238,32 @@ def _client_is_loopback(request: Request) -> bool:
     if host in {"localhost", "testclient"}:
         return True
     try:
-        return ipaddress.ip_address(host).is_loopback
+        address = ipaddress.ip_address(host)
     except ValueError:
         return False
+    return address.is_loopback or any(address in network for network in _trusted_local_networks())
+
+
+def _trusted_local_networks() -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+    """Private networks treated as the local machine, for container setups.
+
+    Docker forwards a host's loopback request from the bridge gateway, not from
+    127.0.0.1. ``BRANDMAN_TRUSTED_LOCAL_NETWORKS`` (comma-separated CIDRs) lets
+    such a request count as local. Only set it when the published port is bound
+    to the host's loopback interface; public or global ranges are ignored.
+    """
+    networks = []
+    for value in os.environ.get("BRANDMAN_TRUSTED_LOCAL_NETWORKS", "").split(","):
+        value = value.strip()
+        if not value:
+            continue
+        try:
+            network = ipaddress.ip_network(value, strict=False)
+        except ValueError:
+            continue
+        if network.is_private and not network.is_global:
+            networks.append(network)
+    return networks
 
 
 def _strong_remote_password(password: str) -> bool:

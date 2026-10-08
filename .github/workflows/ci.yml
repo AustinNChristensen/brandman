@@ -31,4 +31,28 @@ jobs:
       - run: npm ci
       - run: npx tsc -b
       - run: npm test
+      - name: Committed dashboard build matches the source
+        run: |
+          npm run build
+          git diff --exit-code -- ../brandman/static/app || {
+            echo "brandman/static/app is stale: run 'npm run build' in web/ and commit it"; exit 1; }
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: brandman:ci
+      - name: Image starts and serves the dashboard
+        run: |
+          docker run -d --name brandman -p 127.0.0.1:8000:8000 \
+            -e BRANDMAN_PREVIEW_PASSWORD=ci-only-password-1234 \
+            -e BRANDMAN_TRUSTED_LOCAL_NETWORKS=172.16.0.0/12 brandman:ci
+          for i in $(seq 1 30); do curl -fsS http://localhost:8000/ >/dev/null && break; sleep 1; done
+          curl -fsS -u operator:ci-only-password-1234 http://localhost:8000/api/brands
+          docker logs brandman
 
