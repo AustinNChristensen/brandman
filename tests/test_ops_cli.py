@@ -218,7 +218,7 @@ def test_rate_card_cli_emits_metadata_not_credentials(tmp_path, capsys):
         "--endpoint-pattern", "https://api.x.com/2/tweets",
         "--billable-category", "post.create_plain", "--unit-name", "resource",
         "--unit-price", "0.01", "--currency", "USD",
-        "--effective-at", "2026-09-02T00:00:00Z", "--actor", "chris",
+        "--effective-at", "2026-09-02T00:00:00Z", "--actor", "preview-operator",
     ])
     output = json.loads(capsys.readouterr().out)
     assert output["billable_category"] == "post.create_plain"

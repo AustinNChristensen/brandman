@@ -17,11 +17,11 @@ def test_brand_settings_are_audited_and_scoped(tmp_path, monkeypatch):
         "compliance_rules": "Other rules", "approval_policy": "human_approval_required",
     })
     settings = BrandSettingsStore(database, clock=lambda: "2026-09-03T12:00:00+00:00")
-    updated = settings.update(points["id"], {"voice": "Direct and useful"}, actor="chris", reason="Use reviewed voice guidance.")
+    updated = settings.update(points["id"], {"voice": "Direct and useful"}, actor="preview-operator", reason="Use reviewed voice guidance.")
     assert updated["voice"] == "Direct and useful"
     assert store.get_brand("other")["voice"] == other["voice"]
     audit = settings.audit(points["id"])
-    assert audit[0]["actor"] == "chris"
+    assert audit[0]["actor"] == "preview-operator"
     assert audit[0]["before"]["voice"] != audit[0]["after"]["voice"]
 
 
@@ -32,11 +32,11 @@ def test_brand_settings_reject_unknown_blank_and_unsupported_values(tmp_path, mo
     brand = store.get_brand("demo-brand")
     settings = BrandSettingsStore(database)
     with pytest.raises(BrandSettingsError, match="unsupported brand settings"):
-        settings.update(brand["id"], {"slug": "takeover"}, actor="chris", reason="Bad change")
+        settings.update(brand["id"], {"slug": "takeover"}, actor="preview-operator", reason="Bad change")
     with pytest.raises(BrandSettingsError, match="cannot be blank"):
-        settings.update(brand["id"], {"mission": ""}, actor="chris", reason="Bad change")
+        settings.update(brand["id"], {"mission": ""}, actor="preview-operator", reason="Bad change")
     with pytest.raises(BrandSettingsError, match="unsupported approval policy"):
-        settings.update(brand["id"], {"approval_policy": "auto_publish"}, actor="chris", reason="Bad change")
+        settings.update(brand["id"], {"approval_policy": "auto_publish"}, actor="preview-operator", reason="Bad change")
 
 
 def test_rate_cards_list_only_the_selected_brand(tmp_path, monkeypatch):
@@ -53,7 +53,7 @@ def test_rate_cards_list_only_the_selected_brand(tmp_path, monkeypatch):
         ledger.configure_price(
             brand_id=brand_id, version=version, provider="x", method="POST",
             endpoint_pattern="https://api.x.com/2/tweets", unit_name="request", unit_price="0.01",
-            currency="USD", effective_at="2026-09-03T00:00:00Z", actor="chris",
+            currency="USD", effective_at="2026-09-03T00:00:00Z", actor="preview-operator",
         )
     assert [item["version"] for item in ledger.list_prices(points["id"])] == ["demo-v1"]
 
@@ -68,7 +68,7 @@ def test_rate_card_exact_replay_is_idempotent_and_conflict_is_explicit(tmp_path,
         "brand_id": brand["id"], "version": "demo-v1", "provider": "x",
         "method": "POST", "endpoint_pattern": "https://api.x.com/2/tweets",
         "unit_name": "request", "unit_price": "0.01", "currency": "USD",
-        "effective_at": "2026-09-03T00:00:00Z", "actor": "chris",
+        "effective_at": "2026-09-03T00:00:00Z", "actor": "preview-operator",
     }
     created = ledger.configure_price(**values)
     replayed = ledger.configure_price(**values)
@@ -94,7 +94,7 @@ def test_settings_api_uses_authenticated_actor_and_rejects_cross_brand_schedule(
         assert updated.status_code == 200
         settings = client.get("/api/brands/demo-brand/settings").json()
         assert settings["brand"]["voice"] == "Direct, skeptical, and useful"
-        assert settings["audit"][-1]["actor"] == "chris"
+        assert settings["audit"][-1]["actor"] == "preview-operator"
         assert client.put(
             "/api/brands/demo-brand/orchestration/schedules/not-this-brand",
             json={"enabled": False},

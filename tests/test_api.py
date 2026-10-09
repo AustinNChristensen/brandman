@@ -125,7 +125,7 @@ def test_learning_actor_is_authenticated_principal_and_testing_is_mandatory():
             "SELECT actor FROM brand_learning_audit WHERE learning_id=? AND action='testing'",
             (proposed["id"],),
         )
-        assert history["actor"] == "chris"
+        assert history["actor"] == "preview-operator"
 
 
 def test_demo_brand_mission_connectors_and_deduplicated_gaps(tmp_path, monkeypatch):
@@ -246,7 +246,7 @@ def test_editorial_issue_and_canonical_dispatch_integration():
             f"/api/newsletter-issues/{issue['id']}/approve",
             json={"revision": 1, "review_token": newsletter_review_token(client, issue["id"])},
         ).json()
-        assert approved["approved_by"] == "chris"
+        assert approved["approved_by"] == "preview-operator"
         preview = client.get(f"/api/newsletter-issues/{issue['id']}/export-preview").json()
         assert preview["idempotency_key"].endswith(":r1")
 
@@ -327,7 +327,7 @@ def test_editorial_cleanup_routes_use_authenticated_actor_and_preserve_history()
         assert abandoned.status_code == 200
         assert abandoned.json()["status"] == "abandoned"
         history = client.get(f"/api/editorial-candidates/{candidate['id']}/history").json()
-        assert history[0]["actor"] == "chris"
+        assert history[0]["actor"] == "preview-operator"
         assert history[0]["reason"] == "No longer timely"
         active_ids = {
             item["id"] for item in client.get("/api/brands/demo-brand/editorial-candidates").json()
@@ -380,7 +380,7 @@ def test_governed_third_party_source_api_enrolls_and_controls_polling():
         source = created.json()
         assert source["enabled"] is True
         assert source["schedule"]["enabled"] is True
-        assert source["audit"][0]["actor"] == "chris"
+        assert source["audit"][0]["actor"] == "preview-operator"
         serialized_source = str(source).casefold()
         assert "access_token" not in serialized_source
         assert "api_key" not in serialized_source
@@ -396,7 +396,7 @@ def test_governed_third_party_source_api_enrolls_and_controls_polling():
         ).json()
         assert disabled["enabled"] is False
         assert disabled["schedule"]["enabled"] is False
-        assert disabled["audit"][-1]["actor"] == "chris"
+        assert disabled["audit"][-1]["actor"] == "preview-operator"
         enabled_ids = {
             item["connector_account_id"] for item in client.get(
                 "/api/brands/demo-brand/third-party-sources?include_disabled=false"

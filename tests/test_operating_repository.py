@@ -120,17 +120,17 @@ def test_verified_product_gap_leaves_current_operating_plan_but_keeps_evidence(t
 
     assert [item["id"] for item in repository.open_gaps("brand-1")] == ["gap-1"]
     feedback.start(
-        "gap-1", assignee="builder", actor="chris",
+        "gap-1", assignee="builder", actor="preview-operator",
         implementation_links=["/app/operating_plan.py"],
         implementation_notes="Bound recurring incidents without hiding them.",
     )
     feedback.resolve(
-        "gap-1", actor="chris",
+        "gap-1", actor="preview-operator",
         resolution_evidence="Recurring incident regression passes.",
         implementation_links=["/tests/test_operating_plan.py"],
     )
     feedback.verify(
-        "gap-1", actor="chris",
+        "gap-1", actor="preview-operator",
         evidence="Current plan contains one grouped incident and preserves editorial work.",
     )
 

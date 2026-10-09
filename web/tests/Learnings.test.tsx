@@ -45,7 +45,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.list.mockResolvedValue([learning]); mocks.experiments.mockResolvedValue([experiment])
   mocks.context.mockResolvedValue({ campaigns: [{ id: 'c1', source_id: 's1', name: 'Offer launch' }] })
-  mocks.audit.mockResolvedValue([{ sequence: 1, learning_id: 'l1', brand_id: 'brand-1', action: 'testing', actor: 'chris', details: {}, at: '2026-09-01T00:00:00Z' }])
+  mocks.audit.mockResolvedValue([{ sequence: 1, learning_id: 'l1', brand_id: 'brand-1', action: 'testing', actor: 'preview-operator', details: {}, at: '2026-09-01T00:00:00Z' }])
   mocks.experiment.mockResolvedValue(experiment); mocks.transition.mockResolvedValue({ ...learning, status: 'accepted' })
   mocks.acceptRecommendation.mockResolvedValue({ ...experiment, status: 'completed' })
 })

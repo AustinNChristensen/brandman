@@ -250,18 +250,18 @@ def test_global_and_provider_controls_block_new_claims_with_immutable_audit(setu
     bee = next(task for task in tasks if task["provider"] == "beehiiv")
     x_task = next(task for task in tasks if task["provider"] == "x")
 
-    disabled_x = handoffs.set_control("brand-1", "x", enabled=False, actor="chris")
+    disabled_x = handoffs.set_control("brand-1", "x", enabled=False, actor="preview-operator")
     assert disabled_x["effective_enabled"] is False
     with pytest.raises(ExecutionHandoffError, match="x assisted execution is disabled"):
         handoffs.claim(x_task["id"], actor="browser-agent")
     # The provider-specific switch does not interrupt the other read/write lane.
     assert handoffs.claim(bee["id"], actor="browser-agent")["status"] == "claimed"
 
-    handoffs.set_control("brand-1", "x", enabled=True, actor="chris")
-    handoffs.set_control("brand-1", "all", enabled=False, actor="chris")
+    handoffs.set_control("brand-1", "x", enabled=True, actor="preview-operator")
+    handoffs.set_control("brand-1", "all", enabled=False, actor="preview-operator")
     with pytest.raises(ExecutionHandoffError, match="x assisted execution is disabled"):
         handoffs.claim(x_task["id"], actor="browser-agent")
-    handoffs.set_control("brand-1", "all", enabled=True, actor="chris")
+    handoffs.set_control("brand-1", "all", enabled=True, actor="preview-operator")
     assert handoffs.claim(x_task["id"], actor="browser-agent")["status"] == "claimed"
     assert [(row["provider"], row["enabled"]) for row in handoffs.control_audit("brand-1")] == [
         ("x", False), ("x", True), ("all", False), ("all", True),

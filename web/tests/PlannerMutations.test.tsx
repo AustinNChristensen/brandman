@@ -40,8 +40,8 @@ beforeEach(() => {
   mocks.updateItem.mockResolvedValue({ ...item, pinned: true })
   mocks.preview.mockResolvedValue({ id: 'preview-1', snapshot_fingerprint: 'sha256:test', planning_only: true,
     changes: [{ item_type: 'post', item_id: 'post-1', initiative_id: 'initiative-1', channel: 'x', before: null, after: '2026-09-07T15:00:00Z' }] })
-  mocks.commit.mockResolvedValue({ id: 'commit-1', brand_id: 'brand-1', preview_id: 'preview-1', committed_by: 'chris', committed_at: '2026-09-03T12:00:00Z', undone_by: null, undone_at: null, before: [], changes: [{ item_id: 'post-1' }] })
-  mocks.undo.mockResolvedValue({ id: 'commit-1', undone_by: 'chris', undone_at: '2026-09-03T12:01:00Z', changes: [] })
+  mocks.commit.mockResolvedValue({ id: 'commit-1', brand_id: 'brand-1', preview_id: 'preview-1', committed_by: 'preview-operator', committed_at: '2026-09-03T12:00:00Z', undone_by: null, undone_at: null, before: [], changes: [{ item_id: 'post-1' }] })
+  mocks.undo.mockResolvedValue({ id: 'commit-1', undone_by: 'preview-operator', undone_at: '2026-09-03T12:01:00Z', changes: [] })
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 afterEach(cleanup)

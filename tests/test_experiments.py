@@ -123,15 +123,15 @@ def test_only_connector_backed_performance_can_recommend_and_chris_must_accept(t
         experiments.accept(experiment["id"], current_recommendation["id"], actor="agent")
 
     accepted = experiments.accept(
-        experiment["id"], current_recommendation["id"], actor="chris",
+        experiment["id"], current_recommendation["id"], actor="preview-operator",
     )
     replayed = experiments.accept(
-        experiment["id"], current_recommendation["id"], actor="chris",
+        experiment["id"], current_recommendation["id"], actor="preview-operator",
     )
     assert replayed["accepted_recommendation_id"] == accepted["accepted_recommendation_id"]
     assert replayed["recommendations"][0]["learning_id"] == accepted["recommendations"][0]["learning_id"]
     with pytest.raises(ExperimentError, match="different accepted recommendation"):
-        experiments.accept(experiment["id"], "different-recommendation", actor="chris")
+        experiments.accept(experiment["id"], "different-recommendation", actor="preview-operator")
     assert accepted["status"] == "completed"
     assert accepted["recommendations"][0]["status"] == "accepted"
     assert all(window["status"] in {"evaluated", "closed"} for window in accepted["measurement_windows"])
@@ -142,7 +142,7 @@ def test_only_connector_backed_performance_can_recommend_and_chris_must_accept(t
     assert learning["scope_json"] == '{"channel":"x"}'
     assert store.row(
         "SELECT action,actor FROM brand_learning_audit WHERE learning_id=?", (learning["id"],),
-    ) == {"action": "proposed", "actor": "chris"}
+    ) == {"action": "proposed", "actor": "preview-operator"}
     assert BrandLearningEngine(experiments.database).retrieve(
         brand["id"], {"channel": "x"}, audit=False,
     )["learnings"] == []
@@ -168,4 +168,4 @@ def test_tie_and_stale_recommendation_cannot_be_accepted(tmp_path):
     assert window["status"] == "awaiting_evidence"
     assert window["evidence_state"] == "tie"
     with pytest.raises(ExperimentError, match="evidence-backed"):
-        experiments.accept(experiment["id"], tied["id"], actor="chris")
+        experiments.accept(experiment["id"], tied["id"], actor="preview-operator")

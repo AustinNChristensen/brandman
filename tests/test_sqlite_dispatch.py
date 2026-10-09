@@ -21,7 +21,7 @@ class Publisher:
 def approved_and_queued(dispatcher):
     item = dispatcher.create("x", {"body": "hello"}, item_id="post-1")
     item = dispatcher.submit_for_approval(item.id, actor="agent")
-    dispatcher.approve(item.id, revision=item.revision, approver="chris")
+    dispatcher.approve(item.id, revision=item.revision, approver="preview-operator")
     return dispatcher.queue(item.id)
 
 
@@ -36,7 +36,7 @@ def test_round_trip_approval_audit_and_publish_survive_restart(tmp_path):
     second = SQLiteGovernedDispatcher(second_store, {"x": publisher})
     loaded = second_store.get(queued.id)
     assert loaded.approval is not None
-    assert loaded.approval.approver == "chris"
+    assert loaded.approval.approver == "preview-operator"
     assert loaded.idempotency_key == queued.idempotency_key
 
     published = second.dispatch(queued.id)

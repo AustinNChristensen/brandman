@@ -118,7 +118,7 @@ def test_rate_card_rest_uses_authenticated_brand_identity(tmp_path, monkeypatch)
         assert response.status_code == 201
         body = response.json()
         assert body["brand_id"] == brand["id"]
-        assert body["configured_by"] == "chris"
+        assert body["configured_by"] == "preview-operator"
         assert body["currency"] == "USD"
         report = client.get("/api/brands/demo-brand/provider-usage").json()
         assert report["pricing_versions"][0]["version"] == "customer-contract-v1"

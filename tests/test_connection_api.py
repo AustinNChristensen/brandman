@@ -127,7 +127,7 @@ def test_health_reconnect_disconnect_and_authenticated_audit(monkeypatch):
             "SELECT actor FROM credential_audit WHERE provider='beehiiv' AND account_id=? ORDER BY sequence",
             (account,),
         )]
-    assert actors == ["chris", "chris", "chris"]
+    assert actors == ["preview-operator", "preview-operator", "preview-operator"]
 
 
 def test_connection_management_is_not_exposed_to_mcp():
