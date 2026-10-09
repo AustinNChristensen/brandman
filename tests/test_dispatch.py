@@ -39,7 +39,7 @@ def setup_dispatcher(publisher=None):
 def approved_item(dispatcher):
     item = dispatcher.create("x", {"body": "hello"}, item_id="post-1")
     item = dispatcher.submit_for_approval(item.id, actor="agent")
-    return dispatcher.approve(item.id, revision=item.revision, approver="chris")
+    return dispatcher.approve(item.id, revision=item.revision, approver="preview-operator")
 
 
 def test_full_lifecycle_and_audit_history():
@@ -61,7 +61,7 @@ def test_full_lifecycle_and_audit_history():
 def test_edit_increments_revision_and_invalidates_approval():
     dispatcher, _ = setup_dispatcher()
     item = approved_item(dispatcher)
-    edited = dispatcher.edit(item.id, {"body": "materially changed"}, actor="chris")
+    edited = dispatcher.edit(item.id, {"body": "materially changed"}, actor="preview-operator")
     assert edited.revision == 2
     assert edited.status is Lifecycle.DRAFT
     assert edited.approval is None
@@ -69,7 +69,7 @@ def test_edit_increments_revision_and_invalidates_approval():
         dispatcher.queue(edited.id)
     dispatcher.submit_for_approval(edited.id, actor="agent")
     with pytest.raises(RevisionMismatch):
-        dispatcher.approve(edited.id, revision=1, approver="chris")
+        dispatcher.approve(edited.id, revision=1, approver="preview-operator")
 
 
 def test_batch_is_explicit_revision_bound_and_prevalidated():
@@ -77,9 +77,9 @@ def test_batch_is_explicit_revision_bound_and_prevalidated():
     first = dispatcher.submit_for_approval(dispatcher.create("x", {"body": "one"}, item_id="one").id, actor="agent")
     second = dispatcher.submit_for_approval(dispatcher.create("x", {"body": "two"}, item_id="two").id, actor="agent")
     with pytest.raises(RevisionMismatch):
-        dispatcher.approve_batch({first.id: 1, second.id: 99}, approver="chris")
+        dispatcher.approve_batch({first.id: 1, second.id: 99}, approver="preview-operator")
     assert dispatcher.store.get(first.id).status is Lifecycle.AWAITING_APPROVAL
-    approved = dispatcher.approve_batch({first.id: 1, second.id: 1}, approver="chris", batch_id="morning-batch")
+    approved = dispatcher.approve_batch({first.id: 1, second.id: 1}, approver="preview-operator", batch_id="morning-batch")
     assert all(item.approval and item.approval.batch_id == "morning-batch" for item in approved)
 
 
@@ -87,8 +87,8 @@ def test_rejection_requires_current_revision_and_cannot_be_queued():
     dispatcher, _ = setup_dispatcher()
     item = dispatcher.submit_for_approval(dispatcher.create("x", {"body": "no"}).id, actor="agent")
     with pytest.raises(RevisionMismatch):
-        dispatcher.reject(item.id, revision=2, actor="chris")
-    rejected = dispatcher.reject(item.id, revision=1, actor="chris")
+        dispatcher.reject(item.id, revision=2, actor="preview-operator")
+    rejected = dispatcher.reject(item.id, revision=1, actor="preview-operator")
     assert rejected.status is Lifecycle.REJECTED
     with pytest.raises(ApprovalRequired):
         dispatcher.queue(item.id)
@@ -154,12 +154,12 @@ def test_missing_publisher_is_visible_and_cancel_is_terminal():
     dispatcher.set_connector_gate("x", healthy=True, write_enabled=True)
     item = dispatcher.create("x", {"body": "hello"})
     dispatcher.submit_for_approval(item.id, actor="agent")
-    dispatcher.approve(item.id, revision=1, approver="chris")
+    dispatcher.approve(item.id, revision=1, approver="preview-operator")
     dispatcher.queue(item.id)
     attention = dispatcher.dispatch(item.id)
     assert attention.status is Lifecycle.NEEDS_ATTENTION
     assert "not configured" in (attention.last_error or "")
-    cancelled = dispatcher.cancel(item.id, actor="chris")
+    cancelled = dispatcher.cancel(item.id, actor="preview-operator")
     assert cancelled.status is Lifecycle.CANCELLED
     with pytest.raises(InvalidTransition):
-        dispatcher.edit(item.id, {"body": "late edit"}, actor="chris")
+        dispatcher.edit(item.id, {"body": "late edit"}, actor="preview-operator")

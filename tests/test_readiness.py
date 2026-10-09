@@ -153,7 +153,7 @@ def test_connected_preflight_mirrors_runtime_scope_rules_and_preserves_code_gaps
         x_read["id"]: HealthyReadConnector(),
         website["id"]: HealthyReadConnector(),
     }, health)
-    for check in health.trigger(brand["id"], actor="chris"):
+    for check in health.trigger(brand["id"], actor="preview-operator"):
         if check["status"] == "queued":
             handler({"payload": {"health_check_id": check["id"]}})
 

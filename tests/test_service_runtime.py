@@ -239,8 +239,8 @@ def test_bounded_runtime_executes_approved_x_delivery(tmp_path):
         "x", {"body": "Approved post"}, brand_id=brand["id"]
     )
     service.dispatcher.submit_for_approval(item.id, actor="agent")
-    service.dispatcher.approve(item.id, revision=1, approver="chris")
-    queued = service.dispatcher.queue(item.id, actor="chris")
+    service.dispatcher.approve(item.id, revision=1, approver="preview-operator")
+    queued = service.dispatcher.queue(item.id, actor="preview-operator")
     enqueue_x_delivery(queued, x_account["id"])
 
     run = service.run_until_idle(max_jobs=1)
@@ -270,9 +270,9 @@ def test_bounded_runtime_exports_only_exact_approved_newsletter_draft(tmp_path):
     editorial.transition(issue["id"], IssueLifecycle.OUTLINE)
     editorial.transition(issue["id"], IssueLifecycle.DRAFT)
     editorial.record_fact_check(
-        issue["id"], expected_revision=1, reviewer="chris"
+        issue["id"], expected_revision=1, reviewer="preview-operator"
     )
-    editorial.approve_issue(issue["id"], approver="chris", expected_revision=1)
+    editorial.approve_issue(issue["id"], approver="preview-operator", expected_revision=1)
     job = enqueue_newsletter_export(
         editorial, issue["id"], connector_account_id=beehiiv["id"]
     )
@@ -537,7 +537,7 @@ def test_service_runtime_executes_queued_read_only_health_probe(tmp_path):
         lambda account: RecordingTransport(account["connector_type"], calls),
     )
     check = service.health_store.trigger(
-        brand["id"], actor="chris", connector_account_id=rss["id"],
+        brand["id"], actor="preview-operator", connector_account_id=rss["id"],
     )[0]
     completed_job = service.run_once()
 

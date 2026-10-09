@@ -32,7 +32,7 @@ def test_dispatch_and_engagement_snapshots_capture_complete_immutable_scope(tmp_
         "scheduled_for": "2026-09-03T12:00:00+00:00",
     }, brand_id="brand-1")
     dispatcher.submit_for_approval(post.id, actor="writer")
-    approved = dispatcher.approve(post.id, revision=1, approver="chris")
+    approved = dispatcher.approve(post.id, revision=1, approver="preview-operator")
     snapshot = snapshots.capture_dispatch(approved)
     assert {
         "brand_id": snapshot["brand_id"], "account_ref": snapshot["account_ref"],
@@ -42,7 +42,7 @@ def test_dispatch_and_engagement_snapshots_capture_complete_immutable_scope(tmp_
     } == {
         "brand_id": "brand-1", "account_ref": "account-1", "action_type": "post",
         "destination": "x:public", "intended_schedule": "2026-09-03T12:00:00+00:00",
-        "revision": 1, "approver": "chris",
+        "revision": 1, "approver": "preview-operator",
     }
     assert snapshot["material_fingerprint"].startswith("sha256:")
     assert snapshot["approved_at"] == "2026-09-02T12:00:00+00:00"
@@ -56,7 +56,7 @@ def test_dispatch_and_engagement_snapshots_capture_complete_immutable_scope(tmp_
 
     reply = dispatcher.create("x", {"body": "Reply", "reply_to_post_id": "123"}, brand_id="brand-1")
     dispatcher.submit_for_approval(reply.id, actor="writer")
-    reply = dispatcher.approve(reply.id, revision=1, approver="chris")
+    reply = dispatcher.approve(reply.id, revision=1, approver="preview-operator")
     reply_snapshot = snapshots.capture_dispatch(reply)
     assert reply_snapshot["resource_type"] == "engagement_action"
     assert reply_snapshot["action_type"] == "reply"
@@ -99,7 +99,7 @@ def test_reconciler_invalidates_snapshot_after_direct_canonical_edit(tmp_path):
     dispatcher = GovernedDispatcher(SQLiteDispatchStore(database))
     post = dispatcher.create("x", {"body": "Approved body"}, brand_id="brand-1")
     dispatcher.submit_for_approval(post.id, actor="writer")
-    post = dispatcher.approve(post.id, revision=1, approver="chris")
+    post = dispatcher.approve(post.id, revision=1, approver="preview-operator")
     snapshots = ApprovalSnapshotStore(database)
     evidence = snapshots.capture_dispatch(post)
 

@@ -66,7 +66,7 @@ def test_sources_and_performance_are_brand_scoped_and_read_only_first():
         assert store.row(
             "SELECT actor FROM beehiiv_assisted_pull_audit WHERE task_id=? AND action='requested'",
             (pull.json()["id"],),
-        )["actor"] == "chris"
+        )["actor"] == "preview-operator"
 
         store.insert("performance_records", {
             "brand_id": points["id"], "channel": "x",
