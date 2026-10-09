@@ -61,7 +61,7 @@ def test_preview_binds_evidence_and_guideline_then_confirmation_saves_inert_line
         )
         assert confirmed.status_code == 200
         result = confirmed.json()
-        assert result["status"] == "confirmed" and result["confirmed_by"] == "chris"
+        assert result["status"] == "confirmed" and result["confirmed_by"] == "preview-operator"
         campaign = store.row("SELECT * FROM campaigns WHERE id=?", (result["result"]["campaign_id"],))
         post = store.row("SELECT * FROM posts WHERE id=?", (result["result"]["x_post_id"],))
         issue = store.row("SELECT * FROM newsletter_issues WHERE id=?", (result["result"]["newsletter_issue_id"],))

@@ -12,11 +12,11 @@ vi.mock('../src/state/Toast', () => ({ useToast: () => ({ notify: mocks.notify }
 import Guidelines from '../src/pages/Guidelines'
 
 const version1 = { id: 'v1', guideline_id: 'g1', version: 1, instructions: 'Write in the brand voice. Open with “Hey,” and close with “— The Team”.', rules: { minimum_words: 750, operator_checklist: ['one_thesis'] }, source_ref: 'https://example.test/house-style', change_reason: 'Seed house style.', created_by: 'system', content_fingerprint: 'sha256:one', created_at: '2026-09-01T12:00:00Z' }
-const version2 = { ...version1, id: 'v2', version: 2, instructions: `${version1.instructions} Include a useful decision.`, change_reason: 'Add decision support.', created_by: 'chris', content_fingerprint: 'sha256:two', created_at: '2026-09-03T12:00:00Z' }
+const version2 = { ...version1, id: 'v2', version: 2, instructions: `${version1.instructions} Include a useful decision.`, change_reason: 'Add decision support.', created_by: 'preview-operator', content_fingerprint: 'sha256:two', created_at: '2026-09-03T12:00:00Z' }
 const guideline = { id: 'g1', brand_id: 'b1', content_type: 'newsletter', channel: 'beehiiv', name: 'Demo Brand newsletter house style', status: 'active', active_version_id: 'v1', created_at: '2026-09-01T12:00:00Z', updated_at: '2026-09-03T12:00:00Z', versions: [version2, version1], active_version: version1 }
 
 beforeEach(() => {
-  vi.clearAllMocks(); mocks.list.mockResolvedValue([guideline]); mocks.audit.mockResolvedValue([{ sequence: 1, guideline_id: 'g1', version_id: 'v1', action: 'activated', actor: 'chris', reason: 'Use reviewed house style.', details: {}, at: '2026-09-01T12:00:00Z' }]); mocks.createVersion.mockResolvedValue(guideline); mocks.activate.mockResolvedValue({ ...guideline, active_version_id: 'v2', active_version: version2 })
+  vi.clearAllMocks(); mocks.list.mockResolvedValue([guideline]); mocks.audit.mockResolvedValue([{ sequence: 1, guideline_id: 'g1', version_id: 'v1', action: 'activated', actor: 'preview-operator', reason: 'Use reviewed house style.', details: {}, at: '2026-09-01T12:00:00Z' }]); mocks.createVersion.mockResolvedValue(guideline); mocks.activate.mockResolvedValue({ ...guideline, active_version_id: 'v2', active_version: version2 })
 })
 afterEach(cleanup)
 

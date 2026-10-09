@@ -296,7 +296,7 @@ def test_provider_kill_switch_invalidates_claim_and_prevents_every_projection(
         database, EditorialStore(database),
         GovernedDispatcher(SQLiteDispatchStore(database)), clock=lambda: NOW,
     )
-    controls.set_control(brand["id"], "beehiiv", enabled=False, actor="chris")
+    controls.set_control(brand["id"], "beehiiv", enabled=False, actor="preview-operator")
 
     with pytest.raises(BeehiivAssistedPullError, match="valid active claim"):
         tasks.submit_receipt(
@@ -349,7 +349,7 @@ def test_submit_and_concurrent_kill_switch_are_serialized_in_one_writer_transact
 
     def disable():
         results["control"] = controls.set_control(
-            brand["id"], "beehiiv", enabled=False, actor="chris",
+            brand["id"], "beehiiv", enabled=False, actor="preview-operator",
         )
         disabled.set()
 

@@ -62,7 +62,7 @@ def test_terminal_jobs_deduplicate_without_leaking_and_preserve_governed_status(
     assert "RuntimeError" in item["actual_behavior"]
 
     feedback.start(item["id"], assignee="operator", actor="operator")
-    feedback.resolve(item["id"], actor="chris", resolution_evidence="Connection repaired")
+    feedback.resolve(item["id"], actor="preview-operator", resolution_evidence="Connection repaired")
     assert fail("export-cycle-2")["status"] == "needs_attention"
     recurrence = feedback.get(item["id"])
     assert recurrence["occurrence_count"] == 2

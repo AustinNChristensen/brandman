@@ -74,7 +74,7 @@ def test_rest_drafts_recommends_and_human_accepts_without_publishing(tmp_path, m
             f"/api/experiments/{experiment['id']}/recommendations/{recommendation['id']}/accept"
         ).json()
         assert accepted["status"] == "completed"
-        assert accepted["recommendations"][0]["accepted_by"] == "chris"
+        assert accepted["recommendations"][0]["accepted_by"] == "preview-operator"
         assert all(item["post_status"] == "draft" for item in accepted["variants"])
 
 
