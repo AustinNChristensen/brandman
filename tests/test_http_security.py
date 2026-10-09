@@ -78,7 +78,10 @@ def test_operator_navigation_gets_clear_login_page_and_cookie_session(monkeypatc
 
     assert redirect.status_code == 303 and redirect.headers["location"] == "/login?next=%2Fdocs"
     assert login.status_code == 200
-    assert "The BrandOS service is running" in login.text
+    assert "BrandOS is in private preview" in login.text
+    assert "ask the person who invited you" in login.text
+    assert "local" not in login.text.lower()
+    assert PASSWORD not in login.text
     assert wrong.status_code == 401 and "not accepted" in wrong.text
     assert PASSWORD not in wrong.text
     assert accepted.status_code == 303 and accepted.headers["location"] == "/app"
