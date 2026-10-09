@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { dispatch, newsletters } from '../api/endpoints'
-import type { DispatchAudit, LifecycleEvent } from '../api/types'
+import { brands as brandsApi, dispatch, newsletters } from '../api/endpoints'
+import { optional } from '../api/client'
+import type { Brand, DispatchAudit, LifecycleEvent } from '../api/types'
 import { useLoad } from '../api/useLoad'
 import { Icon } from '../components/icons'
 import { Shell } from '../components/Shell'
@@ -9,18 +10,19 @@ import { Bar, BrandTag, Card, CardHeader, Chip, Empty, ErrorState, Kpi, Loading 
 import { brandColor } from '../lib/brands'
 import { addDays, money, parseDate, relTime, titleCase } from '../lib/format'
 import { useBrands } from '../state/BrandContext'
-import { metersFrom, useWorkspace, type BrandBundle } from '../state/useWorkspace'
+import { metersFrom, useWorkspace } from '../state/useWorkspace'
 
-interface NeedsYou { key: string; brand: BrandBundle['brand']; title: string; kind: string; note: { text: string; kind: 'ok' | 'human' }; updated: string; to: string }
+interface NeedsYou { key: string; brand: Brand; title: string; kind: string; note: { text: string; kind: 'ok' | 'human' }; updated: string; to: string }
 interface Activity { key: string; who: string; human: boolean; what: string; at: string }
 
 const AGENT_HINT = /agent|system|bot|writer|research|dispatch|reconciler|scheduler|api/i
 
 export default function Overview() {
-  const ws = useWorkspace(['awaiting', 'newsletters', 'calendar', 'usage', 'workflow', 'scorecard'])
+  const ws = useWorkspace(['awaiting', 'newsletters', 'calendar'])
+  const usage = useWorkspace(['usage'])
   const bundles = ws.data
-  const meters = metersFrom(bundles)
-  const { selected } = useBrands()
+  const meters = metersFrom(bundles?.map((b) => ({ ...b, usage: usage.data?.find((u) => u.brand.id === b.brand.id)?.usage ?? null })) ?? null)
+  const { selected, active } = useBrands()
   const q = selected ? `?brand=${encodeURIComponent(selected)}` : ''
 
   const needs = useMemo<NeedsYou[]>(() => {
@@ -58,12 +60,12 @@ export default function Overview() {
         if (c.status === 'scheduled' && d >= now && d <= weekAhead) scheduled++
         if (c.status === 'published' && d >= weekBack && d <= now) published++
       }
-      for (const t of b.usage?.totals ?? []) if (t.estimated_cost !== null && t.currency === 'USD') { spend += Number(t.estimated_cost); priced = true }
+      for (const t of usage.data?.find((u) => u.brand.id === b.brand.id)?.usage?.totals ?? []) if (t.estimated_cost !== null && t.currency === 'USD') { spend += Number(t.estimated_cost); priced = true }
     }
     const oldest = needs[0] ? relTime(needs[0].updated) : null
-    const unpriced = bundles.reduce((n, b) => n + (b.usage?.unpriced_request_count ?? 0), 0)
+    const unpriced = (usage.data ?? []).reduce((n, b) => n + (b.usage?.unpriced_request_count ?? 0), 0)
     return { scheduled, published, spend, priced, oldest, unpriced }
-  }, [bundles, needs])
+  }, [bundles, needs, usage.data])
 
   const activity = useLoad<Activity[]>(async () => {
     if (!bundles) return []
@@ -85,7 +87,10 @@ export default function Overview() {
     <Shell title="Overview" crumb={new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} meters={meters}
       right={<Chip kind="agent" icon="lock">human approval required</Chip>}>
       {ws.error && <ErrorState message={ws.error} retry={ws.reload} />}
-      {ws.loading && !bundles && <Loading />}
+      {ws.loading && !bundles && <Loading label="Loading approval queue and scheduled content…" />}
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, active.length))}, minmax(0, 1fr))` }}>
+        {active.map((brand) => <BrandCard key={brand.id} brand={brand} />)}
+      </div>
       {bundles && stats && (
         <>
           <div className="grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
@@ -112,13 +117,10 @@ export default function Overview() {
                   </tbody></table>
                 )}
               </Card>
-              <div className="grid" style={{ gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, bundles.length))}, minmax(0, 1fr))` }}>
-                {bundles.map((b) => <BrandCard key={b.brand.id} bundle={b} q={q} />)}
-              </div>
             </div>
             <Card>
               <CardHeader icon="bot" iconColor="var(--accent)" title="Activity" sub="audit trail" />
-              {activity.loading && <Loading />}
+              {activity.loading && <Loading label="Loading recent recorded actions…" />}
               {activity.data && activity.data.length === 0 && <Empty>No recorded actions yet.</Empty>}
               {activity.data?.map((a) => (
                 <div className="feed-item" key={a.key}>
@@ -135,12 +137,20 @@ export default function Overview() {
   )
 }
 
-function BrandCard({ bundle, q }: { bundle: BrandBundle; q: string }) {
-  const { brand, workflow, scorecard } = bundle
+function BrandCard({ brand }: { brand: Brand }) {
+  const details = useLoad(async () => {
+    const [workflow, scorecard] = await Promise.all([brandsApi.workflow(brand.slug), optional(brandsApi.scorecard(brand.slug))])
+    return { workflow, scorecard }
+  }, [brand.slug])
+  const { workflow, scorecard } = details.data ?? {}
+  const q = `?brand=${encodeURIComponent(brand.slug)}`
   const color = brandColor(brand.slug)
   return (
     <Card style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div className="row" style={{ justifyContent: 'space-between' }}><BrandTag brand={brand} /><Link to={`/guidelines${q || '?'}${q ? '&' : ''}brand=${brand.slug}`} className="meta">guidelines</Link></div>
+      <div className="row" style={{ justifyContent: 'space-between' }}><BrandTag brand={brand} /><Link to={`/guidelines${q}`} className="meta">guidelines</Link></div>
+      {details.loading && !details.data && <Loading label={`Loading mission and workflow for ${brand.name}…`} />}
+      {details.error && <ErrorState message={`${brand.name}: ${details.error}`} retry={details.reload} />}
+      {details.data && !scorecard && <div className="meta">No mission scorecard yet. <Link to={`/planner${q}`}>Review this brand's plan</Link>.</div>}
       {workflow && (
         <div className="stack" style={{ gap: 6 }}>
           <div className="row" style={{ justifyContent: 'space-between' }} >
