@@ -1491,7 +1491,11 @@ def dashboard_v2(path: str = "") -> FileResponse:
 
 @app.get("/api/brands")
 def list_brands() -> list[dict]:
-    return store.rows("SELECT * FROM brands ORDER BY name")
+    brands = store.rows(
+        "SELECT brands.*, EXISTS(SELECT 1 FROM missions WHERE missions.brand_id=brands.id "
+        "AND missions.status='active') AS has_active_mission FROM brands ORDER BY name"
+    )
+    return [{**brand, "has_active_mission": bool(brand["has_active_mission"])} for brand in brands]
 
 
 @app.post("/api/brands", status_code=201)
