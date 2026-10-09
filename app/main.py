@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
 from . import store
+from .principal import PREVIEW_PRINCIPAL
 from .attribution_store import AttributionStore, AttributionStoreError
 from .approval_snapshots import ApprovalSnapshotStore
 from .beehiiv_runtime import (
@@ -266,7 +267,6 @@ beehiiv_assisted_pull_store: BeehiivAssistedPullStore = _LazyService("beehiiv_as
 beehiiv_lifecycle_projector: BeehiivNewsletterLifecycleProjector = _LazyService("beehiiv_lifecycle_projector")  # type: ignore[assignment]
 publishing_planner: PublishingPlanner = _LazyService("publishing_planner")  # type: ignore[assignment]
 operator_proposal_store: OperatorProposalStore = _LazyService("operator_proposal_store")  # type: ignore[assignment]
-PREVIEW_PRINCIPAL = "chris"
 SYSTEM_QUEUE_ACTOR = "system:rest-queue"
 
 
@@ -316,7 +316,7 @@ async def preview_password_gate(request: Request, call_next):
                 headers={"WWW-Authenticate": 'Basic realm="Brand OS preview"'},
             )
         return harden_response(response, request)
-    # The preview credential is provisioned for Chris. Approval identity is set by
+    # The preview credential is shared and carries no personal identity, so the generic preview operator is used. Approval identity is set by
     # the authentication boundary and is never accepted from request content.
     request.state.principal = PREVIEW_PRINCIPAL
     return harden_response(await call_next(request), request)

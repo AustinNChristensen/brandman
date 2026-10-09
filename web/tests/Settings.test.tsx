@@ -13,8 +13,8 @@ import Settings from '../src/pages/Settings'
 
 const data = {
   brand: { id: 'b1', slug: 'demo-brand', name: 'Demo Brand', mission: 'Make pricing practical.', voice: 'Clear and specific.', compliance_rules: 'Verify material claims.', approval_policy: 'human_approval_required', created_at: '', updated_at: '' },
-  audit: [{ sequence: 1, brand_id: 'b1', actor: 'chris', reason: 'Clarify mission', before: {}, after: {}, at: '2026-09-03T15:00:00Z' }],
-  rate_cards: [{ id: 'r1', brand_id: 'b1', version: 'customer-2026', provider: 'beehiiv', method: 'GET', endpoint_pattern: '/v2/*', billable_category: 'read', unit_name: 'request', unit_price: '0.002', currency: 'USD', effective_at: '2026-09-03T00:00:00Z', configured_by: 'chris', created_at: '' }],
+  audit: [{ sequence: 1, brand_id: 'b1', actor: 'preview-operator', reason: 'Clarify mission', before: {}, after: {}, at: '2026-09-03T15:00:00Z' }],
+  rate_cards: [{ id: 'r1', brand_id: 'b1', version: 'customer-2026', provider: 'beehiiv', method: 'GET', endpoint_pattern: '/v2/*', billable_category: 'read', unit_name: 'request', unit_price: '0.002', currency: 'USD', effective_at: '2026-09-03T00:00:00Z', configured_by: 'preview-operator', created_at: '' }],
   orchestration: { as_of: '2026-09-03T15:00:00Z', schedules: { total: 1, enabled: 1, due: 1 }, pending_decisions: 0, latest_tick: null },
   schedules: [{ schedule_key: 'connector/bee-1/posts', brand_id: 'b1', connector_account_id: 'bee-1', name: 'Sync newsletter metadata', action_type: 'connector.sync', interval_seconds: 900, enabled: true, next_run_at: '2026-09-03T15:00:00Z', last_run_at: null, last_decision: null, payload: {} }],
 }

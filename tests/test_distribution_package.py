@@ -67,7 +67,7 @@ def package_input(source_id):
             {"body": "Before applying, compare the sourced terms and tradeoffs.",
              "role": "follow_up", "hook": "Decision support", "cta": "Review terms"},
         ],
-        "idempotency_key": "issue-1-distribution-r1", "actor": "chris",
+        "idempotency_key": "issue-1-distribution-r1", "actor": "preview-operator",
     }
 
 
@@ -385,7 +385,7 @@ def test_x_artifact_edits_invalidate_approval_and_approval_is_revision_exact(tmp
     fact_check_anchor(editorial, issue)
     item_id = package["artifacts"][0]["dispatch_item_id"]
     dispatcher.submit_for_approval(item_id, actor="writer")
-    dispatcher.approve(item_id, revision=1, approver="chris")
+    dispatcher.approve(item_id, revision=1, approver="preview-operator")
 
     edited = dispatcher.edit(item_id, {"body": "A corrected, source-backed X draft."}, actor="writer")
 
@@ -394,7 +394,7 @@ def test_x_artifact_edits_invalidate_approval_and_approval_is_revision_exact(tmp
     assert edited.approval is None
     dispatcher.submit_for_approval(item_id, actor="writer")
     with pytest.raises(ValueError, match="revision is no longer current"):
-        dispatcher.approve(item_id, revision=1, approver="chris")
+        dispatcher.approve(item_id, revision=1, approver="preview-operator")
 
 
 def test_distribution_rest_and_mcp_surfaces_are_draft_only(tmp_path, monkeypatch):
@@ -424,7 +424,7 @@ def test_distribution_rest_and_mcp_surfaces_are_draft_only(tmp_path, monkeypatch
         )
         assert created.status_code == 201
         package = created.json()
-        assert package["created_by"] == "chris"
+        assert package["created_by"] == "preview-operator"
         assert all(item["dispatch"]["status"] == "draft" for item in package["artifacts"])
         assert package["lineage"]["primary_evidence"]["id"] == source["id"]
         assert package["discovery_sources"][0]["source_id"] == source["id"]
@@ -498,7 +498,7 @@ def test_newsletter_completion_api_fails_closed_after_anchor_revision_changes(
         )
         assert revised.status_code == 200
         assert revised.json()["current_revision"] == 2
-        assert revised.json()["content"]["created_by"] == "chris"
+        assert revised.json()["content"]["created_by"] == "preview-operator"
         stale = client.get(f"/api/distribution-packages/{package['id']}", auth=auth).json()
         assert stale["status"] == "stale"
         assert stale["governance"]["blockers"][0]["code"] == "anchor_revision_stale"
@@ -626,13 +626,13 @@ def test_membership_moves_are_same_brand_and_audited(tmp_path, monkeypatch):
     handoff = handoffs.ensure_for_brand(brand["id"])[0]
 
     moved = packages.move_membership(
-        member["id"], second["id"], actor="chris", reason="Use in the follow-up campaign",
+        member["id"], second["id"], actor="preview-operator", reason="Use in the follow-up campaign",
     )
 
     assert moved["campaign_id"] == second["campaign_id"]
     audit = packages.membership_audit(second["id"])
     assert audit[-1]["action"] == "moved"
-    assert audit[-1]["actor"] == "chris"
+    assert audit[-1]["actor"] == "preview-operator"
     assert audit[-1]["reason"] == "Use in the follow-up campaign"
     assert not any(
         edge["from_membership_id"] == member["id"] or edge["to_membership_id"] == member["id"]
@@ -651,7 +651,7 @@ def test_membership_moves_are_same_brand_and_audited(tmp_path, monkeypatch):
 
     with pytest.raises(DistributionPackageError, match="already has a primary anchor"):
         packages.move_membership(
-            first["anchor"]["id"], second["id"], actor="chris",
+            first["anchor"]["id"], second["id"], actor="preview-operator",
             reason="This would create two primary anchors",
         )
 

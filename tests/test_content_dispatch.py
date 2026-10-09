@@ -83,7 +83,7 @@ def test_canonical_body_edit_advances_revision_and_invalidates_approval(tmp_path
     service = CanonicalPostDispatchService(dispatcher)
     item = service.create_from_post(post["id"])
     dispatcher.submit_for_approval(item.id, actor="agent")
-    dispatcher.approve(item.id, revision=1, approver="chris")
+    dispatcher.approve(item.id, revision=1, approver="preview-operator")
     with store.connection() as connection:
         connection.execute(
             "UPDATE posts SET body=?, updated_at=? WHERE id=?",
@@ -155,7 +155,7 @@ def test_attributed_payload_linked_duplicate_preserves_tracking_and_invalidates_
     service = CanonicalPostDispatchService(dispatcher)
     canonical = service.create_from_post(post["id"])
     dispatcher.submit_for_approval(canonical.id, actor="agent")
-    dispatcher.approve(canonical.id, revision=1, approver="chris")
+    dispatcher.approve(canonical.id, revision=1, approver="preview-operator")
     tracked_url = (
         "https://example.test/story?utm_source=x&utm_medium=organic-social&utm_campaign="
         + post["campaign_id"] + "&utm_content=" + post["id"] + "&utm_cta=read"

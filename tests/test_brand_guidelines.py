@@ -86,7 +86,7 @@ def approve(editorial: EditorialStore, snapshots: ApprovalSnapshotStore, issue: 
     proposed = snapshots.proposed_newsletter(editorial.get_issue(issue["id"]))
     approved, evidence = snapshots.approve_newsletter(
         issue["id"], revision=issue["current_revision"],
-        review_token=proposed["review_token"], approver="chris",
+        review_token=proposed["review_token"], approver="preview-operator",
     )
     assert checked["guideline_version_id"] == proposed["guideline_version_id"]
     return approved, evidence
@@ -237,7 +237,7 @@ def test_authenticated_guideline_and_policy_operator_apis(tmp_path, monkeypatch)
         assert activated.status_code == 200
         audit = client.get(f"/api/brand-guidelines/{guideline['id']}/audit").json()
         assert [item["action"] for item in audit] == ["created", "activated", "version_created", "activated"]
-        assert all(item["actor"] == "chris" for item in audit)
+        assert all(item["actor"] == "preview-operator" for item in audit)
         assert client.get("/api/brands/demo-brand/guidelines").json()[0]["brand_id"] == brand["id"]
 
         editorial = EditorialStore(store.DATA_PATH, clock=lambda: NOW)
@@ -250,4 +250,4 @@ def test_authenticated_guideline_and_policy_operator_apis(tmp_path, monkeypatch)
             "revision": 1, "reason": "A time-sensitive operator-requested alert needs concise treatment.",
         })
         assert quick.status_code == 201
-        assert quick.json()["actor"] == "chris"
+        assert quick.json()["actor"] == "preview-operator"

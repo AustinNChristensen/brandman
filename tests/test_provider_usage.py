@@ -26,7 +26,7 @@ def test_metered_transport_records_payload_free_request_and_operator_price(tmp_p
         version="operator-2026-09", provider="x", method="POST",
         endpoint_pattern="https://api.x.com/2/tweets", unit_name="request",
         unit_price="0.0125", currency="USD",
-        effective_at="2026-09-01T00:00:00Z", actor="chris",
+        effective_at="2026-09-01T00:00:00Z", actor="preview-operator",
         billable_category="post.create_with_url",
     )
     transport = MeteredTransport(

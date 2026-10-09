@@ -26,7 +26,7 @@ def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(mo
             f"/api/brands/demo-brand/product-feedback/{item['id']}/comments",
             json={"body": "Reproduced from the operator console."},
         )
-        assert comment.json()["actor"] == "chris"
+        assert comment.json()["actor"] == "preview-operator"
         started = client.post(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/start",
             json={"assignee": "builder", "implementation_notes": "Working on the fix."},
@@ -36,12 +36,12 @@ def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(mo
             f"/api/brands/demo-brand/product-feedback/{item['id']}/resolve",
             json={"resolution_evidence": "Focused regression passes."},
         ).json()
-        assert resolved["resolved_by"] == "chris"
+        assert resolved["resolved_by"] == "preview-operator"
         verified = client.post(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/verify",
             json={"evidence": "Operator verified the workflow."},
         ).json()
-        assert verified["verified_by"] == "chris"
+        assert verified["verified_by"] == "preview-operator"
         reopened = client.post(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/reopen",
             json={"reason": "The failure recurred."},
@@ -54,9 +54,9 @@ def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(mo
         history = client.get(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/history"
         ).json()
-        assert detail["comments"][0]["actor"] == "chris"
+        assert detail["comments"][0]["actor"] == "preview-operator"
         assert history[0]["actor"] == "demo-brand-agent"
-        assert {event["actor"] for event in history[1:]} == {"chris"}
+        assert {event["actor"] for event in history[1:]} == {"preview-operator"}
 
         client.post("/api/brands", json={
             "slug": "other-brand", "name": "Other", "mission": "Other",
