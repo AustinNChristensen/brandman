@@ -137,6 +137,9 @@ textarea.input { resize: vertical; line-height: 1.5; }
 .pcard .pc-title { color: var(--text); font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .pcard .pc-meta { display: flex; align-items: center; gap: 6px; opacity: .85; text-transform: capitalize; }
 .mobile-bar { display: none; }
+.content-toolbar { justify-content: space-between; align-items: flex-start; }
+.content-actions { flex-wrap: wrap; justify-content: flex-end; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
 
 /* integrations */
 .integrations-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -210,6 +213,8 @@ textarea.input { resize: vertical; line-height: 1.5; }
   .mobile-nav a { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border-radius: var(--radius-sm); color: var(--muted); font-size: 12px; white-space: nowrap; }
   .mobile-nav a.on { background: var(--accent-soft); color: var(--accent-ink); }
   .content { padding: 14px; }
+  .content-toolbar { flex-direction: column; align-items: stretch; }
+  .content-actions { justify-content: flex-start; }
   .top { padding: 10px 14px; flex-wrap: wrap; }
   .top .cmd { display: none; }
   .plan-grid, .plan-lane { min-width: 900px; }
