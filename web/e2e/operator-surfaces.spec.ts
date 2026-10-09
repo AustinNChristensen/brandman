@@ -133,6 +133,7 @@ for (const viewport of [{ name: 'desktop', width: 1440, height: 1000 }, { name: 
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByText(/No AI writing happens here/)).toBeVisible()
     await expect(dialog.getByText(/Writing instructions do not rewrite the source text/)).toBeVisible()
+    await expect(dialog.getByText(`E2E governed source ${viewport.name}`, { exact: true })).toBeVisible()
     const beforePath = test.info().outputPath(`draft-structure-${viewport.name}.png`)
     await page.screenshot({ path: beforePath })
     await test.info().attach('draft structure input', { path: beforePath, contentType: 'image/png' })
