@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -65,6 +65,42 @@ describe('Agents and live readiness', () => {
     expect(screen.getAllByText('Provider receipt proof is incomplete.')).toHaveLength(2)
     expect(screen.getByText(/Do not repeat the provider action/)).toBeInTheDocument()
     expect(screen.getByText('heartbeat needed')).toBeInTheDocument()
+  })
+
+  it.each([
+    { account_connected: false }, { configured: false }, { healthy: false },
+    { missing_scopes: ['write'] }, { code_ready: false },
+    { missing_provider_receipts: ['x'] }, { status: 'blocked' },
+  ])('never presents unmet provider prerequisites as proven: %j', async (missing) => {
+    mocks.readiness.mockResolvedValue({ ready: true,
+      summary: { code_ready_percent: 100, live_ready_percent: 100,
+        connector_accounts_ready: 1, connector_accounts_total: 1 },
+      checks: [{ id: 'x_publish', label: 'X publishing', status: 'ready', code_ready: true,
+        configured: true, healthy: true, account_connected: true, required_for_live: true,
+        detail: 'Provider requirements', actions: ['Connect and verify the intended account.'],
+        ...missing }],
+    })
+    render(<MemoryRouter><Agents /></MemoryRouter>)
+    const proof = (await screen.findByText('Live requirements proven', { selector: '.card-h *' })).closest('.card')!
+    expect(within(proof as HTMLElement).queryByText('proven', { exact: true })).not.toBeInTheDocument()
+    expect(screen.queryByText('live requirements met')).not.toBeInTheDocument()
+    expect(screen.getByText('Connection or proof incomplete')).toBeInTheDocument()
+    expect(within(proof as HTMLElement).getByText(/Next: Connect and verify/)).toBeInTheDocument()
+  })
+
+  it('identifies fully proven requirements separately from implemented code', async () => {
+    mocks.readiness.mockResolvedValue({ ready: true,
+      summary: { code_ready_percent: 100, live_ready_percent: 100,
+        connector_accounts_ready: 1, connector_accounts_total: 1 },
+      checks: [{ id: 'x_publish', label: 'X publishing', status: 'ready', code_ready: true,
+        configured: true, healthy: true, account_connected: true, required_for_live: true,
+        detail: 'Exact account evidence present', actions: [] }],
+    })
+    render(<MemoryRouter><Agents /></MemoryRouter>)
+    expect(await screen.findByText('live requirements met')).toBeInTheDocument()
+    expect(screen.getByText('implemented', { exact: true })).toBeInTheDocument()
+    expect(screen.getByText('proven', { exact: true })).toBeInTheDocument()
+    expect(screen.getByText('1/1')).toBeInTheDocument()
   })
 
   it('uses only supported configure, heartbeat, and provider-control mutations', async () => {

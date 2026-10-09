@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { agents as api, execution } from '../api/endpoints'
 import { describe, useLoad } from '../api/useLoad'
-import type { Brand, ExecutionAgent, ExecutionConsole, ExecutionControls, LiveReadiness } from '../api/types'
+import type { Brand, ExecutionAgent, ExecutionConsole, ExecutionControls, LiveReadiness, ReadinessCheck } from '../api/types'
 import { Icon } from '../components/icons'
 import { Shell } from '../components/Shell'
 import { Bar, BrandTag, Card, CardHeader, Chip, Empty, ErrorState, Loading } from '../components/ui'
@@ -10,6 +10,25 @@ import { useBrands } from '../state/BrandContext'
 import { useToast } from '../state/Toast'
 
 interface AgentBundle { brand: Brand; readiness: LiveReadiness; console: ExecutionConsole; controls: ExecutionControls }
+
+function connected(check: ReadinessCheck) {
+  return check.code_ready && check.configured && check.account_connected === true && !(check.missing_scopes?.length)
+}
+
+function proven(check: ReadinessCheck) {
+  return check.status === 'ready' && check.code_ready && check.configured && check.healthy
+    && check.account_connected !== false && !(check.missing_scopes?.length)
+    && !(check.missing_provider_receipts?.length)
+}
+
+function requiredChecks(readiness: LiveReadiness) {
+  return readiness.checks.filter((check) => check.required_for_live !== false)
+}
+
+function proofPercent(readiness: LiveReadiness) {
+  const checks = requiredChecks(readiness)
+  return checks.length ? checks.filter(proven).length / checks.length * 100 : 0
+}
 
 function recoveryItems(console: ExecutionConsole) {
   const tasks = console.tasks
@@ -52,7 +71,9 @@ export default function Agents() {
   }
   const totals = useMemo(() => load.data ? {
     code: Math.round(load.data.reduce((sum, item) => sum + item.readiness.summary.code_ready_percent, 0) / load.data.length),
-    live: Math.round(load.data.reduce((sum, item) => sum + item.readiness.summary.live_ready_percent, 0) / load.data.length),
+    live: Math.round(load.data.reduce((sum, item) => sum + proofPercent(item.readiness), 0) / load.data.length),
+    connected: load.data.reduce((sum, item) => sum + item.readiness.checks.filter((check) => connected(check)).length, 0),
+    connectionTotal: load.data.reduce((sum, item) => sum + item.readiness.checks.filter((check) => typeof check.account_connected === 'boolean').length, 0),
     readyAgents: load.data.reduce((sum, item) => sum + item.console.execution_agents.filter((agent) => agent.ready_to_claim).length, 0),
   } : null, [load.data])
 
@@ -61,9 +82,10 @@ export default function Agents() {
       {load.error && <ErrorState message={load.error} retry={load.reload} />}
       {load.loading && !load.data && <Loading />}
       {load.data && totals && <>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-          <Summary label="Code readiness" value={`${totals.code}%`} pct={totals.code} note="Product capabilities implemented" />
-          <Summary label="Provider proof" value={`${totals.live}%`} pct={totals.live} note="Required live evidence present" />
+        <div className="grid agents-summary">
+          <Summary label="Capabilities implemented" value={`${totals.code}%`} pct={totals.code} note="Built in code; connection and live proof are separate" />
+          <Summary label="Provider connections" value={`${totals.connected}/${totals.connectionTotal}`} pct={totals.connectionTotal ? totals.connected / totals.connectionTotal * 100 : 0} note="Provider capabilities with a qualifying account; health and proof checked separately" />
+          <Summary label="Live requirements proven" value={`${totals.live}%`} pct={totals.live} note="Required checks with setup, health, and evidence present" />
           <Summary label="Agents ready to claim" value={totals.readyAgents} pct={totals.readyAgents ? 100 : 0} note="Heartbeat fresh within 15 minutes" />
         </div>
         {load.data.map((bundle) => <BrandAgents key={bundle.brand.id} bundle={bundle} busy={busy}
@@ -86,14 +108,17 @@ function BrandAgents({ bundle, busy, agentId, channel, setAgentId, setChannel, c
 }) {
   const { brand, readiness, console, controls } = bundle
   const recovery = recoveryItems(console)
-  const codeChecks = readiness.checks.filter((check) => check.code_ready)
-  const proofChecks = readiness.checks.filter((check) => check.required_for_live !== false)
+  const codeChecks = readiness.checks
+  const proofChecks = requiredChecks(readiness)
+  const connectionChecks = readiness.checks.filter((check) => typeof check.account_connected === 'boolean')
+  const liveReady = readiness.ready && proofChecks.length > 0 && proofChecks.every(proven)
   return <div className="stack" style={{ gap: 16, marginTop: 16 }}>
     <div className="row" style={{ justifyContent: 'space-between' }}><BrandTag brand={brand} />
-      <Chip kind={readiness.ready ? 'ok' : 'human'}>{readiness.ready ? 'live ready' : 'proof incomplete'}</Chip></div>
-    <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'start' }}>
-      <ReadinessCard title="Code readiness" subtitle="Built capability, independent of account state" checks={codeChecks} mode="code" />
-      <ReadinessCard title="Provider proof" subtitle="Accounts, health, receipts, and scheduler evidence" checks={proofChecks} mode="proof" />
+      <Chip kind={liveReady ? 'ok' : 'human'}>{liveReady ? 'live requirements met' : 'Connection or proof incomplete'}</Chip></div>
+    <div className="grid agents-readiness">
+      <ReadinessCard title="Capabilities implemented" subtitle="Implementation only; does not establish provider access" checks={codeChecks} mode="code" />
+      <ReadinessCard title="Provider connections" subtitle="Qualifying account access; health checked separately" checks={connectionChecks} mode="connection" />
+      <ReadinessCard title="Live requirements proven" subtitle="Connection, health, receipts, and scheduler evidence" checks={proofChecks} mode="proof" />
     </div>
     <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1.25fr) minmax(320px, .75fr)', alignItems: 'start' }}>
       <Card>
@@ -137,13 +162,13 @@ function BrandAgents({ bundle, busy, agentId, channel, setAgentId, setChannel, c
   </div>
 }
 
-function ReadinessCard({ title, subtitle, checks, mode }: { title: string; subtitle: string; checks: LiveReadiness['checks']; mode: 'code' | 'proof' }) {
+function ReadinessCard({ title, subtitle, checks, mode }: { title: string; subtitle: string; checks: LiveReadiness['checks']; mode: 'code' | 'connection' | 'proof' }) {
   return <Card><CardHeader icon={mode === 'code' ? 'layers' : 'checkcircle'} title={title} sub={subtitle} />
     <div className="card-b stack" style={{ gap: 10 }}>{checks.map((check) => {
-      const ready = mode === 'code' ? check.code_ready : check.status === 'ready'
+      const ready = mode === 'code' ? check.code_ready : mode === 'connection' ? connected(check) : proven(check)
       return <div key={check.id} className="check-row" style={{ alignItems: 'flex-start' }}><Icon name={ready ? 'check' : 'alert'} size={15} style={{ color: ready ? 'var(--ok)' : 'var(--human)' }} />
-        <div><div className="row"><b>{check.label}</b><Chip kind={ready ? 'ok' : 'human'}>{ready ? 'ready' : mode === 'code' ? 'not implemented' : 'needs proof'}</Chip></div>
-          <div className="meta">{check.detail}</div>{mode === 'proof' && !ready && check.actions.map((action) => <div className="meta" key={action}>Next: {action}</div>)}</div></div>
+        <div><div className="row"><b>{check.label}</b><Chip kind={ready ? 'ok' : 'human'}>{mode === 'code' ? (ready ? 'implemented' : 'not implemented') : ready ? (mode === 'connection' ? 'connected' : 'proven') : check.account_connected === false ? 'needs connection' : !check.configured ? 'needs setup' : !check.healthy ? 'needs health proof' : 'needs proof'}</Chip></div>
+          <div className="meta">{check.detail}</div>{mode === 'connection' && ready && <div className="meta">{check.healthy ? 'Health verified; live proof is separate.' : 'Health proof missing; provider use is not proven.'}</div>}{mode !== 'code' && !proven(check) && check.actions.map((action) => <div className="meta" key={action}>Next: {action}</div>)}</div></div>
     })}</div></Card>
 }
 
