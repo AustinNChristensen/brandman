@@ -1,4 +1,4 @@
-"""Safe, bounded local bootstrap for the Brand OS MVP."""
+"""Safe, bounded local bootstrap for the BrandMan MVP."""
 
 from __future__ import annotations
 
@@ -204,8 +204,8 @@ def _next_actions(report: dict[str, Any]) -> list[str]:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="brand-os-bootstrap",
-        description="Initialize Brand OS, run one bounded safe cycle, and report readiness.",
+        prog="brandman-bootstrap",
+        description="Initialize BrandMan, run one bounded safe cycle, and report readiness.",
     )
     parser.add_argument("--database", default=str(store.DATA_PATH))
     parser.add_argument("--slug", default="demo-brand")
@@ -245,7 +245,7 @@ def main(argv: list[str] | None = None) -> None:
         return
     readiness = report["readiness"]["summary"]
     print(
-        f"Brand OS bootstrap: {report['status']}\n"
+        f"BrandMan bootstrap: {report['status']}\n"
         f"Code ready: {readiness['code_ready_percent']}%\n"
         f"Live ready: {readiness['live_ready_percent']}%\n"
         f"Safe jobs processed: {report['worker']['jobs_processed']}"

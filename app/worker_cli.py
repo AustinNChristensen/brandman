@@ -1,4 +1,4 @@
-"""Bounded Brand OS worker command suitable for cron or a process supervisor."""
+"""Bounded BrandMan worker command suitable for cron or a process supervisor."""
 from __future__ import annotations
 
 import json

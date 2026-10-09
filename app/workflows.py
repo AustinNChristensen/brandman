@@ -1,4 +1,4 @@
-"""Structured LangChain workflows. Provider configuration stays outside Brand OS."""
+"""Structured LangChain workflows. Provider configuration stays outside BrandMan."""
 from __future__ import annotations
 
 from typing import Any, Protocol
@@ -28,7 +28,7 @@ class StructuredChatModel(Protocol):
 
 
 campaign_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are the content planner inside Brand OS. Use only the supplied canonical
+    ("system", """You are the content planner inside BrandMan. Use only the supplied canonical
 brand context and source material. Generate distinct, specific distribution angles.
 Never invent factual benefits, prices, deadlines, or claims. Flag uncertainty as a compliance check.
 The response must follow the requested structured schema."""),

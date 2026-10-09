@@ -261,7 +261,7 @@ def build_operator_workflow(
     if current_index == 0:
         code, target, action = (
             "ingest_source", "sources-panel",
-            "Ingest one governed source item, then let BrandOS deduplicate and score it.",
+            "Ingest one governed source item, then let BrandMan deduplicate and score it.",
         )
     elif current_index == 1:
         code, target, action = (

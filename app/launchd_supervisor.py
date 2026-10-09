@@ -116,7 +116,7 @@ def build_launchd_plist(
 def validate_launchd_plist(
     payload: Mapping[str, Any], *, allowed_profiles: set[str] | None = None,
 ) -> dict[str, Any]:
-    """Fail closed unless a plist is exactly a managed BrandOS worker."""
+    """Fail closed unless a plist is exactly a managed BrandMan worker."""
     label = _validate_label(str(payload.get("Label", "")))
     expected_keys = {
         "Label", "ProgramArguments", "WorkingDirectory", "EnvironmentVariables",
@@ -171,7 +171,7 @@ def validate_launchd_plist(
         raise ValueError("managed job must use Background process type")
     root = Path(str(payload.get("WorkingDirectory", ""))).expanduser().resolve()
     if not (root / "app" / "worker_cli.py").is_file():
-        raise ValueError("managed working directory is not a BrandOS checkout")
+        raise ValueError("managed working directory is not a BrandMan checkout")
     if Path(arguments[3]).expanduser().resolve() != root:
         raise ValueError("uv project and managed working directory must match")
     return {
@@ -593,7 +593,7 @@ def _valid_uuid(value: Any) -> bool:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brand-os-supervisor")
+    parser = argparse.ArgumentParser(prog="brandman-supervisor")
     sub = parser.add_subparsers(dest="command", required=True)
     render = sub.add_parser("render")
     render.add_argument("--label", default="com.brandos.worker.demo-brand")

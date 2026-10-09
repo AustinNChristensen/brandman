@@ -1,4 +1,4 @@
-"""Offline operator utilities for a standalone Brand OS installation."""
+"""Offline operator utilities for a standalone BrandMan installation."""
 
 from __future__ import annotations
 
@@ -300,7 +300,7 @@ def _connect_readonly(path: Path) -> sqlite3.Connection:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brand-os-ops")
+    parser = argparse.ArgumentParser(prog="brandman-ops")
     parser.add_argument("--database", required=True)
     sub = parser.add_subparsers(dest="command", required=True)
     migrate = sub.add_parser("migrate")
