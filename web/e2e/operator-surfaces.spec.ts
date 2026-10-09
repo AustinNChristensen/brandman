@@ -389,3 +389,10 @@ test('fails closed and recovers before exposing Settings mutations', async ({ pa
   await expect(page.getByRole('button', { name: 'Save governed settings' })).toBeVisible()
   await expect(page.getByRole('button', { name: /^(send|publish|schedule)$/i })).toHaveCount(0)
 })
+
+test('keeps the Content page inside the 390px viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('./content?brand=demo-brand')
+  await expect(page.getByRole('button', { name: /new newsletter/i })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBeTruthy()
+})
