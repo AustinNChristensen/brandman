@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { campaignGraphs, campaignPosts, dispatch, editorialCandidates, newsletters, operatorProposals } from '../api/endpoints'
 import { describe, useLoad } from '../api/useLoad'
 import type { Brand, CalendarItem, Campaign, CampaignPost, DispatchAudit, DispatchItem, DispatchValidation, EditorialCandidate, LifecycleEvent, OperatorContentProposal } from '../api/types'
@@ -12,13 +12,15 @@ import { useToast } from '../state/Toast'
 import { metersFrom, useWorkspace } from '../state/useWorkspace'
 
 type Tab = 'newsletters' | 'drafts' | 'candidates' | 'posts' | 'sources'
+const TABS: Tab[] = ['newsletters', 'drafts', 'candidates', 'posts', 'sources']
 interface StudioBundle { brand: Brand; drafts: DispatchItem[]; candidates: EditorialCandidate[]; campaigns: Campaign[]; posts: CampaignPost[] }
 
 export default function Content() {
   const ws = useWorkspace(['newsletters', 'calendar', 'awaiting', 'usage'])
   const { active, selected } = useBrands()
   const { notify } = useToast()
-  const [tab, setTab] = useState<Tab>('newsletters')
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(() => { const requested = params.get('tab'); return TABS.includes(requested as Tab) ? requested as Tab : 'newsletters' })
   const [modal, setModal] = useState<'newsletter' | 'dispatch' | 'candidate' | 'cleanup' | 'proposal' | 'post' | 'promotion' | null>(null)
   const [proposal, setProposal] = useState<OperatorContentProposal | null>(null)
   const [editing, setEditing] = useState<{ brand: Brand; item: DispatchItem } | null>(null)
@@ -107,7 +109,7 @@ export default function Content() {
     {studio.data && tab === 'posts' && <Card><CardHeader title="Canonical campaign posts" sub="· editable drafts with auditable revisions" />{!posts.length ? <Empty>No campaign posts yet.</Empty> : <div className="table-scroll"><table><thead><tr><th></th><th>Post</th><th>Campaign</th><th>Status</th><th>Revision</th><th>Actions</th></tr></thead><tbody>{posts.map(({ brand, post, campaign }) => <tr key={post.id}><td><BrandTag brand={brand} short /></td><td><div className="row"><ChannelIcon channel={post.channel} /><span style={{ whiteSpace: 'pre-wrap' }}>{post.body}</span></div>{post.candidate_id && <div className="meta">From idea {post.candidate_id}</div>}</td><td>{campaign?.name ?? post.campaign_id}</td><td><StatusChip status={post.status} /></td><td className="mono">r{post.revision}</td><td><div className="row"><button className="btn sm" onClick={() => { setEditingPost({ brand, post }); setModal('post') }}>Edit</button>{post.channel === 'x' && <button className="btn sm" disabled={busy} onClick={() => void run('Exact X review draft created. It remains unsubmitted.', () => campaignPosts.createDispatch(post.id))}>Create review draft</button>}</div></td></tr>)}</tbody></table></div>}</Card>}
     {ws.data && tab === 'sources' && <Card><CardHeader title="Content sources" sub="· manual and connected inputs" />{!sources.length ? <Empty>No sources recorded.</Empty> : <div className="table-scroll"><table><thead><tr><th></th><th>Source</th><th>Type</th><th>State</th><th>Date</th></tr></thead><tbody>{sources.map(({ brand, item }) => <tr key={item.id}><td><BrandTag brand={brand} short /></td><td><b>{item.title}</b><div className="meta">{item.body_summary}</div></td><td>{item.channel}</td><td><StatusChip status={item.status} /></td><td className="meta">{item.scheduled_for ? shortDateTime(item.scheduled_for) : '—'}</td></tr>)}</tbody></table></div>}</Card>}
 
-    {modal === 'dispatch' && <DispatchModal brands={active} editing={editing} busy={busy} close={() => { setModal(null); setEditing(null) }} save={(brand, body, submit) => void run(submit ? 'Exact revision submitted for human review. Nothing was posted.' : 'Draft saved. Nothing was submitted or posted.', async () => { const item = editing ? await dispatch.edit(editing.item.id, { body }) : await dispatch.create(brand.slug, 'x', { body }); if (submit) await dispatch.submit(item.id) })} />}
+    {modal === 'dispatch' && <DispatchModal brands={active} editing={editing} busy={busy} close={() => { setModal(null); setEditing(null) }} save={(brand, body, submit) => void run(submit ? 'Exact revision submitted for human review. Nothing was posted.' : 'Draft saved. Nothing was submitted or posted.', async () => { const item = editing ? await dispatch.edit(editing.item.id, { body }) : await dispatch.create(brand.slug, 'x', { body }); if (submit) await dispatch.submit(item.id); setTab('drafts') })} />}
     {modal === 'candidate' && <CandidateModal brands={active} busy={busy} close={() => setModal(null)} save={(brand, payload) => void run('Editorial idea saved for consideration.', () => editorialCandidates.create(brand.slug, payload))} />}
     {modal === 'post' && <CampaignPostModal campaigns={campaigns} editing={editingPost} busy={busy} close={() => { setModal(null); setEditingPost(null) }} save={(campaign, body) => void run(editingPost ? 'Canonical post revision saved as a draft.' : 'Canonical campaign post saved as a draft.', () => editingPost ? campaignPosts.edit(editingPost.post.id, body) : campaignPosts.create(campaign.id, 'x', body))} />}
     {modal === 'promotion' && promoting && <PromotionModal seed={promoting} campaigns={campaigns.filter((entry) => entry.brand.id === promoting.brand.id).map((entry) => entry.campaign)} busy={busy} close={() => { setModal(null); setPromoting(null) }} save={(payload) => void run('Idea promoted into draft campaign material. Nothing was submitted or posted.', () => editorialCandidates.promoteToCampaignPost(promoting.brand.slug, promoting.candidate.id, payload))} />}
