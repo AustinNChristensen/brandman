@@ -53,7 +53,7 @@ def _decode(record: Mapping[str, Any], *fields: str) -> dict[str, Any]:
 
 
 class SQLiteOperatingPlanRepository:
-    """Read canonical operating state from the current Brand OS SQLite database."""
+    """Read canonical operating state from the current BrandMan SQLite database."""
 
     def __init__(
         self,

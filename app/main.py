@@ -144,13 +144,13 @@ def initialize_application_services(
         and path.expanduser().resolve() == store.DEFAULT_DATA_PATH.expanduser().resolve()
     ):
         raise RuntimeError(
-            "BRAND_OS_DB must be explicitly configured before Brand OS application startup"
+            "BRAND_OS_DB must be explicitly configured before BrandMan application startup"
         )
     requested_profile = profile or os.environ.get("BRAND_OS_DATABASE_PROFILE")
     if requested_profile is None:
         raise RuntimeError(
             "BRAND_OS_DATABASE_PROFILE must be explicitly configured before "
-            "Brand OS application startup"
+            "BrandMan application startup"
         )
     if requested_profile not in store.DATABASE_PROFILES:
         raise RuntimeError(
@@ -245,7 +245,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="Brand OS", version="0.1.0",
+    title="BrandMan", version="0.1.0",
     description="Canonical brand context and approval-gated content operations.",
     lifespan=lifespan,
 )
@@ -313,7 +313,7 @@ async def preview_password_gate(request: Request, call_next):
             response = JSONResponse(
                 status_code=401,
                 content={"detail": "Authentication required."},
-                headers={"WWW-Authenticate": 'Basic realm="Brand OS preview"'},
+                headers={"WWW-Authenticate": 'Basic realm="BrandMan preview"'},
             )
         return harden_response(response, request)
     # The preview credential is shared and carries no personal identity, so the generic preview operator is used. Approval identity is set by
@@ -347,9 +347,9 @@ def _login_page(*, destination: str | None = "/app", error: str | None = None) -
     message = f'<p class="error" role="alert">{escape(error)}</p>' if error else ""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sign in · Brand OS</title><style>
+<title>Sign in · BrandMan</title><style>
 :root{{color-scheme:dark}}body{{margin:0;min-height:100vh;display:grid;place-items:center;background:#101314;color:#f4f1e8;font:16px system-ui,sans-serif}}main{{width:min(420px,calc(100% - 40px));background:#1b2021;border:1px solid #394243;border-radius:18px;padding:32px;box-shadow:0 24px 80px #0008}}.eyebrow{{color:#b9a36a;font-size:12px;font-weight:700;letter-spacing:.14em}}h1{{font-size:30px;margin:10px 0}}p{{color:#bdc5c3;line-height:1.5}}label{{display:block;margin:24px 0 8px;font-weight:650}}input{{box-sizing:border-box;width:100%;border:1px solid #566160;border-radius:10px;padding:13px;background:#111515;color:#fff;font:inherit}}button{{width:100%;margin-top:18px;border:0;border-radius:10px;padding:13px;background:#d7bc72;color:#17170f;font:inherit;font-weight:750;cursor:pointer}}.error{{color:#ffb8ae;background:#3a2020;border-radius:8px;padding:10px}}small{{display:block;margin-top:18px;color:#84908e}}
-</style></head><body><main><div class="eyebrow">BRAND OS · LOCAL OPERATOR CONSOLE</div><h1>Sign in</h1><p>The BrandOS service is running. Enter the local preview password to open the operator console.</p>{message}<form method="post" action="/login"><input type="hidden" name="next" value="{escape(_safe_login_destination(destination), quote=True)}"><label for="password">Preview password</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Open BrandOS</button></form><small>Credentials stay in the request body and are never placed in the URL. This session expires automatically.</small></main></body></html>"""
+</style></head><body><main><div class="eyebrow">BRANDMAN · LOCAL OPERATOR CONSOLE</div><h1>Sign in</h1><p>The BrandMan service is running. Enter the local preview password to open the operator console.</p>{message}<form method="post" action="/login"><input type="hidden" name="next" value="{escape(_safe_login_destination(destination), quote=True)}"><label for="password">Preview password</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Open BrandMan</button></form><small>Credentials stay in the request body and are never placed in the URL. This session expires automatically.</small></main></body></html>"""
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -1491,7 +1491,11 @@ def dashboard_v2(path: str = "") -> FileResponse:
 
 @app.get("/api/brands")
 def list_brands() -> list[dict]:
-    return store.rows("SELECT * FROM brands ORDER BY name")
+    brands = store.rows(
+        "SELECT brands.*, EXISTS(SELECT 1 FROM missions WHERE missions.brand_id=brands.id "
+        "AND missions.status='active') AS has_active_mission FROM brands ORDER BY name"
+    )
+    return [{**brand, "has_active_mission": bool(brand["has_active_mission"])} for brand in brands]
 
 
 @app.post("/api/brands", status_code=201)

@@ -1,1 +1,1 @@
-"""Brand OS application package."""
+"""BrandMan application package."""

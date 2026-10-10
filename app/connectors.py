@@ -1,4 +1,4 @@
-"""Connector boundaries and normalized external events for Brand OS.
+"""Connector boundaries and normalized external events for BrandMan.
 
 This module intentionally contains no persistence and performs no network calls at
 import time. Connectors that need authentication receive a transport and a callable
