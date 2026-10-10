@@ -28,11 +28,11 @@ def test_deduplicated_recurrence_preserves_governed_status(tmp_path):
     store = FeedbackStore(tmp_path / "feedback.db")
     first = report(store, fingerprint="approval:batch")
     started = store.start(
-        first["id"], assignee="builder", actor="chris",
+        first["id"], assignee="builder", actor="preview-operator",
         implementation_links=["/app/main.py"], implementation_notes="Adding exact batch review.",
     )
     resolved = store.resolve(
-        first["id"], actor="chris", resolution_evidence="Regression tests pass.",
+        first["id"], actor="preview-operator", resolution_evidence="Regression tests pass.",
         implementation_links=["/app/main.py", "/tests/test_dispatch_api.py"],
     )
     assert started["status"] == "in_progress"
@@ -54,17 +54,17 @@ def test_full_lifecycle_chris_gates_and_reopen(tmp_path):
     store = FeedbackStore(tmp_path / "feedback.db")
     item = report(store)
     with pytest.raises(FeedbackError, match="cannot transition"):
-        store.resolve(item["id"], actor="chris", resolution_evidence="Not started")
+        store.resolve(item["id"], actor="preview-operator", resolution_evidence="Not started")
     item = store.start(item["id"], assignee="secure-connections", actor="agent")
     with pytest.raises(PermissionError, match="authenticated human"):
         store.resolve(item["id"], actor="agent", resolution_evidence="Trust me")
-    item = store.resolve(item["id"], actor="chris", resolution_evidence="Test run 109 passed")
+    item = store.resolve(item["id"], actor="preview-operator", resolution_evidence="Test run 109 passed")
     with pytest.raises(PermissionError, match="authenticated human"):
         store.verify(item["id"], actor="agent", evidence="Looks good")
-    item = store.verify(item["id"], actor="chris", evidence="Reproduced fixed behavior")
+    item = store.verify(item["id"], actor="preview-operator", evidence="Reproduced fixed behavior")
     assert item["status"] == "verified"
-    assert item["resolved_by"] == "chris"
-    assert item["verified_by"] == "chris"
+    assert item["resolved_by"] == "preview-operator"
+    assert item["verified_by"] == "preview-operator"
 
     reopened = store.reopen(item["id"], actor="demo-brand-agent", reason="Regression observed")
     assert reopened["status"] == "open"
@@ -183,12 +183,12 @@ def test_rest_lifecycle_uses_authenticated_human_and_mcp_is_agent_only(tmp_path,
             "resolution_evidence": "Focused and full tests pass.",
             "implementation_links": ["/app/feedback.py", "/tests/test_feedback.py"],
         }).json()
-        assert resolved["resolved_by"] == "chris"
+        assert resolved["resolved_by"] == "preview-operator"
         verified = client.post(f"/api/product-feedback/{created['id']}/verify", json={
             "evidence": "Demo Brand adversarial review confirmed the behavior."
         }).json()
         assert verified["status"] == "verified"
-        assert verified["verified_by"] == "chris"
+        assert verified["verified_by"] == "preview-operator"
 
         filtered = client.get(
             "/api/brands/demo-brand/product-feedback?status=verified&assignee=builder"
@@ -196,7 +196,7 @@ def test_rest_lifecycle_uses_authenticated_human_and_mcp_is_agent_only(tmp_path,
         assert [item["id"] for item in filtered] == [created["id"]]
         detail = client.get(f"/api/product-feedback/{created['id']}").json()
         history = client.get(f"/api/product-feedback/{created['id']}/history").json()
-        assert detail["comments"][0]["actor"] == "chris"
+        assert detail["comments"][0]["actor"] == "preview-operator"
         assert history[-1]["action"] == "verified"
 
     tools = set(mcp._tool_manager._tools)

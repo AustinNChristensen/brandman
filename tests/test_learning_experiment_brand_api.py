@@ -26,7 +26,7 @@ def test_brand_scoped_learning_lifecycle_uses_authenticated_actor_and_refuses_cr
         assert proposed.status_code == 201
         learning = proposed.json()
         audit = client.get(f"/api/brands/demo-brand/learnings/{learning['id']}/audit").json()
-        assert audit[0]["actor"] == "chris"
+        assert audit[0]["actor"] == "preview-operator"
         assert audit[0]["action"] == "proposed"
         assert client.post(
             f"/api/brands/demo-brand/learnings/{learning['id']}/accept"
@@ -62,7 +62,7 @@ def test_brand_scoped_learning_lifecycle_uses_authenticated_actor_and_refuses_cr
             f"/api/brands/demo-brand/learnings/{learning['id']}/audit"
         ).json()
         assert [item["action"] for item in history] == ["proposed", "testing", "accepted", "superseded"]
-        assert all(item["actor"] == "chris" for item in history)
+        assert all(item["actor"] == "preview-operator" for item in history)
 
         rejected = client.post("/api/brands/demo-brand/learnings", json={
             "hypothesis": "Unsupported hook", "evidence": "A weak aggregate result",

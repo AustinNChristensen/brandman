@@ -132,7 +132,7 @@ def test_rest_brand_scoped_inbox_detail_history_draft_and_submit():
         assert {
             entry["actor"] for entry in history
             if entry["action"] in {"action_drafted", "awaiting_approval"}
-        } == {"chris"}
+        } == {"preview-operator"}
 
 
 def test_rest_dismiss_and_brand_scope_are_enforced():

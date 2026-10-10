@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('deep links and reloads the brand-scoped integration surface', async ({ page }) => {
   await page.goto('./integrations?brand=demo-brand')
   await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible()
-  await expect(page.getByText('Choose how Brand OS connects')).toBeVisible()
+  await expect(page.getByText('Choose how BrandMan connects')).toBeVisible()
   await expect(page.getByText('secrets are write-only')).toBeVisible()
   await page.reload()
   await expect(page.getByText('Live readiness')).toBeVisible()
@@ -56,7 +56,7 @@ test('creates a governed newsletter revision with a server-derived operator', as
   const refreshed = await page.request.get(`http://127.0.0.1:8011/api/newsletter-issues/${issue.id}`)
   const revised = await refreshed.json()
   expect(revised.current_revision).toBe(2)
-  expect(revised.content.created_by).toBe('chris')
+  expect(revised.content.created_by).toBe('preview-operator')
   await expect(page.getByRole('button', { name: /^(send|publish|schedule)$/i })).toHaveCount(0)
 })
 
@@ -94,7 +94,7 @@ test('runs the learning lifecycle through explicit human decisions without publi
   page.on('dialog', (prompt) => prompt.accept())
   await page.getByRole('button', { name: 'Accept evidence' }).click()
   await expect(page.getByText('accepted', { exact: true }).first()).toBeVisible()
-  await expect(page.getByText(/chris ·/).last()).toBeVisible()
+  await expect(page.getByText(/preview-operator ·/).last()).toBeVisible()
   const after = await page.request.get('http://127.0.0.1:8011/api/brands/demo-brand/context')
   expect(((await after.json()).campaigns ?? []).length).toBe(beforePostCount)
   await expect(page.getByRole('button', { name: /^(send|publish|schedule)$/i })).toHaveCount(0)
@@ -116,39 +116,54 @@ test('drafts and submits engagement for approval without direct execution', asyn
   expect(saved.state).toBe('awaiting_approval')
   const audit = await page.request.get(`http://127.0.0.1:8011/api/brands/demo-brand/engagement/${saved.id}/history`)
   const actions = await audit.json()
-  expect(actions.filter((item: { action: string }) => ['action_drafted', 'awaiting_approval'].includes(item.action)).every((item: { actor: string }) => item.actor === 'chris')).toBeTruthy()
+  expect(actions.filter((item: { action: string }) => ['action_drafted', 'awaiting_approval'].includes(item.action)).every((item: { actor: string }) => item.actor === 'preview-operator')).toBeTruthy()
   await expect(page.getByRole('button', { name: /^(send|publish|schedule|like|follow)$/i })).toHaveCount(0)
 })
 
-test('previews a source-grounded command and saves only inert package drafts', async ({ page }) => {
-  const sourceResponse = await page.request.post('http://127.0.0.1:8011/api/brands/demo-brand/sources', {
-    data: { title: 'E2E governed source', source_type: 'manual', body_summary: 'Official terms end Friday.', url: 'https://issuer.test/e2e-terms', lifecycle_state: 'published' },
+for (const viewport of [{ name: 'desktop', width: 1440, height: 1000 }, { name: 'mobile', width: 390, height: 844 }]) {
+  test(`previews draft structure honestly and saves only inert drafts on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize(viewport)
+    const sourceResponse = await page.request.post('http://127.0.0.1:8011/api/brands/demo-brand/sources', {
+      data: { title: `E2E governed source ${viewport.name}`, source_type: 'manual', body_summary: 'Official terms end Friday.', url: 'https://issuer.test/e2e-terms', lifecycle_state: 'published' },
+    })
+    expect(sourceResponse.ok()).toBeTruthy()
+    const source = await sourceResponse.json()
+    await page.goto('./content?brand=demo-brand')
+    await page.getByRole('button', { name: 'Create draft structure' }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByText(/No AI writing happens here/)).toBeVisible()
+    await expect(dialog.getByText(/Writing instructions do not rewrite the source text/)).toBeVisible()
+    await expect(dialog.getByText(`E2E governed source ${viewport.name}`, { exact: true })).toBeVisible()
+    const beforePath = test.info().outputPath(`draft-structure-${viewport.name}.png`)
+    await page.screenshot({ path: beforePath })
+    await test.info().attach('draft structure input', { path: beforePath, contentType: 'image/png' })
+    await dialog.getByLabel('Content goal').fill('Build a decision-support package from the selected official terms.')
+    await dialog.getByText(`E2E governed source ${viewport.name}`, { exact: true }).click()
+    await dialog.getByRole('button', { name: 'Preview draft structure' }).click()
+    await expect(dialog.getByText('Exact active guideline binding')).toBeVisible()
+    await expect(dialog.getByText(/No AI writing happens here/)).toBeVisible()
+    await expect(dialog.getByText('X source-text draft')).toBeVisible()
+    await expect(dialog.getByText(`E2E governed source ${viewport.name}: Official terms end Friday.`, { exact: true })).toBeVisible()
+    const previewPath = test.info().outputPath(`draft-preview-${viewport.name}.png`)
+    await page.screenshot({ path: previewPath })
+    await test.info().attach('draft structure preview', { path: previewPath, contentType: 'image/png' })
+    await expect(dialog.getByText(/^sha256:/)).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Save inert drafts' })).toBeDisabled()
+    await dialog.getByLabel('Confirm inert drafts').check()
+    await dialog.getByRole('button', { name: 'Save inert drafts' }).click()
+    await expect(dialog.getByText(/Saved as inert drafts by preview-operator/)).toBeVisible()
+    const context = await page.request.get('http://127.0.0.1:8011/api/brands/demo-brand/context')
+    const matching = (await context.json()).campaigns.find((item: { source_id: string; status: string }) => item.source_id === source.id)
+    expect(matching.status).toBe('draft')
+    const graph = await page.request.get(`http://127.0.0.1:8011/api/campaigns/${matching.id}/graph`)
+    const graphBody = await graph.json()
+    expect(graphBody.memberships.map((item: { asset_type: string; role: string }) => [item.asset_type, item.role])).toEqual([
+      ['newsletter_issue', 'anchor'], ['post', 'touchpoint'],
+    ])
+    expect(graphBody.relationships).toHaveLength(1)
+    await expect(dialog.getByRole('button', { name: /^(approve|send|publish|schedule)$/i })).toHaveCount(0)
   })
-  expect(sourceResponse.ok()).toBeTruthy()
-  const source = await sourceResponse.json()
-  await page.goto('./content?brand=demo-brand')
-  await page.getByRole('button', { name: 'Build governed package' }).click()
-  const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('Operator command').fill('Build a decision-support package from the selected official terms.')
-  await dialog.getByText('E2E governed source', { exact: true }).click()
-  await dialog.getByRole('button', { name: 'Preview proposed changes' }).click()
-  await expect(dialog.getByText('Exact active guideline binding')).toBeVisible()
-  await expect(dialog.getByText(/^sha256:/)).toBeVisible()
-  await expect(dialog.getByRole('button', { name: 'Save inert drafts' })).toBeDisabled()
-  await dialog.getByLabel('Confirm inert drafts').check()
-  await dialog.getByRole('button', { name: 'Save inert drafts' }).click()
-  await expect(dialog.getByText(/Saved as inert drafts by chris/)).toBeVisible()
-  const context = await page.request.get('http://127.0.0.1:8011/api/brands/demo-brand/context')
-  const matching = (await context.json()).campaigns.find((item: { source_id: string; status: string }) => item.source_id === source.id)
-  expect(matching.status).toBe('draft')
-  const graph = await page.request.get(`http://127.0.0.1:8011/api/campaigns/${matching.id}/graph`)
-  const graphBody = await graph.json()
-  expect(graphBody.memberships.map((item: { asset_type: string; role: string }) => [item.asset_type, item.role])).toEqual([
-    ['newsletter_issue', 'anchor'], ['post', 'touchpoint'],
-  ])
-  expect(graphBody.relationships).toHaveLength(1)
-  await expect(dialog.getByRole('button', { name: /^(approve|send|publish|schedule)$/i })).toHaveCount(0)
-})
+}
 
 test('triages an agent-reported product failure through the audited feedback lifecycle', async ({ page }) => {
   const reported = await page.request.post('http://127.0.0.1:8011/api/brands/demo-brand/product-feedback', {
@@ -183,7 +198,7 @@ test('triages an agent-reported product failure through the audited feedback lif
   const history = await page.request.get(`http://127.0.0.1:8011/api/brands/demo-brand/product-feedback/${item.id}/history`)
   const events = await history.json()
   expect(events[0].actor).toBe('demo-brand-agent')
-  expect(events.slice(1).every((event: { actor: string }) => event.actor === 'chris')).toBeTruthy()
+  expect(events.slice(1).every((event: { actor: string }) => event.actor === 'preview-operator')).toBeTruthy()
   await expect(page.getByRole('button', { name: /^(send|publish|schedule)$/i })).toHaveCount(0)
 })
 
@@ -218,7 +233,7 @@ test('authors and promotes canonical content while failing closed before provide
   await expect(dispatchRow).toContainText('draft')
   await dispatchRow.getByRole('button', { name: 'Validation & history' }).click()
   await expect(page.getByText('Exact material is valid')).toBeVisible()
-  await expect(page.getByRole('dialog')).toContainText('chris created')
+  await expect(page.getByRole('dialog')).toContainText('preview-operator created')
   await page.getByRole('button', { name: 'Close' }).click()
 
   await page.getByRole('button', { name: /Campaign posts/ }).click()
@@ -236,7 +251,7 @@ test('authors and promotes canonical content while failing closed before provide
   await expect(page.getByRole('dialog')).toHaveCount(0)
   const candidateHistory = await page.request.get(`http://127.0.0.1:8011/api/editorial-candidates/${candidate.id}/history`)
   expect(candidateHistory.ok()).toBeTruthy()
-  expect((await candidateHistory.json()).at(-1)).toMatchObject({ action: 'promoted_to_campaign_post', actor: 'chris' })
+  expect((await candidateHistory.json()).at(-1)).toMatchObject({ action: 'promoted_to_campaign_post', actor: 'preview-operator' })
   const tasks = await page.request.get('http://127.0.0.1:8011/api/brands/demo-brand/execution-tasks')
   expect((await tasks.json()).filter((task: { source_id: string }) => task.source_id === campaign.id)).toHaveLength(0)
   await expect(page.getByRole('button', { name: /^(approve|send|publish|schedule)$/i })).toHaveCount(0)
@@ -388,4 +403,36 @@ test('fails closed and recovers before exposing Settings mutations', async ({ pa
   await page.getByRole('button', { name: 'Retry' }).click()
   await expect(page.getByRole('button', { name: 'Save governed settings' })).toBeVisible()
   await expect(page.getByRole('button', { name: /^(send|publish|schedule)$/i })).toHaveCount(0)
+})
+
+test('keeps the Content page inside the 390px viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('./content?brand=demo-brand')
+  await expect(page.getByRole('button', { name: /new newsletter/i })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBeTruthy()
+})
+
+test('reflows Overview navigation and cards without clipping at 390px', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('./?brand=')
+  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+  const nav = page.getByRole('navigation', { name: 'Primary navigation' })
+  await expect(nav.getByRole('link', { name: 'Integrations' })).toBeVisible()
+  const metrics = await page.evaluate(() => {
+    const nav = document.querySelector('.mobile-nav') as HTMLElement
+    const links = [...nav.querySelectorAll('a')] as HTMLElement[]
+    const kpis = [...document.querySelectorAll('.overview-kpis .kpi')] as HTMLElement[]
+    return {
+      navScrolls: nav.scrollWidth > nav.clientWidth + 1,
+      pageScrolls: document.documentElement.scrollWidth > window.innerWidth + 1,
+      clippedLabels: links.filter((a) => a.scrollWidth > a.clientWidth + 1 || a.getBoundingClientRect().right > window.innerWidth).length,
+      kpiWidths: kpis.map((k) => Math.round(k.getBoundingClientRect().width)),
+      kpiOverflow: kpis.filter((k) => k.scrollWidth > k.clientWidth + 1).length,
+    }
+  })
+  expect(metrics.navScrolls).toBe(false)
+  expect(metrics.pageScrolls).toBe(false)
+  expect(metrics.clippedLabels).toBe(0)
+  expect(metrics.kpiOverflow).toBe(0)
+  expect(Math.min(...metrics.kpiWidths)).toBeGreaterThan(300)
 })

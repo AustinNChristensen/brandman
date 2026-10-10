@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import base64
+from html.parser import HTMLParser
+from urllib.parse import parse_qs, urlsplit
+
+import pytest
 
 from fastapi.testclient import TestClient
 
@@ -72,12 +76,12 @@ def test_operator_navigation_gets_clear_login_page_and_cookie_session(monkeypatc
         )
         dashboard = client.get("/", headers={"Accept": "text/html"})
 
-    assert redirect.status_code == 303 and redirect.headers["location"] == "/login"
+    assert redirect.status_code == 303 and redirect.headers["location"] == "/login?next=%2Fdocs"
     assert login.status_code == 200
-    assert "The BrandOS service is running" in login.text
+    assert "The BrandMan service is running" in login.text
     assert wrong.status_code == 401 and "not accepted" in wrong.text
     assert PASSWORD not in wrong.text
-    assert accepted.status_code == 303 and accepted.headers["location"] == "/"
+    assert accepted.status_code == 303 and accepted.headers["location"] == "/app"
     assert PASSWORD not in accepted.headers["location"]
     cookie = accepted.headers["set-cookie"]
     assert PREVIEW_SESSION_COOKIE in cookie
@@ -220,3 +224,59 @@ def test_homepage_console_figures_are_labeled_illustrative(monkeypatch):
     assert "ILLUSTRATIVE EXAMPLE" in home.text and "SAMPLE DATA" in home.text
     assert "not live data" in home.text
     assert "Your brand is healthy" not in home.text
+
+
+class _LoginDestinationParser(HTMLParser):
+    destination: str | None = None
+
+    def handle_starttag(self, tag, attrs):
+        fields = dict(attrs)
+        if tag == "input" and fields.get("name") == "next":
+            self.destination = fields.get("value")
+
+
+@pytest.mark.parametrize("destination", ["/app", "/app/content?brand=demo&tab=social"])
+def test_app_navigation_preserves_destination_through_login_and_retry(monkeypatch, destination):
+    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        redirect = client.get(destination, headers={"Accept": "text/html"}, follow_redirects=False)
+        assert redirect.status_code == 303
+        location = urlsplit(redirect.headers["location"])
+        assert location.path == "/login"
+        assert parse_qs(location.query) == {"next": [destination]}
+        login = client.get(redirect.headers["location"])
+        assert login.status_code == 200
+        parser = _LoginDestinationParser()
+        parser.feed(login.text)
+        assert parser.destination == destination
+        wrong = client.post("/login", data={"password": "wrong", "next": parser.destination})
+        assert wrong.status_code == 401
+        retry = _LoginDestinationParser()
+        retry.feed(wrong.text)
+        assert retry.destination == destination
+        accepted = client.post("/login", data={"password": PASSWORD, "next": retry.destination}, follow_redirects=False)
+        assert accepted.status_code == 303
+        assert accepted.headers["location"] == destination
+        dashboard = client.get(accepted.headers["location"])
+        assert dashboard.status_code == 200
+        assert "text/html" in dashboard.headers["content-type"]
+
+
+@pytest.mark.parametrize("destination", ["https://outside.example", "//outside.example", "/\\outside.example", "/app\n//outside.example"])
+def test_login_rejects_unsafe_return_destinations(monkeypatch, destination):
+    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        accepted = client.post("/login", data={"password": PASSWORD, "next": destination}, follow_redirects=False)
+    assert accepted.status_code == 303
+    assert accepted.headers["location"] == "/app"
+
+
+def test_login_destination_is_escaped_and_non_navigation_stays_unauthorized(monkeypatch):
+    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        page = client.get("/login", params={"next": '/app?name="<example>&tab=social'})
+        asset = client.get("/app/assets/index.js", headers={"Accept": "*/*"}, follow_redirects=False)
+        api = client.get("/api/brands", headers={"Accept": "text/html"}, follow_redirects=False)
+        mutation = client.post("/app", headers={"Accept": "text/html"}, follow_redirects=False)
+    assert '&quot;&lt;example&gt;&amp;tab=social' in page.text
+    assert asset.status_code == api.status_code == mutation.status_code == 401

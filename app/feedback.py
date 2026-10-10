@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Any, Iterable
 from uuid import uuid4
 
+from app.principal import PREVIEW_PRINCIPAL
+
 
 _SEVERITIES = {"low", "medium", "high", "critical"}
 _STATUSES = {"open", "in_progress", "resolved", "verified"}
@@ -197,7 +199,7 @@ class FeedbackStore:
         self, feedback_id: str, *, actor: str, resolution_evidence: str,
         implementation_links: Iterable[str] = (), implementation_notes: str = "",
     ) -> dict[str, Any]:
-        self._require_chris(actor)
+        self._require_operator(actor)
         if not resolution_evidence.strip():
             raise FeedbackError("resolution evidence is required")
         return self._transition(
@@ -206,7 +208,7 @@ class FeedbackStore:
         )
 
     def verify(self, feedback_id: str, *, actor: str, evidence: str) -> dict[str, Any]:
-        self._require_chris(actor)
+        self._require_operator(actor)
         if not evidence.strip():
             raise FeedbackError("verification evidence is required")
         return self._transition(feedback_id, "verified", actor=actor, verification_evidence=evidence)
@@ -350,8 +352,8 @@ class FeedbackStore:
             return self._history_rows(connection, feedback_id)
 
     @staticmethod
-    def _require_chris(actor: str) -> None:
-        if actor != "chris":
+    def _require_operator(actor: str) -> None:
+        if actor != PREVIEW_PRINCIPAL:
             raise PermissionError("only the authenticated human principal may resolve or verify feedback")
 
     @staticmethod

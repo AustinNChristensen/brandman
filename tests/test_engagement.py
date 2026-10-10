@@ -85,7 +85,7 @@ def test_projection_is_unique_ranked_and_preserves_context(tmp_path):
 def test_only_materially_new_context_resurfaces_terminal_or_drafted_items(tmp_path):
     brand, inbox, dispatcher = setup(tmp_path)
     opportunity = project(inbox, brand, event())
-    inbox.dismiss(opportunity["id"], actor="chris")
+    inbox.dismiss(opportunity["id"], actor="preview-operator")
     same = project(inbox, brand, event())
     assert same["state"] == "dismissed"
     original_payload = dict(event().payload)
@@ -108,7 +108,7 @@ def test_only_materially_new_context_resurfaces_terminal_or_drafted_items(tmp_pa
     assert newer["resurfaced_count"] == 2
     with pytest.raises(InvalidEngagementTransition, match="linked action is stale"):
         inbox.draft_action(
-            newer["id"], "reply", dispatcher, actor="chris",
+            newer["id"], "reply", dispatcher, actor="preview-operator",
             text="A revised answer must not silently reuse the old draft.",
         )
 
