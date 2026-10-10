@@ -3,7 +3,7 @@
 The tool implementations remain in :mod:`app.mcp_server`; this module owns only
 client registration, PKCE authorization-code exchange, refresh/revocation, and
 bearer-token validation.  Secrets are stored as SHA-256 digests, never returned
-after issuance, and all state lives in the configured Brand OS database.
+after issuance, and all state lives in the configured BrandMan database.
 """
 from __future__ import annotations
 

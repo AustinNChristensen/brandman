@@ -907,7 +907,7 @@ class DistributionPackageStore:
                 if any(item["code"] == "primary_evidence_lineage_unknown" for item in blockers) else
                 "Resolve or replace the selected primary evidence, then regenerate from the exact revision."
                 if any(item["code"] == "primary_evidence_not_authoritative" for item in blockers) else
-                "Bind the canonical web destination; BrandOS will create attributed X URLs and new draft revisions."
+                "Bind the canonical web destination; BrandMan will create attributed X URLs and new draft revisions."
                 if blockers else
                 "Review each channel artifact and complete its separate fact-check and exact approval."
             ),

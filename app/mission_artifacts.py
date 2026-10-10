@@ -73,7 +73,7 @@ def _decode(row: sqlite3.Row | Mapping[str, Any] | None) -> dict[str, Any] | Non
 
 
 class MissionArtifactStore:
-    """SQLite repository that can use Brand OS or an isolated connection seam."""
+    """SQLite repository that can use BrandMan or an isolated connection seam."""
 
     def __init__(self, connection_factory: ConnectionFactory, *, clock: Callable[[], str] = _utc_now) -> None:
         self.connection_factory = connection_factory
