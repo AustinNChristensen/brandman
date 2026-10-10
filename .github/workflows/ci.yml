@@ -14,7 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - run: uv sync --locked
+      - run: uv run python scripts/build_dashboard.py
       - run: uv run pytest -q
   web:
     runs-on: ubuntu-latest
@@ -29,6 +35,23 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
-      - run: npx tsc -b
+      - run: npm run build
+      - name: Keep generated dashboard assets out of Git
+        run: test -z "$(git ls-files ../app/static/app)" && git diff --exit-code
       - run: npm test
 
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      # uv builds the wheel from the sdist, exercising the source archive too.
+      - run: uv build
+      - run: uv venv .package-venv
+      - run: uv pip install --python .package-venv/bin/python dist/*.whl
+      - run: .package-venv/bin/python scripts/check_dashboard_package.py
