@@ -47,7 +47,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["brandman"]
-# The hook includes these once, even in Docker contexts without Git metadata.
+# The dashboard is added once, by the build hook (force-include ignores this).
+# Without it, a build outside git (e.g. Docker) would add the folder twice.
 exclude = ["/brandman/static/app"]
 
 [tool.hatch.build.hooks.custom]
