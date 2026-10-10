@@ -219,6 +219,16 @@ def test_secret_free_deployment_readiness_distinguishes_local_and_remote_boundar
     assert "a-strong-remote-preview-password" not in repr(safe_remote)
 
 
+def test_homepage_console_figures_are_labeled_illustrative(monkeypatch):
+    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        home = client.get("/")
+
+    assert "ILLUSTRATIVE EXAMPLE" in home.text and "SAMPLE DATA" in home.text
+    assert "not live data" in home.text
+    assert "Your brand is healthy" not in home.text
+
+
 class _LoginDestinationParser(HTMLParser):
     destination: str | None = None
 
