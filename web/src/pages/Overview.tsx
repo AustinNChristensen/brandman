@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { brands as brandsApi, dispatch, newsletters } from '../api/endpoints'
 import { optional } from '../api/client'
@@ -88,18 +88,18 @@ export default function Overview() {
       right={<Chip kind="agent" icon="lock">human approval required</Chip>}>
       {ws.error && <ErrorState message={ws.error} retry={ws.reload} />}
       {ws.loading && !bundles && <Loading label="Loading approval queue and scheduled content…" />}
-      <div className="grid" style={{ gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, active.length))}, minmax(0, 1fr))` }}>
+      <div className="grid overview-brands" style={{ '--brand-cols': Math.min(3, Math.max(1, active.length)) } as CSSProperties}>
         {active.map((brand) => <BrandCard key={brand.id} brand={brand} />)}
       </div>
       {bundles && stats && (
         <>
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+          <div className="grid overview-kpis">
             <Kpi label="Awaiting your approval" value={needs.length} sub={needs.length ? `oldest ${stats.oldest}` : 'queue is clear'} color={needs.length ? 'var(--human)' : undefined} to={`/approvals${q}`} />
             <Kpi label="Scheduled next 7 days" value={stats.scheduled} sub={`across ${bundles.length} brand${bundles.length === 1 ? '' : 's'}`} to={`/planner${q}`} />
             <Kpi label="Published last 7 days" value={stats.published} sub="from the content calendar" to={`/planner${q}`} />
             <Kpi label="Estimated spend (month)" value={stats.priced ? money(stats.spend) : '—'} sub={stats.priced ? `${stats.unpriced} unpriced requests` : 'add provider rate cards to price usage'} />
           </div>
-          <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
+          <div className="grid overview-main">
             <div className="stack" style={{ gap: 16 }}>
               <Card>
                 <CardHeader icon="checkcircle" iconColor="var(--human)" title="Needs you" sub="— human approval gate" right={<Link className="btn sm" to={`/approvals${q}`}>Open queue <Icon name="arrow" size={14} /></Link>} />
