@@ -241,6 +241,21 @@ textarea.input { resize: vertical; line-height: 1.5; }
   .feedback-layout { grid-template-columns: minmax(0, 1fr); }
   .source-heading, .source-detail { align-items: stretch; flex-direction: column; }
 }
+
+/* Keep readiness evidence and prerequisite labels readable together. */
+.agents-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.agents-readiness { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+.agents-readiness .check-row > div { min-width: 0; }
+.agents-readiness .check-row .row { flex-wrap: wrap; }
+@media (max-width: 1000px) {
+  .agents-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .agents-readiness { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .agents-summary, .agents-readiness { grid-template-columns: minmax(0, 1fr); }
+}
+.agents-readiness .card-h { flex-wrap: wrap; }
+.agents-readiness .card-h .sub { flex-basis: 100%; white-space: normal; overflow: visible; text-overflow: clip; }
 @media (max-width: 480px) {
   .overview-kpis { grid-template-columns: minmax(0, 1fr); }
 }
