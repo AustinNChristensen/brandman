@@ -243,7 +243,7 @@ function NewsletterReview({ issue, brand, onDone }: { issue: NewsletterIssue; br
           right={<><StatusChip status={issue.lifecycle} /><Link className="btn sm" to={`/content/newsletter/${encodeURIComponent(issue.id)}`}><Icon name="file" size={14} />Open</Link></>} />
         <div style={{ padding: '18px 22px' }}><NewsletterBody revision={content} /></div>
         <div style={{ padding: '10px 16px', borderTop: '1px solid var(--line-2)' }} className="stack">
-          <div className="meta">Approving creates an unpublished Beehiiv draft on export. No scheduling, publishing, or sending happens from Brand OS.</div>
+          <div className="meta">Approving creates an unpublished Beehiiv draft on export. No scheduling, publishing, or sending happens from BrandMan.</div>
           {!readiness.ready && <div className="meta" style={{ color: 'var(--human)' }}>Not ready: {readiness.reasons.join('; ')}.</div>}
           <div className="row">
             <button className="btn ok" disabled={!readiness.ready || busy} onClick={() => setModal('approve')}><Icon name="check" size={15} />Approve revision {issue.current_revision}</button>

@@ -22,7 +22,7 @@ _UTM_KEYS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_cta
 
 
 class AttributionConfidence(StrEnum):
-    """Confidence that a conversion can be assigned to Brand OS content."""
+    """Confidence that a conversion can be assigned to BrandMan content."""
 
     DIRECT = "direct"
     ASSISTED = "assisted"
@@ -31,7 +31,7 @@ class AttributionConfidence(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class UtmIdentity:
-    """Canonical, persistable identity carried by a Brand OS link."""
+    """Canonical, persistable identity carried by a BrandMan link."""
 
     source: str
     medium: str
@@ -252,7 +252,7 @@ def build_utm_identity(
     *, source: str, medium: str, campaign_id: str, artifact_id: str, cta_id: str,
     brand_slug: str | None = None,
 ) -> UtmIdentity:
-    """Validate and construct a canonical Brand OS attribution identity."""
+    """Validate and construct a canonical BrandMan attribution identity."""
 
     return UtmIdentity(
         source=_validate_identifier(source.lower(), "source"),

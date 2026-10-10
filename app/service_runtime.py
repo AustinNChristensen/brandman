@@ -1,4 +1,4 @@
-"""Fail-closed composition root for bounded Brand OS connector work.
+"""Fail-closed composition root for bounded BrandMan connector work.
 
 The factory maps safe, persisted connection metadata to runtime adapters. It
 does not start a daemon and performs no network requests while being built.

@@ -24,7 +24,7 @@ export interface BrandBundle {
  */
 export function useWorkspace(parts: Part[]): Loaded<BrandBundle[]> & { brandsReady: boolean } {
   const { active, loading: brandsLoading, error: brandsError, reload: reloadBrands } = useBrands()
-  const key = active.map((b) => b.slug).join(',')
+  const key = active.map((b) => `${b.slug}:${b.has_active_mission ?? 'unknown'}`).join(',')
   const partKey = parts.join(',')
   const loaded = useLoad<BrandBundle[]>(async () => {
     if (brandsLoading) return []
@@ -36,7 +36,7 @@ export function useWorkspace(parts: Part[]): Loaded<BrandBundle[]> & { brandsRea
         want('calendar') ? brandsApi.calendar(brand.slug) : Promise.resolve([]),
         want('usage') ? brandsApi.usage(brand.slug) : Promise.resolve(null),
         want('workflow') ? brandsApi.workflow(brand.slug) : Promise.resolve(null),
-        want('scorecard') ? optional(brandsApi.scorecard(brand.slug)).catch(() => null) : Promise.resolve(null),
+        want('scorecard') && brand.has_active_mission !== false ? optional(brandsApi.scorecard(brand.slug)).catch(() => null) : Promise.resolve(null),
       ])
       return { brand, awaiting, newsletters: issues, calendar, usage, workflow, scorecard }
     }))

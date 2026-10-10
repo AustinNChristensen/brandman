@@ -139,9 +139,9 @@ export default function Overview() {
 
 function BrandCard({ brand }: { brand: Brand }) {
   const details = useLoad(async () => {
-    const [workflow, scorecard] = await Promise.all([brandsApi.workflow(brand.slug), optional(brandsApi.scorecard(brand.slug))])
+    const [workflow, scorecard] = await Promise.all([brandsApi.workflow(brand.slug), brand.has_active_mission !== false ? optional(brandsApi.scorecard(brand.slug)) : Promise.resolve(null)])
     return { workflow, scorecard }
-  }, [brand.slug])
+  }, [brand.slug, brand.has_active_mission])
   const { workflow, scorecard } = details.data ?? {}
   const q = `?brand=${encodeURIComponent(brand.slug)}`
   const color = brandColor(brand.slug)
