@@ -235,7 +235,7 @@ def main(argv: list[str] | None = None) -> None:
         )
     except (OSError, ValueError) as error:
         # Validation messages are authored above and contain no secret values.
-        raise SystemExit(f"brand-os-bootstrap: {error}") from None
+        raise SystemExit(f"brandman-bootstrap: {error}") from None
     if args.generate_master_key:
         report["generated_master_key_file"] = str(
             Path(args.generate_master_key).expanduser().resolve()

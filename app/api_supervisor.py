@@ -279,7 +279,7 @@ def main(argv: list[str] | None = None) -> None:
         else:  # pragma: no cover
             raise ValueError("unsupported command")
     except (OSError, ValueError, plistlib.InvalidFileException, subprocess.SubprocessError) as error:
-        raise SystemExit(f"brand-os-api-supervisor: {error}") from None
+        raise SystemExit(f"brandman-api-supervisor: {error}") from None
     print(json.dumps(result, sort_keys=True))
 
 

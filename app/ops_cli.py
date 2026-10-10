@@ -143,7 +143,7 @@ def operability_audit(
         }
     else:
         result["provider_usage"] = {
-            "status": "schema_missing", "action": "Run brand-os-ops migrate.",
+            "status": "schema_missing", "action": "Run brandman-ops migrate.",
         }
     return result
 
@@ -425,7 +425,7 @@ def main(argv: list[str] | None = None) -> None:
             )
         else: raise ValueError("unsupported command")
     except (OSError, sqlite3.Error, ValueError) as error:
-        raise SystemExit(f"brand-os-ops: {error}") from None
+        raise SystemExit(f"brandman-ops: {error}") from None
     print(json.dumps(result, sort_keys=True))
 
 
