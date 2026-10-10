@@ -58,6 +58,19 @@ describe('Content authoring flows', () => {
     expect(JSON.stringify(api.createDraft.mock.calls)).not.toMatch(/actor|publish|schedule|send/)
   })
 
+  it('opens the Social drafts tab after saving a draft and honors a requested tab', async () => {
+    render(<MemoryRouter><Content /></MemoryRouter>); await waitFor(() => expect(api.listDrafts).toHaveBeenCalled())
+    expect(screen.getByText('No active newsletter issues. Create one to begin at the idea stage.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'New X draft' }))
+    const dialog = screen.getByRole('dialog'); fireEvent.change(within(dialog).getByLabelText('Post text'), { target: { value: 'Fresh draft.' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save draft' }))
+    await waitFor(() => expect(api.createDraft).toHaveBeenCalled())
+    expect(await screen.findByText('General social content')).toBeInTheDocument()
+    cleanup()
+    render(<MemoryRouter initialEntries={['/content?tab=drafts']}><Content /></MemoryRouter>)
+    expect(await screen.findByText('General social content')).toBeInTheDocument()
+  })
+
   it('revises rejected material before resubmitting and preserves candidate lineage into a newsletter idea', async () => {
     render(<MemoryRouter><Content /></MemoryRouter>); await waitFor(() => expect(api.listDrafts).toHaveBeenCalled())
     fireEvent.click(screen.getByRole('button', { name: /Social drafts/ }))

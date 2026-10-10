@@ -18,7 +18,8 @@ type Entry =
   | { kind: 'newsletter'; id: string; brand: Brand; issue: NewsletterIssue; updated: string }
 
 export default function Approvals() {
-  const ws = useWorkspace(['awaiting', 'newsletters', 'usage'])
+  const ws = useWorkspace(['awaiting', 'newsletters'])
+  const meterLoad = useWorkspace(['usage'])
   const { kind, id } = useParams()
   const navigate = useNavigate()
   const { selected } = useBrands()
@@ -39,15 +40,15 @@ export default function Approvals() {
     if (current && (current.kind !== kind || current.id !== id)) navigate(`/approvals/${current.kind}/${encodeURIComponent(current.id)}${q}`, { replace: true })
   }, [current, kind, id, navigate, q])
 
-  const afterAction = () => { ws.reload(); navigate(`/approvals${q}`) }
+  const afterAction = () => { ws.reload(); meterLoad.reload(); navigate(`/approvals${q}`) }
 
   return (
-    <Shell title="Approvals" crumb="Queue" meters={metersFrom(ws.data)}>
+    <Shell title="Approvals" crumb="Queue" meters={metersFrom(ws.data?.map((b) => ({ ...b, usage: meterLoad.data?.find((m) => m.brand.id === b.brand.id)?.usage ?? null })) ?? null)}>
       {ws.error && <ErrorState message={ws.error} retry={ws.reload} />}
       <div className="grid" style={{ gridTemplateColumns: '340px minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
         <Card>
           <CardHeader title={`${entries.length} waiting`} sub="· oldest first" right={<button className="btn sm ghost" onClick={ws.reload}><Icon name="refresh" size={14} />Refresh</button>} />
-          {ws.loading && !ws.data && <Loading />}
+          {ws.loading && !ws.data && <Loading label="Loading exact revisions awaiting your review…" />}
           {ws.data && entries.length === 0 && <Empty>Nothing awaiting approval{selected ? ' for this brand' : ''}.</Empty>}
           {entries.map((e) => (
             <QueueRow key={`${e.kind}:${e.id}`} entry={e} on={current === e} to={`/approvals/${e.kind}/${encodeURIComponent(e.id)}${q}`} />
@@ -142,7 +143,7 @@ function DispatchReview({ item, brand, onDone }: { item: DispatchItem; brand: Br
             <button className="btn ok" disabled={!scope || busy} onClick={() => setModal('approve')}><Icon name="check" size={15} />Approve revision {item.revision} <span className="kbd" style={{ color: '#fff', borderColor: 'rgba(255,255,255,.4)', background: 'transparent' }}>A</span></button>
             <button className="btn" disabled={busy} onClick={() => setModal('reject')}>Reject revision <span className="kbd">R</span></button>
           </div>
-          <div className="meta">Edits happen through the API or MCP and create a new revision, which invalidates any approval.</div>
+          <div className="meta">Editing creates a new revision, which invalidates any approval. <Link to={`/content?brand=${encodeURIComponent(brand.slug)}&tab=drafts`}>Edit this draft in Content</Link>.</div>
         </div>
       </Card>
       <div className="stack" style={{ gap: 12 }}>

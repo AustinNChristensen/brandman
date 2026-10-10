@@ -23,7 +23,7 @@ export interface BrandBundle {
  * partial data is never mistaken for the whole picture.
  */
 export function useWorkspace(parts: Part[]): Loaded<BrandBundle[]> & { brandsReady: boolean } {
-  const { active, loading: brandsLoading } = useBrands()
+  const { active, loading: brandsLoading, error: brandsError, reload: reloadBrands } = useBrands()
   const key = active.map((b) => `${b.slug}:${b.has_active_mission ?? 'unknown'}`).join(',')
   const partKey = parts.join(',')
   const loaded = useLoad<BrandBundle[]>(async () => {
@@ -41,8 +41,14 @@ export function useWorkspace(parts: Part[]): Loaded<BrandBundle[]> & { brandsRea
       return { brand, awaiting, newsletters: issues, calendar, usage, workflow, scorecard }
     }))
   }, [key, partKey, brandsLoading])
-  const brandsReady = !brandsLoading
-  return useMemo(() => ({ ...loaded, brandsReady }), [loaded, brandsReady])
+  const brandsReady = !brandsLoading && !brandsError
+  return useMemo(() => ({
+    ...loaded, brandsReady,
+    data: brandsReady ? loaded.data : null,
+    loading: brandsLoading || loaded.loading,
+    error: brandsError || loaded.error,
+    reload: brandsError ? reloadBrands : loaded.reload,
+  }), [loaded, brandsReady, brandsLoading, brandsError, reloadBrands])
 }
 
 /** Sidebar meters derived from whatever bundles a page already loaded. */

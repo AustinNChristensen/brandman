@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { campaignGraphs, campaignPosts, dispatch, editorialCandidates, newsletters, operatorProposals } from '../api/endpoints'
 import { describe, useLoad } from '../api/useLoad'
 import type { Brand, CalendarItem, Campaign, CampaignPost, DispatchAudit, DispatchItem, DispatchValidation, EditorialCandidate, LifecycleEvent, OperatorContentProposal } from '../api/types'
@@ -12,13 +12,17 @@ import { useToast } from '../state/Toast'
 import { metersFrom, useWorkspace } from '../state/useWorkspace'
 
 type Tab = 'newsletters' | 'drafts' | 'candidates' | 'posts' | 'sources'
+const TABS: Tab[] = ['newsletters', 'drafts', 'candidates', 'posts', 'sources']
 interface StudioBundle { brand: Brand; drafts: DispatchItem[]; candidates: EditorialCandidate[]; campaigns: Campaign[]; posts: CampaignPost[] }
 
 export default function Content() {
-  const ws = useWorkspace(['newsletters', 'calendar', 'awaiting', 'usage'])
+  const ws = useWorkspace(['newsletters'])
+  const sourceLoad = useWorkspace(['calendar'])
+  const meterLoad = useWorkspace(['awaiting', 'usage'])
   const { active, selected } = useBrands()
   const { notify } = useToast()
-  const [tab, setTab] = useState<Tab>('newsletters')
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(() => { const requested = params.get('tab'); return TABS.includes(requested as Tab) ? requested as Tab : 'newsletters' })
   const [modal, setModal] = useState<'newsletter' | 'dispatch' | 'candidate' | 'cleanup' | 'proposal' | 'post' | 'promotion' | null>(null)
   const [proposal, setProposal] = useState<OperatorContentProposal | null>(null)
   const [editing, setEditing] = useState<{ brand: Brand; item: DispatchItem } | null>(null)
@@ -38,14 +42,14 @@ export default function Content() {
   })), [active.map((brand) => brand.slug).join('|')])
   const issues = useMemo(() => (ws.data ?? []).flatMap((b) => b.newsletters.map((issue) => ({ brand: b.brand, issue })))
     .sort((a, b) => (parseDate(b.issue.updated_at)?.getTime() ?? 0) - (parseDate(a.issue.updated_at)?.getTime() ?? 0)), [ws.data])
-  const sources = useMemo(() => (ws.data ?? []).flatMap((b) => b.calendar.filter((item) => item.item_type === 'source').map((item) => ({ brand: b.brand, item }))), [ws.data])
+  const sources = useMemo(() => (sourceLoad.data ?? []).flatMap((b) => b.calendar.filter((item) => item.item_type === 'source').map((item) => ({ brand: b.brand, item }))), [sourceLoad.data])
   const drafts = studio.data?.flatMap((bundle) => bundle.drafts.map((item) => ({ brand: bundle.brand, item }))) ?? []
   const candidates = studio.data?.flatMap((bundle) => bundle.candidates.map((candidate) => ({ brand: bundle.brand, candidate }))) ?? []
   const campaigns = studio.data?.flatMap((bundle) => bundle.campaigns.map((campaign) => ({ brand: bundle.brand, campaign }))) ?? []
   const posts = studio.data?.flatMap((bundle) => bundle.posts.map((post) => ({ brand: bundle.brand, post, campaign: bundle.campaigns.find((item) => item.id === post.campaign_id) }))) ?? []
   const run = async (success: string, operation: () => Promise<unknown>) => {
     setBusy(true)
-    try { await operation(); notify(success); ws.reload(); studio.reload(); setModal(null); setEditing(null); setEditingPost(null); setPromoting(null); setCandidateForIssue(null); setCleanup(null) }
+    try { await operation(); notify(success); ws.reload(); sourceLoad.reload(); meterLoad.reload(); studio.reload(); setModal(null); setEditing(null); setEditingPost(null); setPromoting(null); setCandidateForIssue(null); setCleanup(null) }
     catch (error) { notify(describe(error), 'bad') }
     finally { setBusy(false) }
   }
@@ -63,7 +67,7 @@ export default function Content() {
     } catch (error) { notify(describe(error), 'bad') }
     finally { setBusy(false) }
   }
-  return <Shell title="Content" meters={metersFrom(ws.data)}>
+  return <Shell title="Content" meters={metersFrom(meterLoad.data)}>
     <div className="tabs">
       <TabButton id="newsletters" current={tab} set={setTab}>Newsletters ({issues.length})</TabButton>
       <TabButton id="drafts" current={tab} set={setTab}>Social drafts ({drafts.length})</TabButton>
@@ -79,7 +83,10 @@ export default function Content() {
       <button className="btn" disabled={!active.length} onClick={() => setModal('candidate')}><Icon name="spark" size={14} />New idea</button>
     </div></div>
     {ws.error && <ErrorState message={ws.error} retry={ws.reload} />}{studio.error && <ErrorState message={studio.error} retry={studio.reload} />}
-    {((ws.loading && !ws.data) || (studio.loading && !studio.data)) && <Loading />}
+    {sourceLoad.error && <ErrorState message={sourceLoad.error} retry={sourceLoad.reload} />}
+    {tab === 'newsletters' && ws.loading && !ws.data && <Loading label="Loading newsletter issues and their review status…" />}
+    {tab === 'sources' && sourceLoad.loading && !sourceLoad.data && <Loading label="Loading content sources…" />}
+    {['drafts', 'candidates', 'posts'].includes(tab) && studio.loading && !studio.data && <Loading label="Loading social drafts, ideas, and campaign posts…" />}
 
     {ws.data && tab === 'newsletters' && <Card><CardHeader title="Newsletter issues" sub="· governed revisions" />
       {!issues.length ? <Empty>No active newsletter issues. Create one to begin at the idea stage.</Empty> : <div className="table-scroll"><table><thead><tr><th></th><th>Issue</th><th>Lifecycle</th><th>Revision</th><th>Next safe action</th><th>Updated</th></tr></thead><tbody>{issues.map(({ brand, issue }) => <tr key={issue.id} className="row-link" onClick={() => navigate(`/content/newsletter/${encodeURIComponent(issue.id)}${q}`)}><td><BrandTag brand={brand} short /></td><td><b>{issue.content?.final_title || issue.content?.working_title || 'Untitled'}</b><div className="meta">{issue.content?.subject}</div></td><td><StatusChip status={issue.lifecycle} /></td><td className="mono">r{issue.current_revision}</td><td className="muted">{issue.governance?.next_safe_action}</td><td className="meta nowrap">{relTime(issue.updated_at)}</td></tr>)}</tbody></table></div>}
@@ -105,14 +112,14 @@ export default function Content() {
     </Card>}
 
     {studio.data && tab === 'posts' && <Card><CardHeader title="Canonical campaign posts" sub="· editable drafts with auditable revisions" />{!posts.length ? <Empty>No campaign posts yet.</Empty> : <div className="table-scroll"><table><thead><tr><th></th><th>Post</th><th>Campaign</th><th>Status</th><th>Revision</th><th>Actions</th></tr></thead><tbody>{posts.map(({ brand, post, campaign }) => <tr key={post.id}><td><BrandTag brand={brand} short /></td><td><div className="row"><ChannelIcon channel={post.channel} /><span style={{ whiteSpace: 'pre-wrap' }}>{post.body}</span></div>{post.candidate_id && <div className="meta">From idea {post.candidate_id}</div>}</td><td>{campaign?.name ?? post.campaign_id}</td><td><StatusChip status={post.status} /></td><td className="mono">r{post.revision}</td><td><div className="row"><button className="btn sm" onClick={() => { setEditingPost({ brand, post }); setModal('post') }}>Edit</button>{post.channel === 'x' && <button className="btn sm" disabled={busy} onClick={() => void run('Exact X review draft created. It remains unsubmitted.', () => campaignPosts.createDispatch(post.id))}>Create review draft</button>}</div></td></tr>)}</tbody></table></div>}</Card>}
-    {ws.data && tab === 'sources' && <Card><CardHeader title="Content sources" sub="· manual and connected inputs" />{!sources.length ? <Empty>No sources recorded.</Empty> : <div className="table-scroll"><table><thead><tr><th></th><th>Source</th><th>Type</th><th>State</th><th>Date</th></tr></thead><tbody>{sources.map(({ brand, item }) => <tr key={item.id}><td><BrandTag brand={brand} short /></td><td><b>{item.title}</b><div className="meta">{item.body_summary}</div></td><td>{item.channel}</td><td><StatusChip status={item.status} /></td><td className="meta">{item.scheduled_for ? shortDateTime(item.scheduled_for) : '—'}</td></tr>)}</tbody></table></div>}</Card>}
+    {sourceLoad.data && tab === 'sources' && <Card><CardHeader title="Content sources" sub="· manual and connected inputs" />{!sources.length ? <Empty>No sources recorded.</Empty> : <div className="table-scroll"><table><thead><tr><th></th><th>Source</th><th>Type</th><th>State</th><th>Date</th></tr></thead><tbody>{sources.map(({ brand, item }) => <tr key={item.id}><td><BrandTag brand={brand} short /></td><td><b>{item.title}</b><div className="meta">{item.body_summary}</div></td><td>{item.channel}</td><td><StatusChip status={item.status} /></td><td className="meta">{item.scheduled_for ? shortDateTime(item.scheduled_for) : '—'}</td></tr>)}</tbody></table></div>}</Card>}
 
-    {modal === 'dispatch' && <DispatchModal brands={active} editing={editing} busy={busy} close={() => { setModal(null); setEditing(null) }} save={(brand, body, submit) => void run(submit ? 'Exact revision submitted for human review. Nothing was posted.' : 'Draft saved. Nothing was submitted or posted.', async () => { const item = editing ? await dispatch.edit(editing.item.id, { body }) : await dispatch.create(brand.slug, 'x', { body }); if (submit) await dispatch.submit(item.id) })} />}
+    {modal === 'dispatch' && <DispatchModal brands={active} editing={editing} busy={busy} close={() => { setModal(null); setEditing(null) }} save={(brand, body, submit) => void run(submit ? 'Exact revision submitted for human review. Nothing was posted.' : 'Draft saved. Nothing was submitted or posted.', async () => { const item = editing ? await dispatch.edit(editing.item.id, { body }) : await dispatch.create(brand.slug, 'x', { body }); if (submit) await dispatch.submit(item.id); setTab('drafts') })} />}
     {modal === 'candidate' && <CandidateModal brands={active} busy={busy} close={() => setModal(null)} save={(brand, payload) => void run('Editorial idea saved for consideration.', () => editorialCandidates.create(brand.slug, payload))} />}
     {modal === 'post' && <CampaignPostModal campaigns={campaigns} editing={editingPost} busy={busy} close={() => { setModal(null); setEditingPost(null) }} save={(campaign, body) => void run(editingPost ? 'Canonical post revision saved as a draft.' : 'Canonical campaign post saved as a draft.', () => editingPost ? campaignPosts.edit(editingPost.post.id, body) : campaignPosts.create(campaign.id, 'x', body))} />}
     {modal === 'promotion' && promoting && <PromotionModal seed={promoting} campaigns={campaigns.filter((entry) => entry.brand.id === promoting.brand.id).map((entry) => entry.campaign)} busy={busy} close={() => { setModal(null); setPromoting(null) }} save={(payload) => void run('Idea promoted into draft campaign material. Nothing was submitted or posted.', () => editorialCandidates.promoteToCampaignPost(promoting.brand.slug, promoting.candidate.id, payload))} />}
     {modal === 'newsletter' && <NewsletterModal brands={active} seed={candidateForIssue} busy={busy} close={() => { setModal(null); setCandidateForIssue(null) }} save={(brand, content, candidateId) => void run('Newsletter idea created. It remains unapproved.', () => newsletters.create(brand.slug, content, candidateId))} />}
-    {modal === 'proposal' && selected && active[0] && <ProposalModal brand={active[0]} sources={sources.filter((item) => item.brand.slug === selected).map((item) => item.item)} candidates={candidates.filter((item) => item.brand.slug === selected && item.candidate.status === 'open').map((item) => item.candidate)} proposal={proposal} busy={busy} close={() => { setModal(null); setProposal(null) }} preview={async (command, sourceIds, candidateIds) => { setBusy(true); try { setProposal(await operatorProposals.preview(selected, { command, source_ids: sourceIds, candidate_ids: candidateIds })) } catch (error) { notify(describe(error), 'bad') } finally { setBusy(false) } }} confirm={async () => { if (!proposal) return; setBusy(true); try { const saved = await operatorProposals.confirm(selected, proposal.id); setProposal(saved); notify('Campaign, newsletter, and X draft structures saved for writing and review.'); ws.reload(); studio.reload() } catch (error) { notify(describe(error), 'bad') } finally { setBusy(false) } }} />}
+    {modal === 'proposal' && selected && active[0] && <ProposalModal brand={active[0]} sources={sources.filter((item) => item.brand.slug === selected).map((item) => item.item)} candidates={candidates.filter((item) => item.brand.slug === selected && item.candidate.status === 'open').map((item) => item.candidate)} proposal={proposal} busy={busy} close={() => { setModal(null); setProposal(null) }} preview={async (command, sourceIds, candidateIds) => { setBusy(true); try { setProposal(await operatorProposals.preview(selected, { command, source_ids: sourceIds, candidate_ids: candidateIds })) } catch (error) { notify(describe(error), 'bad') } finally { setBusy(false) } }} confirm={async () => { if (!proposal) return; setBusy(true); try { const saved = await operatorProposals.confirm(selected, proposal.id); setProposal(saved); notify('Campaign, newsletter, and X draft structures saved for writing and review.'); ws.reload(); sourceLoad.reload(); meterLoad.reload(); studio.reload() } catch (error) { notify(describe(error), 'bad') } finally { setBusy(false) } }} />}
     {modal === 'cleanup' && cleanup && <ReasonModal candidate={cleanup.candidate} action={cleanup.action} busy={busy} close={() => { setModal(null); setCleanup(null) }} save={(reason) => void run(`Idea ${cleanup.action === 'abandon' ? 'abandoned' : 'archived'}.`, () => cleanup.action === 'abandon' ? editorialCandidates.abandon(cleanup.candidate.id, reason) : editorialCandidates.archive(cleanup.candidate.id, reason))} />}
     {candidateHistory && <Modal title={`Idea history: ${candidateHistory.candidate.title}`} onClose={() => setCandidateHistory(null)} footer={<button className="btn" onClick={() => setCandidateHistory(null)}>Close</button>}><div className="stack">{!candidateHistory.events.length ? <Empty>No lifecycle decisions recorded yet.</Empty> : candidateHistory.events.map((event) => <div className="feed-item" key={event.id}><Icon name="history" size={14} /><div><b>{event.actor}</b> {event.action.replace(/_/g, ' ')}<div className="meta">{event.from_state ?? 'new'} → {event.to_state ?? event.from_state}{event.reason ? ` · ${event.reason}` : ''}</div></div><span className="meta" style={{ marginLeft: 'auto' }}>{relTime(event.created_at)}</span></div>)}</div></Modal>}
     {dispatchEvidence && <Modal title={`Exact validation & history · r${dispatchEvidence.item.revision}`} onClose={() => setDispatchEvidence(null)} footer={<button className="btn" onClick={() => setDispatchEvidence(null)}>Close</button>}><div className="stack"><div className="ai-note"><Icon name={dispatchEvidence.validation.valid ? 'check' : 'alert'} size={15} /><div><b>{dispatchEvidence.validation.valid ? 'Exact material is valid' : 'Validation blocked'}</b><div>{dispatchEvidence.validation.errors.join(' · ') || `${dispatchEvidence.validation.effective_length ?? 0} effective characters`}</div></div></div>{dispatchEvidence.audit.map((event, index) => <div className="feed-item" key={`${event.at}:${index}`}><Icon name="history" size={14} /><div><b>{event.actor}</b> {event.action}<div className="meta">revision {event.revision}{event.detail ? ` · ${event.detail}` : ''}</div></div><span className="meta" style={{ marginLeft: 'auto' }}>{relTime(event.at)}</span></div>)}</div></Modal>}

@@ -18,8 +18,22 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     init.headers = { ...init.headers, 'Content-Type': 'application/json' }
     init.body = JSON.stringify(body)
   }
-  const response = await fetch(path, init)
-  const text = await response.text()
+  // Bound reads only. A timed-out mutation may already have committed and must
+  // never invite an automatic retry.
+  const controller = method === 'GET' ? new AbortController() : null
+  if (controller) init.signal = controller.signal
+  const timer = controller ? setTimeout(() => controller.abort(), 5000) : null
+  let response: Response
+  let text: string
+  try {
+    response = await fetch(path, init)
+    text = await response.text()
+  } catch (error) {
+    if (controller?.signal.aborted) throw new Error('The request took too long. Check your connection and retry.')
+    throw error
+  } finally {
+    if (timer !== null) clearTimeout(timer)
+  }
   let data: unknown = null
   if (text) {
     try { data = JSON.parse(text) } catch { data = text }
