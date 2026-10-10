@@ -81,7 +81,7 @@ function ReadinessSummary({ readiness }: { readiness: LiveReadiness }) {
 }
 
 function ModeComparison({ bundle }: { bundle: Bundle }) {
-  return <Card><CardHeader icon="layers" title="Choose how Brand OS connects" sub="start assisted, then graduate individual lanes when API access is available" />
+  return <Card><CardHeader icon="layers" title="Choose how BrandMan connects" sub="start assisted, then graduate individual lanes when API access is available" />
     <div className="grid card-b integrations-two-col">{bundle.onboarding.modes.map((mode) => <div key={mode.mode} className="integration-box stack">
       <div className="row"><b>{mode.title}</b><Chip kind={mode.available_now ? 'ok' : 'neutral'}>{mode.available_now ? 'available' : 'admin setup needed'}</Chip></div>
       <div>{mode.best_for}</div><div className="meta">{mode.tradeoff}</div>
@@ -122,7 +122,7 @@ function AvailableLanes({ bundle, onSetup }: { bundle: Bundle; onSetup: (lane: C
 
 function Recovery({ readiness }: { readiness: LiveReadiness }) {
   const gaps = readiness.checks.filter((check) => check.status !== 'ready' && check.actions.length)
-  return <Card><CardHeader icon="alert" title="Readiness gaps" sub="the next supported recovery actions from Brand OS" />{!gaps.length ? <Empty>There are no reported recovery actions.</Empty> : gaps.map((check) => <div className="card-b integration-row" key={check.id}><div className="row"><b>{check.label}</b><Chip kind={tone(check.status)}>{check.status.replace(/_/g, ' ')}</Chip>{check.required_for_live === false && <Chip kind="neutral">optional for live</Chip>}</div><div className="meta integration-detail-copy">{check.detail}</div><ol className="integration-recovery">{check.actions.map((action) => <li key={action}>{action}</li>)}</ol></div>)}</Card>
+  return <Card><CardHeader icon="alert" title="Readiness gaps" sub="the next supported recovery actions from BrandMan" />{!gaps.length ? <Empty>There are no reported recovery actions.</Empty> : gaps.map((check) => <div className="card-b integration-row" key={check.id}><div className="row"><b>{check.label}</b><Chip kind={tone(check.status)}>{check.status.replace(/_/g, ' ')}</Chip>{check.required_for_live === false && <Chip kind="neutral">optional for live</Chip>}</div><div className="meta integration-detail-copy">{check.detail}</div><ol className="integration-recovery">{check.actions.map((action) => <li key={action}>{action}</li>)}</ol></div>)}</Card>
 }
 
 function SetupModal({ slug, setup, encryptionReady, onClose, onDone }: { slug: string; setup: Setup; encryptionReady: boolean; onClose: () => void; onDone: () => void }) {
@@ -145,7 +145,7 @@ function SetupModal({ slug, setup, encryptionReady, onClose, onDone }: { slug: s
   }
   return <Modal title={`${setup.account ? 'Reconnect' : 'Set up'} ${setup.lane.title}`} onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button form="connection-setup" className="btn primary" disabled={busy || !encryptionReady}>{prepared ? 'Save credential' : 'Prepare lane'}</button></>}>
     <form id="connection-setup" className="stack" onSubmit={submit}>
-      <div className="ai-note"><Icon name="lock" size={16} /><div><b>Secret values are write-only.</b><div>Brand OS encrypts them on receipt. This page cannot retrieve or show them later.</div></div></div>
+      <div className="ai-note"><Icon name="lock" size={16} /><div><b>Secret values are write-only.</b><div>BrandMan encrypts them on receipt. This page cannot retrieve or show them later.</div></div></div>
       <div className="field"><label htmlFor="connection-id">Connection ID</label><input id="connection-id" className="input" required disabled={prepared} value={accountKey} onChange={(event) => setAccountKey(event.target.value)} placeholder={setup.lane.provider === 'beehiiv' ? 'publication ID' : 'unique account lane ID'} /></div>
       <div className="field"><label htmlFor="connection-name">Display name</label><input id="connection-name" className="input" required value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></div>
       <div><div className="meta">Exact allowed scopes</div><div className="integration-scopes">{setup.lane.scopes.map((scope) => <Chip key={scope} kind="neutral">{scope}</Chip>)}</div><div className="meta integration-detail-copy">{setup.lane.write_boundary}</div></div>
