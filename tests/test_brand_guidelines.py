@@ -6,18 +6,19 @@ import base64
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.approval_snapshots import ApprovalSnapshotStore
-from app.brand_guidelines import (
+from brandman import store
+from brandman.approval_snapshots import ApprovalSnapshotStore
+from brandman.brand_guidelines import (
     BrandGuidelineError,
     BrandGuidelineStore,
-    DEMO_BRAND_NEWSLETTER_RULES,
 )
-from app.editorial import ApprovalBlocked, EditorialStore, IssueLifecycle
-from app.main import app, brand_guideline_store
+from brandman import seed_packs
+from brandman.editorial import ApprovalBlocked, EditorialStore, IssueLifecycle
+from brandman.main import app, brand_guideline_store
 
 
 NOW = "2026-09-02T12:00:00+00:00"
+DEMO_BRAND_NEWSLETTER_RULES = seed_packs.brand("demo-brand")["guidelines"][0]["rules"]
 AUTH = "Basic " + base64.b64encode(b"operator:guideline-test").decode()
 
 
@@ -29,7 +30,7 @@ def setup(tmp_path: Path):
     snapshots = ApprovalSnapshotStore(database)
     guidelines = editorial.guidelines
     brand = store.get_brand("demo-brand")
-    seeded = guidelines.seed_demo_brand(brand["id"], actor="test-seed")
+    seeded = guidelines.seed_guidelines(brand["id"], "demo-brand", actor="test-seed")[0]
     return database, brand, editorial, snapshots, guidelines, seeded
 
 
@@ -86,7 +87,7 @@ def approve(editorial: EditorialStore, snapshots: ApprovalSnapshotStore, issue: 
     proposed = snapshots.proposed_newsletter(editorial.get_issue(issue["id"]))
     approved, evidence = snapshots.approve_newsletter(
         issue["id"], revision=issue["current_revision"],
-        review_token=proposed["review_token"], approver="preview-operator",
+        review_token=proposed["review_token"], approver="chris",
     )
     assert checked["guideline_version_id"] == proposed["guideline_version_id"]
     return approved, evidence
@@ -202,7 +203,7 @@ def test_other_brands_and_channels_are_unaffected(tmp_path):
 
 
 def test_authenticated_guideline_and_policy_operator_apis(tmp_path, monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "guideline-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "guideline-test")
     with TestClient(app, headers={"Authorization": AUTH}) as client:
         brand = store.get_brand("demo-brand")
         created = client.post("/api/brands/demo-brand/guidelines", json={
@@ -237,7 +238,7 @@ def test_authenticated_guideline_and_policy_operator_apis(tmp_path, monkeypatch)
         assert activated.status_code == 200
         audit = client.get(f"/api/brand-guidelines/{guideline['id']}/audit").json()
         assert [item["action"] for item in audit] == ["created", "activated", "version_created", "activated"]
-        assert all(item["actor"] == "preview-operator" for item in audit)
+        assert all(item["actor"] == "chris" for item in audit)
         assert client.get("/api/brands/demo-brand/guidelines").json()[0]["brand_id"] == brand["id"]
 
         editorial = EditorialStore(store.DATA_PATH, clock=lambda: NOW)
@@ -250,4 +251,4 @@ def test_authenticated_guideline_and_policy_operator_apis(tmp_path, monkeypatch)
             "revision": 1, "reason": "A time-sensitive operator-requested alert needs concise treatment.",
         })
         assert quick.status_code == 201
-        assert quick.json()["actor"] == "preview-operator"
+        assert quick.json()["actor"] == "chris"

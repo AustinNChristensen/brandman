@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import sqlite3
 
-from app import store
-from app.jobs import JobWorker
+from brandman import store
+from brandman.jobs import JobWorker
 
 
 def use_database(tmp_path: Path) -> None:

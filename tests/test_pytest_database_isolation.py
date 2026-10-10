@@ -43,8 +43,8 @@ def test_full_pytest_collection_and_run_preserve_operating_database(tmp_path):
     before = (_digest(sentinel), _counts(sentinel))
     project = Path(__file__).parents[1]
     environment = os.environ.copy()
-    environment["BRAND_OS_DB"] = str(sentinel)
-    environment["BRAND_OS_DATABASE_PROFILE"] = "operating"
+    environment["BRANDMAN_DB"] = str(sentinel)
+    environment["BRANDMAN_DATABASE_PROFILE"] = "operating"
     environment.pop("PYTEST_ADDOPTS", None)
     commands = (
         [sys.executable, "-m", "pytest", "--collect-only", "-q", "tests"],

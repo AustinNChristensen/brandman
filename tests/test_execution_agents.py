@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.execution_agents import ExecutionAgentRegistry
+from brandman.execution_agents import ExecutionAgentRegistry
 
 
 NOW = datetime(2026, 9, 2, 12, tzinfo=UTC)

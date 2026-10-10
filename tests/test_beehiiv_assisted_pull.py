@@ -4,20 +4,20 @@ from threading import Event, Thread
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
-import app.beehiiv_assisted_pull as assisted_pull_module
-from app.beehiiv_assisted_pull import (
+from brandman import store
+import brandman.beehiiv_assisted_pull as assisted_pull_module
+from brandman.beehiiv_assisted_pull import (
     ASSISTED_BEEHIIV_PULL_JOB_TYPE, BeehiivAssistedPullError,
     BeehiivAssistedPullStore, make_assisted_beehiiv_pull_handler,
 )
-from app.campaign_graph import CampaignGraphStore
-from app.execution_agents import ExecutionAgentRegistry
-from app.execution_handoff import ExecutionHandoffStore
-from app.editorial import EditorialStore
-from app.dispatch import GovernedDispatcher, SQLiteDispatchStore
-from app.jobs import JobWorker
-from app.scheduler import ASSISTED_BEEHIIV_PULL, PeriodicOrchestrator
-from app.main import app, beehiiv_assisted_pull_store
+from brandman.campaign_graph import CampaignGraphStore
+from brandman.execution_agents import ExecutionAgentRegistry
+from brandman.execution_handoff import ExecutionHandoffStore
+from brandman.editorial import EditorialStore
+from brandman.dispatch import GovernedDispatcher, SQLiteDispatchStore
+from brandman.jobs import JobWorker
+from brandman.scheduler import ASSISTED_BEEHIIV_PULL, PeriodicOrchestrator
+from brandman.main import app, beehiiv_assisted_pull_store
 
 
 NOW = datetime(2026, 9, 2, 12, tzinfo=UTC)
@@ -296,7 +296,7 @@ def test_provider_kill_switch_invalidates_claim_and_prevents_every_projection(
         database, EditorialStore(database),
         GovernedDispatcher(SQLiteDispatchStore(database)), clock=lambda: NOW,
     )
-    controls.set_control(brand["id"], "beehiiv", enabled=False, actor="preview-operator")
+    controls.set_control(brand["id"], "beehiiv", enabled=False, actor="chris")
 
     with pytest.raises(BeehiivAssistedPullError, match="valid active claim"):
         tasks.submit_receipt(
@@ -349,7 +349,7 @@ def test_submit_and_concurrent_kill_switch_are_serialized_in_one_writer_transact
 
     def disable():
         results["control"] = controls.set_control(
-            brand["id"], "beehiiv", enabled=False, actor="preview-operator",
+            brand["id"], "beehiiv", enabled=False, actor="chris",
         )
         disabled.set()
 

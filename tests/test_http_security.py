@@ -8,14 +8,14 @@ import pytest
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.http_security import (
+from brandman import store
+from brandman.http_security import (
     PREVIEW_SESSION_COOKIE,
     create_preview_session,
     deployment_boundary_status,
     validate_preview_session,
 )
-from app.main import app
+from brandman.main import app
 
 
 PASSWORD = "test-only-password"
@@ -31,7 +31,7 @@ def _brand_payload(slug: str) -> dict:
 
 
 def test_public_homepage_is_static_and_every_other_surface_stays_gated(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         home = client.get("/")
         api = client.get("/api/brands")
@@ -45,7 +45,7 @@ def test_public_homepage_is_static_and_every_other_surface_stays_gated(monkeypat
 
 
 def test_every_response_is_non_cacheable_and_browser_hardened(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         unauthorized = client.get("/health")
         authorized = client.get("/health", headers={"Authorization": AUTH})
@@ -62,7 +62,7 @@ def test_every_response_is_non_cacheable_and_browser_hardened(monkeypatch):
 
 
 def test_operator_navigation_gets_clear_login_page_and_cookie_session(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         redirect = client.get(
             "/docs", headers={"Accept": "text/html"}, follow_redirects=False,
@@ -93,7 +93,7 @@ def test_operator_navigation_gets_clear_login_page_and_cookie_session(monkeypatc
 
 
 def test_top_level_login_metadata_is_allowed_without_weakening_api_mutations(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         login = client.post(
             "/login", data={"password": PASSWORD}, follow_redirects=False,
@@ -119,7 +119,7 @@ def test_preview_session_is_expiring_signed_and_password_bound():
 
 
 def test_cross_site_browser_mutation_is_rejected_before_state_change(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         before = len(store.rows("SELECT * FROM brands"))
         response = client.post(
@@ -134,7 +134,7 @@ def test_cross_site_browser_mutation_is_rejected_before_state_change(monkeypatch
 
 
 def test_same_origin_browser_and_explicit_non_browser_mutations_remain_supported(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         browser = client.post(
             "/api/brands", json=_brand_payload("same-origin-allowed"),
@@ -151,14 +151,14 @@ def test_same_origin_browser_and_explicit_non_browser_mutations_remain_supported
 
 
 def test_host_allowlist_and_remote_https_fail_closed(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "a-strong-remote-preview-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "a-strong-remote-preview-password")
     with TestClient(app) as client:
         rejected_host = client.get(
             "/health", headers={"Authorization": AUTH, "Host": "evil.example"},
         )
     assert rejected_host.status_code == 421
 
-    monkeypatch.setenv("BRAND_OS_ALLOWED_HOSTS", "brand.example")
+    monkeypatch.setenv("BRANDMAN_ALLOWED_HOSTS", "brand.example")
     remote_auth = "Basic " + base64.b64encode(
         b"operator:a-strong-remote-preview-password"
     ).decode()
@@ -173,7 +173,7 @@ def test_host_allowlist_and_remote_https_fail_closed(monkeypatch):
 
 
 def test_remote_client_cannot_spoof_loopback_host_to_bypass_transport_policy(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(
         app, base_url="http://localhost", client=("198.51.100.42", 50000),
     ) as client:
@@ -184,15 +184,15 @@ def test_remote_client_cannot_spoof_loopback_host_to_bypass_transport_policy(mon
 
 
 def test_remote_or_malformed_security_configuration_is_inert(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "short")
-    monkeypatch.setenv("BRAND_OS_ALLOWED_HOSTS", "brand.example")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "short")
+    monkeypatch.setenv("BRANDMAN_ALLOWED_HOSTS", "brand.example")
     short_auth = "Basic " + base64.b64encode(b"operator:short").decode()
     with TestClient(app, base_url="https://brand.example") as client:
         weak = client.get("/health", headers={"Authorization": short_auth})
     assert weak.status_code == 503
     assert "short" not in weak.text
 
-    monkeypatch.setenv("BRAND_OS_ALLOWED_HOSTS", "*")
+    monkeypatch.setenv("BRANDMAN_ALLOWED_HOSTS", "*")
     with TestClient(app) as client:
         wildcard = client.get("/health", headers={"Authorization": short_auth})
     assert wildcard.status_code == 503
@@ -200,15 +200,15 @@ def test_remote_or_malformed_security_configuration_is_inert(monkeypatch):
 
 
 def test_secret_free_deployment_readiness_distinguishes_local_and_remote_boundaries():
-    local = deployment_boundary_status({"BRAND_OS_PREVIEW_PASSWORD": PASSWORD})
+    local = deployment_boundary_status({"BRANDMAN_PREVIEW_PASSWORD": PASSWORD})
     unsafe_remote = deployment_boundary_status({
-        "BRAND_OS_PREVIEW_PASSWORD": "configured",
-        "BRAND_OS_ALLOWED_HOSTS": "brand.example",
+        "BRANDMAN_PREVIEW_PASSWORD": "configured",
+        "BRANDMAN_ALLOWED_HOSTS": "brand.example",
     })
     safe_remote = deployment_boundary_status({
-        "BRAND_OS_PREVIEW_PASSWORD": "a-strong-remote-preview-password",
-        "BRAND_OS_ALLOWED_HOSTS": "brand.example",
-        "BRAND_OS_REQUIRE_HTTPS": "true",
+        "BRANDMAN_PREVIEW_PASSWORD": "a-strong-remote-preview-password",
+        "BRANDMAN_ALLOWED_HOSTS": "brand.example",
+        "BRANDMAN_REQUIRE_HTTPS": "true",
     })
 
     assert local["healthy"] is True and local["local_only"] is True
@@ -219,8 +219,19 @@ def test_secret_free_deployment_readiness_distinguishes_local_and_remote_boundar
     assert "a-strong-remote-preview-password" not in repr(safe_remote)
 
 
+def test_trusted_local_networks_admit_container_gateway_only(monkeypatch):
+    from types import SimpleNamespace
+    from brandman.http_security import _client_is_loopback
+    request = lambda host: SimpleNamespace(client=SimpleNamespace(host=host))  # noqa: E731
+    assert not _client_is_loopback(request("172.17.0.1"))
+    monkeypatch.setenv("BRANDMAN_TRUSTED_LOCAL_NETWORKS", "172.16.0.0/12, 8.8.8.0/24, nonsense")
+    assert _client_is_loopback(request("172.17.0.1"))
+    assert not _client_is_loopback(request("8.8.8.8"))
+    assert not _client_is_loopback(request("10.0.0.5"))
+
+
 def test_homepage_console_figures_are_labeled_illustrative(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         home = client.get("/")
 
@@ -240,7 +251,7 @@ class _LoginDestinationParser(HTMLParser):
 
 @pytest.mark.parametrize("destination", ["/app", "/app/content?brand=demo&tab=social"])
 def test_app_navigation_preserves_destination_through_login_and_retry(monkeypatch, destination):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         redirect = client.get(destination, headers={"Accept": "text/html"}, follow_redirects=False)
         assert redirect.status_code == 303
@@ -267,7 +278,7 @@ def test_app_navigation_preserves_destination_through_login_and_retry(monkeypatc
 
 @pytest.mark.parametrize("destination", ["https://outside.example", "//outside.example", "/\\outside.example", "/app\n//outside.example"])
 def test_login_rejects_unsafe_return_destinations(monkeypatch, destination):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         accepted = client.post("/login", data={"password": PASSWORD, "next": destination}, follow_redirects=False)
     assert accepted.status_code == 303
@@ -275,7 +286,7 @@ def test_login_rejects_unsafe_return_destinations(monkeypatch, destination):
 
 
 def test_login_destination_is_escaped_and_non_navigation_stays_unauthorized(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         page = client.get("/login", params={"next": '/app?name="<example>&tab=social'})
         asset = client.get("/app/assets/index.js", headers={"Accept": "*/*"}, follow_redirects=False)
@@ -286,7 +297,7 @@ def test_login_destination_is_escaped_and_non_navigation_stays_unauthorized(monk
 
 
 def test_login_page_offers_access_request_without_leaking_password(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
         login = client.get("/login")
         failed = client.post("/login", data={"password": "wrong"})

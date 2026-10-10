@@ -4,15 +4,15 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app import store
-from app.beehiiv_assisted_sync import ingest_beehiiv_pull
-from app.beehiiv_lifecycle import (
+from brandman import store
+from brandman.beehiiv_assisted_sync import ingest_beehiiv_pull
+from brandman.beehiiv_lifecycle import (
     BeehiivLifecycleError, BeehiivNewsletterLifecycleProjector,
 )
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.editorial import EditorialStore, IssueLifecycle
-from app.main import app
-from app.sync import SyncOrchestrator
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.main import app
+from brandman.sync import SyncOrchestrator
 from fastapi.testclient import TestClient
 
 

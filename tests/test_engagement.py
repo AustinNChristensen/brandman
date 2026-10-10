@@ -5,10 +5,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app import store
-from app.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
-from app.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
-from app.engagement import (
+from brandman import store
+from brandman.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
+from brandman.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
+from brandman.engagement import (
     AntiSpamBlocked,
     AntiSpamPolicy,
     EngagementInbox,
@@ -85,7 +85,7 @@ def test_projection_is_unique_ranked_and_preserves_context(tmp_path):
 def test_only_materially_new_context_resurfaces_terminal_or_drafted_items(tmp_path):
     brand, inbox, dispatcher = setup(tmp_path)
     opportunity = project(inbox, brand, event())
-    inbox.dismiss(opportunity["id"], actor="preview-operator")
+    inbox.dismiss(opportunity["id"], actor="chris")
     same = project(inbox, brand, event())
     assert same["state"] == "dismissed"
     original_payload = dict(event().payload)
@@ -108,7 +108,7 @@ def test_only_materially_new_context_resurfaces_terminal_or_drafted_items(tmp_pa
     assert newer["resurfaced_count"] == 2
     with pytest.raises(InvalidEngagementTransition, match="linked action is stale"):
         inbox.draft_action(
-            newer["id"], "reply", dispatcher, actor="preview-operator",
+            newer["id"], "reply", dispatcher, actor="chris",
             text="A revised answer must not silently reuse the old draft.",
         )
 

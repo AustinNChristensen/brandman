@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 
-DASHBOARD = Path(__file__).parents[1] / "app" / "static" / "legacy_operator_dashboard.html"
+DASHBOARD = Path(__file__).parents[1] / "brandman" / "static" / "legacy_operator_dashboard.html"
 
 
 def dashboard_source() -> str:

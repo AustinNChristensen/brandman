@@ -38,8 +38,8 @@ def _operating_sentinel(path: Path) -> None:
 
 def _run(code: str, *, database: Path, profile: str) -> subprocess.CompletedProcess[str]:
     environment = os.environ.copy()
-    environment["BRAND_OS_DB"] = str(database)
-    environment["BRAND_OS_DATABASE_PROFILE"] = profile
+    environment["BRANDMAN_DB"] = str(database)
+    environment["BRANDMAN_DATABASE_PROFILE"] = profile
     return subprocess.run(
         [sys.executable, "-c", code], cwd=PROJECT, env=environment,
         text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30,
@@ -52,7 +52,7 @@ def test_main_and_mcp_imports_are_database_inert(tmp_path):
     before = _sha256(sentinel)
 
     result = _run(
-        "import app.main; import app.mcp_server; print('imported')",
+        "import brandman.main; import brandman.mcp_server; print('imported')",
         database=sentinel,
         profile="operating",
     )
@@ -73,8 +73,8 @@ def test_startup_initializes_only_explicit_database_and_profile(tmp_path):
     code = """
 import json, sqlite3
 from fastapi.testclient import TestClient
-from app.main import app
-from app import store
+from brandman.main import app
+from brandman import store
 with TestClient(app):
     with sqlite3.connect(store.DATA_PATH) as connection:
         profile = connection.execute(
@@ -98,7 +98,7 @@ print(json.dumps({"path": str(store.DATA_PATH), "profile": profile, "brands": br
 def test_mcp_first_tool_initializes_only_explicit_database(tmp_path):
     configured = tmp_path / "explicit-mcp-test.db"
     result = _run(
-        "import json; from app.mcp_server import list_brands; "
+        "import json; from brandman.mcp_server import list_brands; "
         "print(json.dumps(list_brands()))",
         database=configured,
         profile="test",
@@ -120,7 +120,7 @@ def test_startup_rejects_profile_mismatch_before_schema_write(tmp_path):
     before = _sha256(sentinel)
     code = """
 from fastapi.testclient import TestClient
-from app.main import app
+from brandman.main import app
 with TestClient(app):
     pass
 """
@@ -135,13 +135,13 @@ with TestClient(app):
 def test_new_database_startup_requires_explicit_profile(tmp_path):
     database = tmp_path / "must-not-be-created.db"
     environment = os.environ.copy()
-    environment["BRAND_OS_DB"] = str(database)
-    environment.pop("BRAND_OS_DATABASE_PROFILE", None)
+    environment["BRANDMAN_DB"] = str(database)
+    environment.pop("BRANDMAN_DATABASE_PROFILE", None)
     result = subprocess.run(
         [
             sys.executable, "-c",
             "from fastapi.testclient import TestClient; "
-            "from app.main import app; "
+            "from brandman.main import app; "
             "TestClient(app).__enter__()",
         ],
         cwd=PROJECT, env=environment, text=True,
@@ -149,7 +149,7 @@ def test_new_database_startup_requires_explicit_profile(tmp_path):
     )
 
     assert result.returncode != 0
-    assert "BRAND_OS_DATABASE_PROFILE must be explicitly configured" in result.stdout
+    assert "BRANDMAN_DATABASE_PROFILE must be explicitly configured" in result.stdout
     assert not database.exists()
 
 
@@ -157,13 +157,13 @@ def test_default_project_database_is_never_implicitly_initialized():
     operating_database = PROJECT / "brand_os.db"
     before = _sha256(operating_database)
     environment = os.environ.copy()
-    environment.pop("BRAND_OS_DB", None)
-    environment["BRAND_OS_DATABASE_PROFILE"] = "operating"
+    environment.pop("BRANDMAN_DB", None)
+    environment["BRANDMAN_DATABASE_PROFILE"] = "operating"
     result = subprocess.run(
         [
             sys.executable, "-c",
             "from fastapi.testclient import TestClient; "
-            "from app.main import app; "
+            "from brandman.main import app; "
             "TestClient(app).__enter__()",
         ],
         cwd=PROJECT, env=environment, text=True,
@@ -171,5 +171,5 @@ def test_default_project_database_is_never_implicitly_initialized():
     )
 
     assert result.returncode != 0
-    assert "BRAND_OS_DB must be explicitly configured" in result.stdout
+    assert "BRANDMAN_DB must be explicitly configured" in result.stdout
     assert _sha256(operating_database) == before

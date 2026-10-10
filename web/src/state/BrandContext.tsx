@@ -8,7 +8,6 @@ interface BrandState {
   brands: Brand[]
   loading: boolean
   error: string | null
-  reload: () => void
   /** Selected brand slug, or null for "all brands". */
   selected: string | null
   /** Brands the current view should operate on. */
@@ -16,6 +15,8 @@ interface BrandState {
   select: (slug: string | null) => void
   bySlug: (slug: string) => Brand | undefined
   byId: (id: string) => Brand | undefined
+  /** Re-read the brand list, e.g. after creating a brand. */
+  reload: () => void
 }
 
 const Ctx = createContext<BrandState | null>(null)
@@ -28,7 +29,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   const value = useMemo<BrandState>(() => {
     const valid = selected && brands.some((b) => b.slug === selected) ? selected : null
     return {
-      brands, loading, error, reload,
+      brands, loading, error,
       selected: valid,
       active: valid ? brands.filter((b) => b.slug === valid) : brands,
       select: (slug) => {
@@ -38,8 +39,9 @@ export function BrandProvider({ children }: { children: ReactNode }) {
       },
       bySlug: (slug) => brands.find((b) => b.slug === slug),
       byId: (id) => brands.find((b) => b.id === id),
+      reload,
     }
-  }, [brands, loading, error, reload, selected, params, setParams])
+  }, [brands, loading, error, selected, params, setParams, reload])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

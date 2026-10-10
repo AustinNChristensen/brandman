@@ -17,7 +17,7 @@ import pytest
 _COLLECTION_SCRATCH = Path(tempfile.mkdtemp(prefix="brand-os-pytest-")) / "collection.db"
 _PROJECT_DATABASE = Path(__file__).parents[1] / "brand_os.db"
 _LEGACY_TEST_DATABASE = Path(__file__).parent / "test_brand_os.db"
-_INHERITED_DATABASE = Path(os.environ.get("BRAND_OS_DB", _PROJECT_DATABASE))
+_INHERITED_DATABASE = Path(os.environ.get("BRANDMAN_DB", _PROJECT_DATABASE))
 _PROTECTED_DATABASES = frozenset(
     path.expanduser().resolve()
     for path in {_PROJECT_DATABASE, _LEGACY_TEST_DATABASE, _INHERITED_DATABASE}
@@ -28,7 +28,7 @@ def _refuse_protected_sqlite_connection(event, arguments):
     """Make accidental operating-path access impossible inside pytest.
 
     Python's SQLite audit event occurs before the connection is opened, which
-    protects direct repository constructors as well as ``app.store`` helpers.
+    protects direct repository constructors as well as ``brandman.store`` helpers.
     The guard is deliberately path-based: tests may create temporary databases
     profiled as operating to test policy, but never access the inherited or
     project operating files.
@@ -51,19 +51,21 @@ def _refuse_protected_sqlite_connection(event, arguments):
 
 
 sys.addaudithook(_refuse_protected_sqlite_connection)
-os.environ["BRAND_OS_DB"] = str(_COLLECTION_SCRATCH)
-os.environ["BRAND_OS_DATABASE_PROFILE"] = "test"
+os.environ["BRANDMAN_DB"] = str(_COLLECTION_SCRATCH)
+os.environ["BRANDMAN_DATABASE_PROFILE"] = "test"
+# Fixtures record approvals as "chris"; the operator identity is configurable.
+os.environ["BRANDMAN_OPERATOR"] = "chris"
 
 # This is intentionally the first application import in the pytest process.
-from app import store  # noqa: E402
+from brandman import store  # noqa: E402
 
 store.DATA_PATH = _COLLECTION_SCRATCH
 
 
 def pytest_collection_finish(session):
     """Undo any module-level environment assignments made during collection."""
-    os.environ["BRAND_OS_DB"] = str(_COLLECTION_SCRATCH)
-    os.environ["BRAND_OS_DATABASE_PROFILE"] = "test"
+    os.environ["BRANDMAN_DB"] = str(_COLLECTION_SCRATCH)
+    os.environ["BRANDMAN_DATABASE_PROFILE"] = "test"
     store.DATA_PATH = _COLLECTION_SCRATCH
 
 
@@ -71,15 +73,15 @@ def pytest_collection_finish(session):
 def isolated_test_database(tmp_path, monkeypatch):
     """Bind every test to a fresh, explicitly profiled scratch database.
 
-    This fixture runs before any TestClient lifespan, which is where app.main
+    This fixture runs before any TestClient lifespan, which is where brandman.main
     composes its lazy service set. Tests remain free to replace DATA_PATH with
     another tmp_path database, but can never inherit the operating path.
     """
     original = store.DATA_PATH
     scratch = tmp_path / "brand-os-pytest.db"
     store.DATA_PATH = scratch
-    monkeypatch.setenv("BRAND_OS_DB", str(scratch))
-    monkeypatch.setenv("BRAND_OS_DATABASE_PROFILE", "test")
+    monkeypatch.setenv("BRANDMAN_DB", str(scratch))
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "test")
     yield
     store.DATA_PATH = original
 

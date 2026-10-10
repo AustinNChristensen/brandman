@@ -3,8 +3,8 @@ import os
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.main import app
+from brandman import store
+from brandman.main import app
 
 
 HEADERS = {
@@ -14,7 +14,7 @@ HEADERS = {
 
 def test_rest_drafts_recommends_and_human_accepts_without_publishing(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "experiment-api.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app, headers=HEADERS) as client:
         source = client.post("/api/brands/demo-brand/sources", json={
             "title": "Offer update", "source_type": "rss", "body_summary": "The source reports 80,000 credits.",
@@ -74,12 +74,12 @@ def test_rest_drafts_recommends_and_human_accepts_without_publishing(tmp_path, m
             f"/api/experiments/{experiment['id']}/recommendations/{recommendation['id']}/accept"
         ).json()
         assert accepted["status"] == "completed"
-        assert accepted["recommendations"][0]["accepted_by"] == "preview-operator"
+        assert accepted["recommendations"][0]["accepted_by"] == "chris"
         assert all(item["post_status"] == "draft" for item in accepted["variants"])
 
 
 def test_mcp_can_draft_and_recommend_but_has_no_acceptance_authority():
-    from app.mcp_server import mcp
+    from brandman.mcp_server import mcp
 
     tools = set(mcp._tool_manager._tools)
     assert {

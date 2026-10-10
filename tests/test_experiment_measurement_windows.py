@@ -4,8 +4,8 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app.experiments import (
+from brandman import store
+from brandman.experiments import (
     EXPERIMENT_WINDOW_COLLECT_JOB_TYPE,
     EXPERIMENT_WINDOW_EVALUATE_JOB_TYPE,
     ExperimentError,
@@ -13,7 +13,7 @@ from app.experiments import (
     make_experiment_window_collection_handler,
     make_experiment_window_evaluation_handler,
 )
-from app.jobs import JobWorker
+from brandman.jobs import JobWorker
 
 
 def _setup(tmp_path, *, windows=None):

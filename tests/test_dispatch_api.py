@@ -1,11 +1,11 @@
 import base64
 import os
 
-os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
+os.environ["BRANDMAN_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 HEADERS = {
@@ -46,7 +46,7 @@ def test_persisted_dispatch_approval_queue_and_audit_flow():
         ).json()
         assert approved["status"] == "approved"
         assert approved["approval"]["revision"] == 1
-        assert approved["approval"]["approver"] == "preview-operator"
+        assert approved["approval"]["approver"] == "chris"
 
         queued = client.post(f"/api/dispatch-items/{item['id']}/queue").json()
         assert queued["status"] == "queued"
@@ -138,16 +138,16 @@ def test_review_identity_is_authenticated_and_cannot_be_supplied_by_caller():
                 f"/api/dispatch-items/{item['id']}/approve",
                 json={"revision": 1, "review_token": review_token(client, item["id"])}
         ).json()
-        assert approved["approval"]["approver"] == "preview-operator"
+        assert approved["approval"]["approver"] == "chris"
         queued = client.post(
             f"/api/dispatch-items/{item['id']}/queue", json={"actor": "mallory"}
         ).json()
         assert queued["status"] == "queued"
         audit = client.get(f"/api/dispatch-items/{item['id']}/audit").json()
         assert [(entry["action"], entry["actor"]) for entry in audit] == [
-            ("created", "preview-operator"),
-            ("awaiting_approval", "preview-operator"),
-            ("approved", "preview-operator"),
+            ("created", "chris"),
+            ("awaiting_approval", "chris"),
+            ("approved", "chris"),
             ("queued", "system:rest-queue"),
         ]
 
@@ -167,7 +167,7 @@ def test_rejection_and_batch_approval_use_principal_not_request_text():
             f"/api/dispatch-items/{rejected_item['id']}/reject", json={"revision": 1}
         ).json()
         assert rejected["status"] == "rejected"
-        assert client.get(f"/api/dispatch-items/{rejected_item['id']}/audit").json()[-1]["actor"] == "preview-operator"
+        assert client.get(f"/api/dispatch-items/{rejected_item['id']}/audit").json()[-1]["actor"] == "chris"
 
         batch_item = client.post(
             "/api/brands/demo-brand/dispatch-items",
@@ -187,11 +187,11 @@ def test_rejection_and_batch_approval_use_principal_not_request_text():
                               "review_token": review_token(client, batch_item["id"])}],
                   "batch_id": "human-review"},
         ).json()
-        assert approved[0]["approval"]["approver"] == "preview-operator"
+        assert approved[0]["approval"]["approver"] == "chris"
 
 
 def test_mcp_exposes_drafting_but_no_human_review_or_queue_authority():
-    from app.mcp_server import mcp
+    from brandman.mcp_server import mcp
 
     tools = set(mcp._tool_manager._tools)
     assert {"list_dispatch_items", "create_dispatch_item", "edit_dispatch_item",

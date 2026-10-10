@@ -16,7 +16,7 @@ uv run pytest
 ```
 
 - Install Node.js 22.12+ with npm for the dashboard build. Commit frontend sources,
-  never generated `app/static/app/` files. Rebuild locally after frontend changes.
+  never generated `brandman/static/app/` files. Rebuild locally after frontend changes.
 - Keep changes focused and add or update tests with them.
 - Never commit credentials, database files or real customer data. Tests must use scratch databases only.
 - Nothing may publish to an external channel without an explicit approval step; keep that invariant.

@@ -1,4 +1,4 @@
-from app.operator_workflow import build_operator_workflow
+from brandman.operator_workflow import build_operator_workflow
 
 
 def candidate():

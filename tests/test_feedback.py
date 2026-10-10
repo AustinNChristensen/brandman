@@ -3,7 +3,7 @@ import base64
 import pytest
 from fastapi.testclient import TestClient
 
-from app.feedback import FeedbackError, FeedbackStore
+from brandman.feedback import FeedbackError, FeedbackStore
 
 
 def report(store: FeedbackStore, **overrides):
@@ -28,11 +28,11 @@ def test_deduplicated_recurrence_preserves_governed_status(tmp_path):
     store = FeedbackStore(tmp_path / "feedback.db")
     first = report(store, fingerprint="approval:batch")
     started = store.start(
-        first["id"], assignee="builder", actor="preview-operator",
+        first["id"], assignee="builder", actor="chris",
         implementation_links=["/app/main.py"], implementation_notes="Adding exact batch review.",
     )
     resolved = store.resolve(
-        first["id"], actor="preview-operator", resolution_evidence="Regression tests pass.",
+        first["id"], actor="chris", resolution_evidence="Regression tests pass.",
         implementation_links=["/app/main.py", "/tests/test_dispatch_api.py"],
     )
     assert started["status"] == "in_progress"
@@ -54,17 +54,17 @@ def test_full_lifecycle_chris_gates_and_reopen(tmp_path):
     store = FeedbackStore(tmp_path / "feedback.db")
     item = report(store)
     with pytest.raises(FeedbackError, match="cannot transition"):
-        store.resolve(item["id"], actor="preview-operator", resolution_evidence="Not started")
+        store.resolve(item["id"], actor="chris", resolution_evidence="Not started")
     item = store.start(item["id"], assignee="secure-connections", actor="agent")
     with pytest.raises(PermissionError, match="authenticated human"):
         store.resolve(item["id"], actor="agent", resolution_evidence="Trust me")
-    item = store.resolve(item["id"], actor="preview-operator", resolution_evidence="Test run 109 passed")
+    item = store.resolve(item["id"], actor="chris", resolution_evidence="Test run 109 passed")
     with pytest.raises(PermissionError, match="authenticated human"):
         store.verify(item["id"], actor="agent", evidence="Looks good")
-    item = store.verify(item["id"], actor="preview-operator", evidence="Reproduced fixed behavior")
+    item = store.verify(item["id"], actor="chris", evidence="Reproduced fixed behavior")
     assert item["status"] == "verified"
-    assert item["resolved_by"] == "preview-operator"
-    assert item["verified_by"] == "preview-operator"
+    assert item["resolved_by"] == "chris"
+    assert item["verified_by"] == "chris"
 
     reopened = store.reopen(item["id"], actor="demo-brand-agent", reason="Regression observed")
     assert reopened["status"] == "open"
@@ -148,12 +148,12 @@ def test_reconciliation_attaches_evidence_to_already_classified_gap(tmp_path):
 
 
 def test_rest_lifecycle_uses_authenticated_human_and_mcp_is_agent_only(tmp_path, monkeypatch):
-    from app import store as brand_store
-    from app.main import app
-    from app.mcp_server import mcp
+    from brandman import store as brand_store
+    from brandman.main import app
+    from brandman.mcp_server import mcp
 
     brand_store.DATA_PATH = tmp_path / "api-feedback.db"
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "feedback-test-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "feedback-test-password")
     headers = {"Authorization": "Basic " + base64.b64encode(
         b"operator:feedback-test-password"
     ).decode()}
@@ -183,12 +183,12 @@ def test_rest_lifecycle_uses_authenticated_human_and_mcp_is_agent_only(tmp_path,
             "resolution_evidence": "Focused and full tests pass.",
             "implementation_links": ["/app/feedback.py", "/tests/test_feedback.py"],
         }).json()
-        assert resolved["resolved_by"] == "preview-operator"
+        assert resolved["resolved_by"] == "chris"
         verified = client.post(f"/api/product-feedback/{created['id']}/verify", json={
             "evidence": "Demo Brand adversarial review confirmed the behavior."
         }).json()
         assert verified["status"] == "verified"
-        assert verified["verified_by"] == "preview-operator"
+        assert verified["verified_by"] == "chris"
 
         filtered = client.get(
             "/api/brands/demo-brand/product-feedback?status=verified&assignee=builder"
@@ -196,7 +196,7 @@ def test_rest_lifecycle_uses_authenticated_human_and_mcp_is_agent_only(tmp_path,
         assert [item["id"] for item in filtered] == [created["id"]]
         detail = client.get(f"/api/product-feedback/{created['id']}").json()
         history = client.get(f"/api/product-feedback/{created['id']}/history").json()
-        assert detail["comments"][0]["actor"] == "preview-operator"
+        assert detail["comments"][0]["actor"] == "chris"
         assert history[-1]["action"] == "verified"
 
     tools = set(mcp._tool_manager._tools)

@@ -4,9 +4,9 @@ import json
 import pytest
 from cryptography.fernet import Fernet
 
-from app.connectors import ConnectorError, HttpResponse
-from app.credentials import CredentialStore
-from app.x_auth import XOAuthRefreshError, XOAuthTokenSupplier
+from brandman.connectors import ConnectorError, HttpResponse
+from brandman.credentials import CredentialStore
+from brandman.x_auth import XOAuthRefreshError, XOAuthTokenSupplier
 
 
 NOW = datetime(2026, 9, 2, 12, tzinfo=UTC)

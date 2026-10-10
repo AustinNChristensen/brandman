@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from app import store
-from app.connectors import DispatchReceipt, HttpResponse, ConnectorKind, dedup_identity
-from app.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
-from app.jobs import JobWorker
-from app.x_delivery import (
+from brandman import store
+from brandman.connectors import DispatchReceipt, HttpResponse, ConnectorKind, dedup_identity
+from brandman.dispatch import GovernedDispatcher, Lifecycle, SQLiteDispatchStore
+from brandman.jobs import JobWorker
+from brandman.x_delivery import (
     XDeliveryJobHandler,
     XPublisherAdapter,
     X_DELIVERY_JOB_TYPE,
@@ -58,8 +58,8 @@ def setup_system(tmp_path: Path, *, transport=None, reconciler=None, scopes=None
     dispatcher.set_connector_gate("x", healthy=True, write_enabled=True)
     item = dispatcher.create("x", {"body": "Hello"}, item_id="dispatch-1", brand_id=brand["id"])
     dispatcher.submit_for_approval(item.id, actor="agent")
-    dispatcher.approve(item.id, revision=1, approver="preview-operator")
-    queued = dispatcher.queue(item.id, actor="preview-operator")
+    dispatcher.approve(item.id, revision=1, approver="chris")
+    queued = dispatcher.queue(item.id, actor="chris")
     handler = XDeliveryJobHandler(dispatcher, account["id"])
     worker = JobWorker("x-worker", retry_base_seconds=0)
     register_x_delivery(worker, handler)

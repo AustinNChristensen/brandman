@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from app import store
-from app.feedback import FeedbackStore
-from app.jobs import JobWorker
-from app.connectors import ConnectorKind
-from app.runtime import BrandOSRuntime
-from app.scheduler import CONNECTOR_SYNC, PeriodicOrchestrator
-from app.sync import enqueue_sync_job
-from app.operational_feedback import (
+from brandman import store
+from brandman.feedback import FeedbackStore
+from brandman.jobs import JobWorker
+from brandman.connectors import ConnectorKind
+from brandman.runtime import BrandOSRuntime
+from brandman.scheduler import CONNECTOR_SYNC, PeriodicOrchestrator
+from brandman.sync import enqueue_sync_job
+from brandman.operational_feedback import (
     report_approval_dead_end, report_missing_permission, report_stale_metric,
     report_successful_workaround,
 )
@@ -62,7 +62,7 @@ def test_terminal_jobs_deduplicate_without_leaking_and_preserve_governed_status(
     assert "RuntimeError" in item["actual_behavior"]
 
     feedback.start(item["id"], assignee="operator", actor="operator")
-    feedback.resolve(item["id"], actor="preview-operator", resolution_evidence="Connection repaired")
+    feedback.resolve(item["id"], actor="chris", resolution_evidence="Connection repaired")
     assert fail("export-cycle-2")["status"] == "needs_attention"
     recurrence = feedback.get(item["id"])
     assert recurrence["occurrence_count"] == 2

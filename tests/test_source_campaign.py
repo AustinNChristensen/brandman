@@ -1,18 +1,18 @@
 from pathlib import Path
 
-from app import store
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.editorial import EditorialStore
-from app.learning_engine import BrandLearningEngine
-from app.source_campaign import SourceCampaignOperator, semantic_cluster, source_grounded_x_draft
-from app.sync import SyncOrchestrator, make_sync_job_handler
+from brandman import store
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.editorial import EditorialStore
+from brandman.learning_engine import BrandLearningEngine
+from brandman.source_campaign import SourceCampaignOperator, semantic_cluster, source_grounded_x_draft
+from brandman.sync import SyncOrchestrator, make_sync_job_handler
 
 
 def setup_operator(tmp_path: Path):
     store.DATA_PATH = tmp_path / "source-campaign.db"
     store.init_db()
     brand = store.get_brand("demo-brand")
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     editorial = EditorialStore(store.DATA_PATH)
     return brand, SourceCampaignOperator(editorial)
 
@@ -280,7 +280,7 @@ def test_legacy_reconciliation_is_dry_run_first_and_fails_closed(tmp_path):
 
 
 def test_product_family_titles_cluster_by_vendor_line_and_content_type():
-    from app.source_campaign import SourceVocabulary, configure_source_vocabulary
+    from brandman.source_campaign import SourceVocabulary, configure_source_vocabulary
     configure_source_vocabulary(SourceVocabulary(
         vendors=(("acme", ("acme",)),),
         product_lines=(("cloud", ("acme cloud", "cloud")), ("desk", ("acme desk", "desk"))),

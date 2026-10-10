@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from app import store
-from app.connectors import (
+from brandman import store
+from brandman.connectors import (
     ConnectorError,
     ConnectorEvent,
     ConnectorKind,
@@ -11,8 +11,8 @@ from app.connectors import (
     EventKind,
     SyncCursor,
 )
-from app.jobs import JobWorker
-from app.sync import SYNC_JOB_TYPE, SyncOrchestrator, enqueue_sync_job, make_sync_job_handler
+from brandman.jobs import JobWorker
+from brandman.sync import SYNC_JOB_TYPE, SyncOrchestrator, enqueue_sync_job, make_sync_job_handler
 
 
 def setup_account(tmp_path: Path, connector_type: str = "beehiiv"):

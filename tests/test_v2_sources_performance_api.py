@@ -3,12 +3,12 @@ from __future__ import annotations
 import base64
 import os
 
-os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
+os.environ["BRANDMAN_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.main import app
+from brandman import store
+from brandman.main import app
 
 
 def _headers() -> dict[str, str]:
@@ -66,7 +66,7 @@ def test_sources_and_performance_are_brand_scoped_and_read_only_first():
         assert store.row(
             "SELECT actor FROM beehiiv_assisted_pull_audit WHERE task_id=? AND action='requested'",
             (pull.json()["id"],),
-        )["actor"] == "preview-operator"
+        )["actor"] == "chris"
 
         store.insert("performance_records", {
             "brand_id": points["id"], "channel": "x",

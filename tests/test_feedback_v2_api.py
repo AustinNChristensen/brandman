@@ -2,11 +2,11 @@ import base64
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "feedback-v2-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "feedback-v2-test")
     headers = {"Authorization": "Basic " + base64.b64encode(b"operator:feedback-v2-test").decode()}
     with TestClient(app, headers=headers) as client:
         reported = client.post("/api/brands/demo-brand/product-feedback", json={
@@ -26,7 +26,7 @@ def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(mo
             f"/api/brands/demo-brand/product-feedback/{item['id']}/comments",
             json={"body": "Reproduced from the operator console."},
         )
-        assert comment.json()["actor"] == "preview-operator"
+        assert comment.json()["actor"] == "chris"
         started = client.post(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/start",
             json={"assignee": "builder", "implementation_notes": "Working on the fix."},
@@ -36,12 +36,12 @@ def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(mo
             f"/api/brands/demo-brand/product-feedback/{item['id']}/resolve",
             json={"resolution_evidence": "Focused regression passes."},
         ).json()
-        assert resolved["resolved_by"] == "preview-operator"
+        assert resolved["resolved_by"] == "chris"
         verified = client.post(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/verify",
             json={"evidence": "Operator verified the workflow."},
         ).json()
-        assert verified["verified_by"] == "preview-operator"
+        assert verified["verified_by"] == "chris"
         reopened = client.post(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/reopen",
             json={"reason": "The failure recurred."},
@@ -54,9 +54,9 @@ def test_brand_feedback_lifecycle_preserves_reporter_and_derives_human_actors(mo
         history = client.get(
             f"/api/brands/demo-brand/product-feedback/{item['id']}/history"
         ).json()
-        assert detail["comments"][0]["actor"] == "preview-operator"
+        assert detail["comments"][0]["actor"] == "chris"
         assert history[0]["actor"] == "demo-brand-agent"
-        assert {event["actor"] for event in history[1:]} == {"preview-operator"}
+        assert {event["actor"] for event in history[1:]} == {"chris"}
 
         client.post("/api/brands", json={
             "slug": "other-brand", "name": "Other", "mission": "Other",

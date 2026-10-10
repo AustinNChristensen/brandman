@@ -9,7 +9,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BRAND_OS_API_URL + '/api/brands/demo-brand/sources' }}",
+        "url": "={{ $env.BRANDMAN_API_URL + '/api/brands/demo-brand/sources' }}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { title: $json.body.title, url: $json.body.url, source_type: 'beehiiv', body_summary: $json.body.summary, lifecycle_state: $json.body.status === 'published' ? 'published' : 'scheduled', scheduled_for: $json.body.publish_at } }}"

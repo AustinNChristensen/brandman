@@ -4,10 +4,10 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app.attribution_store import AttributionStore
-from app.content_dispatch import CanonicalPostDispatchService, CanonicalPostNotFound
-from app.dispatch import (
+from brandman import store
+from brandman.attribution_store import AttributionStore
+from brandman.content_dispatch import CanonicalPostDispatchService, CanonicalPostNotFound
+from brandman.dispatch import (
     DispatchItem,
     DispatchValidationError,
     GovernedDispatcher,
@@ -83,7 +83,7 @@ def test_canonical_body_edit_advances_revision_and_invalidates_approval(tmp_path
     service = CanonicalPostDispatchService(dispatcher)
     item = service.create_from_post(post["id"])
     dispatcher.submit_for_approval(item.id, actor="agent")
-    dispatcher.approve(item.id, revision=1, approver="preview-operator")
+    dispatcher.approve(item.id, revision=1, approver="chris")
     with store.connection() as connection:
         connection.execute(
             "UPDATE posts SET body=?, updated_at=? WHERE id=?",
@@ -155,7 +155,7 @@ def test_attributed_payload_linked_duplicate_preserves_tracking_and_invalidates_
     service = CanonicalPostDispatchService(dispatcher)
     canonical = service.create_from_post(post["id"])
     dispatcher.submit_for_approval(canonical.id, actor="agent")
-    dispatcher.approve(canonical.id, revision=1, approver="preview-operator")
+    dispatcher.approve(canonical.id, revision=1, approver="chris")
     tracked_url = (
         "https://example.test/story?utm_source=x&utm_medium=organic-social&utm_campaign="
         + post["campaign_id"] + "&utm_content=" + post["id"] + "&utm_cta=read"

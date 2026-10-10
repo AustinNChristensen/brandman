@@ -34,9 +34,7 @@ from the results. The brand context itself never lives inside a channel.
 - **Managed:** a hosted offering built on this core plus separate closed
   components (billing, multi-tenancy and similar). Not part of this repository.
 
-On first start the app seeds a sample brand (`demo-brand`) and a second one (`demo-personal`) so there is something to click through. Replace them with your own.
-
-## Quickstart (self-hosting)
+## Quickstart
 
 Requirements for a source checkout: Python 3.11+, [uv](https://docs.astral.sh/uv/), and Node.js 22.12+ with npm.
 
@@ -51,18 +49,16 @@ cd brandman
 uv sync --locked
 uv run python scripts/build_dashboard.py
 
-# Copy .env.example for the full list of settings. A minimal local run:
-export BRAND_OS_DB="$PWD/brand_os.db"
-export BRAND_OS_DATABASE_PROFILE=development
-export BRAND_OS_PREVIEW_PASSWORD="choose-a-long-random-password"
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+uv run brandman init        # asks for your brand; writes .env and the database
+uv run brandman serve       # http://127.0.0.1:8000/app (password is in .env)
+uv run brandman mcp-config --client claude-code   # connect an agent
 ```
 
-Open http://127.0.0.1:8000. The home page is public; the dashboard, API and
-login are behind the preview password. Run the test suite with `uv run pytest`.
+Or with Docker: `cp .env.example .env`, set `BRANDMAN_PREVIEW_PASSWORD`, then
+`docker compose up -d`.
 
 The source HTML (`web/index.html`) and React code are tracked; generated files in
-`app/static/app/` are ignored. After changing dashboard source, rerun
+`brandman/static/app/` are ignored. After changing dashboard source, rerun
 `uv run python scripts/build_dashboard.py` before serving it or running Python
 HTTP tests. `npm run dev` in `web/` remains available for frontend development.
 
@@ -90,28 +86,23 @@ Production notes:
 - The built-in password rate limit on `/oauth/authorize` is in memory and per
   process.
 
-## MCP setup
+Walkthrough: [docs/getting-started.md](docs/getting-started.md).
 
-Local (stdio), for example with Claude Code:
+## Documentation
 
-```json
-{
-  "mcpServers": {
-    "brandman": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/brandman", "brandman-mcp"],
-      "env": { "BRAND_OS_DB": "/path/to/brand_os.db" }
-    }
-  }
-}
+- [Getting started](docs/getting-started.md)
+- [Connecting MCP clients](docs/mcp.md): Claude Code, Claude Desktop, Cursor, hosted OAuth
+- [Configuration](docs/configuration.md): every `BRANDMAN_*` setting
+- [Seed packs](docs/seed-packs.md): start a database with your own brands and house style
+- [Deployment](docs/deployment.md): Docker, TLS proxies, backups
+- [Extending BrandMan](docs/extending.md): plugins, custom authentication, one database per workspace
+
+## Development
+
+```bash
+uv sync && uv run pytest
+cd web && npm ci && npm test && npm run build   # rebuilds brandman/static/app
 ```
-
-Hosted endpoint: your deployment serves Streamable HTTP MCP at `/mcp`, protected
-by OAuth 2.1 with PKCE and dynamic client registration. Point an MCP client at
-`https://your-host/mcp` and complete the browser sign-in. The consent screen
-says what the client may do: read brand data and create or edit drafts,
-campaigns, records and connector jobs. Approving and publishing stay with a
-human.
 
 ## Contributing
 

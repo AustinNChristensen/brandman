@@ -5,25 +5,25 @@ import json
 import pytest
 from cryptography.fernet import Fernet
 
-from app import store
-from app.experiments import (
+from brandman import store
+from brandman.experiments import (
     EXPERIMENT_WINDOW_COLLECT_JOB_TYPE, EXPERIMENT_WINDOW_EVALUATE_JOB_TYPE,
 )
-from app.connectors import HttpResponse
-from app.campaign_graph import CampaignGraphStore
-from app.credentials import CredentialConfigurationError, CredentialStore
-from app.editorial import EditorialStore, IssueLifecycle
-from app.beehiiv_runtime import (
+from brandman.connectors import HttpResponse
+from brandman.campaign_graph import CampaignGraphStore
+from brandman.credentials import CredentialConfigurationError, CredentialStore
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.beehiiv_runtime import (
     BEEHIIV_NEWSLETTER_EXPORT_JOB,
     enqueue_newsletter_export,
 )
-from app.service_runtime import (
+from brandman.service_runtime import (
     ServiceRuntimeConfigurationError,
     build_service_runtime,
 )
-from app.sync import enqueue_sync_job
-from app.connector_health import HEALTH_CHECK_JOB_TYPE
-from app.x_delivery import enqueue_x_delivery
+from brandman.sync import enqueue_sync_job
+from brandman.connector_health import HEALTH_CHECK_JOB_TYPE
+from brandman.x_delivery import enqueue_x_delivery
 
 
 pytestmark = pytest.mark.usefixtures("launch_window_clock")
@@ -155,10 +155,10 @@ def test_periodic_native_beehiiv_sync_projects_subscribers_and_issue_metrics(tmp
     # The seeded mission window ends 2026-10-01, so pin the connector clock inside
     # it. Otherwise KPI projection is skipped as outside_mission_window.
     monkeypatch.setattr(
-        "app.connectors.BeehiivConnector._now", lambda self: "2026-09-15T12:00:00+00:00",
+        "brandman.connectors.BeehiivConnector._now", lambda self: "2026-09-15T12:00:00+00:00",
     )
     database, key, brand, beehiiv, _, _ = configured_database(tmp_path)
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     scopes = ["posts.read", "posts.write", "publications.read"]
     store.upsert_connector_account(
         brand["id"], "beehiiv", "pub_demo", "Demo Brand Beehiiv",
@@ -239,8 +239,8 @@ def test_bounded_runtime_executes_approved_x_delivery(tmp_path):
         "x", {"body": "Approved post"}, brand_id=brand["id"]
     )
     service.dispatcher.submit_for_approval(item.id, actor="agent")
-    service.dispatcher.approve(item.id, revision=1, approver="preview-operator")
-    queued = service.dispatcher.queue(item.id, actor="preview-operator")
+    service.dispatcher.approve(item.id, revision=1, approver="chris")
+    queued = service.dispatcher.queue(item.id, actor="chris")
     enqueue_x_delivery(queued, x_account["id"])
 
     run = service.run_until_idle(max_jobs=1)
@@ -270,9 +270,9 @@ def test_bounded_runtime_exports_only_exact_approved_newsletter_draft(tmp_path):
     editorial.transition(issue["id"], IssueLifecycle.OUTLINE)
     editorial.transition(issue["id"], IssueLifecycle.DRAFT)
     editorial.record_fact_check(
-        issue["id"], expected_revision=1, reviewer="preview-operator"
+        issue["id"], expected_revision=1, reviewer="chris"
     )
-    editorial.approve_issue(issue["id"], approver="preview-operator", expected_revision=1)
+    editorial.approve_issue(issue["id"], approver="chris", expected_revision=1)
     job = enqueue_newsletter_export(
         editorial, issue["id"], connector_account_id=beehiiv["id"]
     )
@@ -365,7 +365,7 @@ def test_multiple_writable_x_accounts_fail_closed(tmp_path):
 
 def test_production_composes_separate_x_read_for_metrics_and_engagement(tmp_path):
     database, key, brand, _, x_write, _ = configured_database(tmp_path)
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     x_read = store.upsert_connector_account(
         brand["id"], "x", "demobrand-read", "DemoBrand X read",
         status="healthy", scopes=["tweet.read", "users.read", "offline.access"],
@@ -435,7 +435,7 @@ def test_production_composes_separate_x_read_for_metrics_and_engagement(tmp_path
 
 def test_production_composes_website_analytics_and_promotes_evidence(tmp_path):
     database, key, brand, _, _, _ = configured_database(tmp_path)
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     website = store.upsert_connector_account(
         brand["id"], "website", "demobrand-analytics", "DemoBrand analytics",
         status="healthy", scopes=["analytics.read"],
@@ -537,7 +537,7 @@ def test_service_runtime_executes_queued_read_only_health_probe(tmp_path):
         lambda account: RecordingTransport(account["connector_type"], calls),
     )
     check = service.health_store.trigger(
-        brand["id"], actor="preview-operator", connector_account_id=rss["id"],
+        brand["id"], actor="chris", connector_account_id=rss["id"],
     )[0]
     completed_job = service.run_once()
 

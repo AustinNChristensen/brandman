@@ -13,4 +13,4 @@ class DashboardBuildHook(BuildHookInterface):
         root = Path(self.root)
         subprocess.run([sys.executable, str(root / "scripts" / "build_dashboard.py")],
                        cwd=root, check=True)
-        build_data["force_include"][str(root / "app" / "static" / "app")] = "app/static/app"
+        build_data["force_include"][str(root / "brandman" / "static" / "app")] = "brandman/static/app"
