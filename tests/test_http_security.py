@@ -283,3 +283,15 @@ def test_login_destination_is_escaped_and_non_navigation_stays_unauthorized(monk
         mutation = client.post("/app", headers={"Accept": "text/html"}, follow_redirects=False)
     assert '&quot;&lt;example&gt;&amp;tab=social' in page.text
     assert asset.status_code == api.status_code == mutation.status_code == 401
+
+
+def test_login_page_offers_access_request_without_leaking_password(monkeypatch):
+    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        login = client.get("/login")
+        failed = client.post("/login", data={"password": "wrong"})
+
+    for page in (login, failed):
+        assert 'id="request-access"' in page.text
+        assert "request access" in page.text and "run your own copy" in page.text
+        assert PASSWORD not in page.text

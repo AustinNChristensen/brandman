@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useBrands } from '../state/BrandContext'
 import { brandColor } from '../lib/brands'
 import { Icon, type IconName } from './icons'
@@ -56,9 +56,10 @@ export function Shell({ title, crumb, right, meters, children }: { title: ReactN
           ))}
         </nav>
         <div className="side-foot">
-          <div className="meter-row"><span>X requests (month)</span><span className="mono">{meters?.xRequests ?? '—'}</span></div>
-          <div className="meter-row"><span>Estimated spend</span><span className="mono">{meters?.spend ?? '—'}</span></div>
-          <div className="meta">Prices come only from your provider rate cards.</div>
+          <div className="meter-row"><span>X API requests this month</span><span className="mono">{meters?.xRequests ?? '—'}</span></div>
+          {meters?.xRequests === undefined && <div className="meta">Not shown yet: usage data has not loaded for this view.</div>}
+          <div className="meter-row"><span>Estimated spend this month</span><span className="mono">{meters?.spend ?? '—'}</span></div>
+          {meters?.spend === undefined && <div className="meta">Not shown yet: no price is set. Add what your provider charges per request in <Link to="/settings">Settings</Link> to see an estimate.</div>}
         </div>
       </aside>
       <div className="main">
