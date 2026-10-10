@@ -230,6 +230,16 @@ def test_trusted_local_networks_admit_container_gateway_only(monkeypatch):
     assert not _client_is_loopback(request("10.0.0.5"))
 
 
+def test_homepage_console_figures_are_labeled_illustrative(monkeypatch):
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        home = client.get("/")
+
+    assert "ILLUSTRATIVE EXAMPLE" in home.text and "SAMPLE DATA" in home.text
+    assert "not live data" in home.text
+    assert "Your brand is healthy" not in home.text
+
+
 class _LoginDestinationParser(HTMLParser):
     destination: str | None = None
 
