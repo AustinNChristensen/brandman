@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.campaign_templates import CampaignTemplateError, CampaignTemplateStore
-from app.main import app
+from brandman import store
+from brandman.campaign_templates import CampaignTemplateError, CampaignTemplateStore
+from brandman.main import app
 
 
 def answers():
@@ -60,7 +60,7 @@ def test_preflight_is_non_mutating_and_preserves_hard_boundaries(tmp_path, monke
 def test_template_rest_contract_returns_graph_preview_only(tmp_path, monkeypatch):
     database = tmp_path / "template-api.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-password")
     headers = {"Authorization": "Basic b3BlcmF0b3I6dGVzdC1wYXNzd29yZA=="}
     with TestClient(app, headers=headers) as client:
         listed = client.get("/api/campaign-templates")

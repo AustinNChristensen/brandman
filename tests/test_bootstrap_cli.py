@@ -6,8 +6,8 @@ import stat
 from cryptography.fernet import Fernet
 import pytest
 
-from app import store
-from app.bootstrap_cli import PROJECT_ROOT, bootstrap, generate_master_key_file, main
+from brandman import store
+from brandman.bootstrap_cli import PROJECT_ROOT, bootstrap, generate_master_key_file, main
 
 
 def test_bootstrap_without_secrets_initializes_safe_internal_cycle(tmp_path):
@@ -33,10 +33,10 @@ def test_bootstrap_without_secrets_initializes_safe_internal_cycle(tmp_path):
         job["job_type"] == "operating_plan.refresh"
         for job in report["worker"]["jobs"]
     )
-    assert any("BRAND_OS_PREVIEW_PASSWORD" in action for action in report["next_actions"])
+    assert any("BRANDMAN_PREVIEW_PASSWORD" in action for action in report["next_actions"])
     assert any("execution agent" in action for action in report["next_actions"])
     assert any(
-        "BRAND_OS_CREDENTIAL_MASTER_KEY" in action
+        "BRANDMAN_CREDENTIAL_MASTER_KEY" in action
         for action in report["optional_api_actions"]
     )
 
@@ -45,8 +45,8 @@ def test_bootstrap_json_never_contains_environment_secret_values(tmp_path, monke
     database = tmp_path / "json.db"
     preview = "preview-sensitive-value"
     key = Fernet.generate_key().decode()
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", preview)
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", key)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", preview)
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", key)
 
     main(["--database", str(database), "--json", "--max-jobs", "2"])
     output = capsys.readouterr().out
@@ -101,8 +101,8 @@ def test_bootstrap_worker_never_claims_delivery_jobs(tmp_path):
     report = bootstrap(
         database=database,
         environment={
-            "BRAND_OS_PREVIEW_PASSWORD": "configured",
-            "BRAND_OS_CREDENTIAL_MASTER_KEY": key,
+            "BRANDMAN_PREVIEW_PASSWORD": "configured",
+            "BRANDMAN_CREDENTIAL_MASTER_KEY": key,
         },
         max_jobs=10,
     )

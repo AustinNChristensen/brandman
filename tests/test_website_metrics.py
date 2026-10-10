@@ -2,12 +2,12 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app.attribution_store import AttributionStore
-from app.campaign_graph import CampaignGraphStore
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, WebsiteMetric
-from app.sync import SyncOrchestrator
-from app.website_metrics import WebsiteCampaignMetricProjector
+from brandman import store
+from brandman.attribution_store import AttributionStore
+from brandman.campaign_graph import CampaignGraphStore
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, WebsiteMetric
+from brandman.sync import SyncOrchestrator
+from brandman.website_metrics import WebsiteCampaignMetricProjector
 
 
 def setup_campaign(tmp_path, monkeypatch):

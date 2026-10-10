@@ -14,8 +14,8 @@ def main() -> None:
         )
     subprocess.run([npm, "ci"], cwd=root / "web", check=True)
     subprocess.run([npm, "run", "build"], cwd=root / "web", check=True)
-    if not (root / "app" / "static" / "app" / "index.html").is_file():
-        raise SystemExit("Dashboard build did not produce app/static/app/index.html")
+    if not (root / "brandman" / "static" / "app" / "index.html").is_file():
+        raise SystemExit("Dashboard build did not produce brandman/static/app/index.html")
 
 
 if __name__ == "__main__":

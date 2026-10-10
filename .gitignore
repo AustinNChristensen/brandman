@@ -16,6 +16,6 @@ web/node_modules/
 web/dist/
 
 # Dashboard output is generated locally and included by the wheel build hook.
-/app/static/app/
+/brandman/static/app/
 /dist/
 /.package-venv/

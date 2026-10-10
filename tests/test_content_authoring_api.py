@@ -4,7 +4,7 @@ import base64
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 def headers(password: str) -> dict[str, str]:
@@ -13,7 +13,7 @@ def headers(password: str) -> dict[str, str]:
 
 
 def test_http_content_authorship_is_session_derived_and_resubmission_is_governed(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "content-authoring-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "content-authoring-test")
     with TestClient(app, headers=headers("content-authoring-test")) as client:
         spoofed_issue = client.post("/api/brands/demo-brand/newsletter-issues", json={
             "content": {"working_title": "Spoof attempt"}, "created_by": "mallory",
@@ -23,7 +23,7 @@ def test_http_content_authorship_is_session_derived_and_resubmission_is_governed
             "content": {"working_title": "Principal-owned draft"},
         })
         assert issue.status_code == 201
-        assert issue.json()["content"]["created_by"] == "preview-operator"
+        assert issue.json()["content"]["created_by"] == "chris"
 
         created = client.post("/api/brands/demo-brand/dispatch-items", json={
             "connector": "x", "payload": {"body": "First review"},
@@ -47,14 +47,14 @@ def test_http_content_authorship_is_session_derived_and_resubmission_is_governed
         assert client.post(f"/api/dispatch-items/{created['id']}/submit", json={}).json()["status"] == "awaiting_approval"
         audit = client.get(f"/api/dispatch-items/{created['id']}/audit").json()
         assert [(entry["action"], entry["actor"]) for entry in audit] == [
-            ("created", "preview-operator"), ("awaiting_approval", "preview-operator"),
-            ("rejected", "preview-operator"), ("edited; approval invalidated", "preview-operator"),
-            ("awaiting_approval", "preview-operator"),
+            ("created", "chris"), ("awaiting_approval", "chris"),
+            ("rejected", "chris"), ("edited; approval invalidated", "chris"),
+            ("awaiting_approval", "chris"),
         ]
 
 
 def test_editorial_candidate_to_newsletter_preserves_brand_and_source_lineage(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "candidate-parity-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "candidate-parity-test")
     with TestClient(app, headers=headers("candidate-parity-test")) as client:
         brand = client.get("/api/brands/demo-brand/context").json()
         source = client.post("/api/brands/demo-brand/sources", json={
@@ -98,7 +98,7 @@ def test_editorial_candidate_to_newsletter_preserves_brand_and_source_lineage(mo
 
 
 def test_campaign_post_revision_dispatch_validation_and_audit_are_draft_only(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "campaign-post-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "campaign-post-test")
     with TestClient(app, headers=headers("campaign-post-test")) as client:
         campaign = client.post("/api/brands/demo-brand/campaigns", json={
             "name": "Decision support", "objective": "Help readers compare",
@@ -121,7 +121,7 @@ def test_campaign_post_revision_dispatch_validation_and_audit_are_draft_only(mon
         assert revised["status"] == "draft" and revised["revision"] == 2
         audit = client.get(f"/api/posts/{post['id']}/audit").json()
         assert [(event["action"], event["actor"], event["revision"]) for event in audit] == [
-            ("draft_created", "preview-operator", 1), ("draft_revised", "preview-operator", 2),
+            ("draft_created", "chris", 1), ("draft_revised", "chris", 2),
         ]
 
         dispatch = client.post(f"/api/posts/{post['id']}/dispatch", json={}).json()
@@ -130,14 +130,14 @@ def test_campaign_post_revision_dispatch_validation_and_audit_are_draft_only(mon
         validation = client.get(f"/api/dispatch-items/{dispatch['id']}/validation").json()
         assert validation["valid"] is True
         dispatch_audit = client.get(f"/api/dispatch-items/{dispatch['id']}/audit").json()
-        assert dispatch_audit[0]["actor"] == "preview-operator"
+        assert dispatch_audit[0]["actor"] == "chris"
         blocked = client.patch(f"/api/posts/{post['id']}", json={"body": "Late divergence"})
         assert blocked.status_code == 409
         assert "exact dispatch copy" in blocked.json()["detail"]
 
 
 def test_candidate_promotes_atomically_to_brand_owned_draft_campaign_post(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "candidate-post-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "candidate-post-test")
     with TestClient(app, headers=headers("candidate-post-test")) as client:
         candidate = client.post("/api/brands/demo-brand/editorial-candidates", json={
             "title": "Transfer window", "summary": "Help readers decide",
@@ -157,11 +157,11 @@ def test_candidate_promotes_atomically_to_brand_owned_draft_campaign_post(monkey
         assert result["campaign"]["status"] == "draft"
         assert result["post"]["status"] == "draft"
         assert result["post"]["candidate_id"] == candidate["id"]
-        assert result["post"]["created_by"] == "preview-operator"
+        assert result["post"]["created_by"] == "chris"
         assert result["candidate"]["status"] == "selected"
         history = client.get(f"/api/editorial-candidates/{candidate['id']}/history").json()
         assert history[-1]["action"] == "promoted_to_campaign_post"
-        assert history[-1]["actor"] == "preview-operator"
+        assert history[-1]["actor"] == "chris"
 
         client.post("/api/brands", json={
             "slug": "other-brand", "name": "Other", "mission": "Other",

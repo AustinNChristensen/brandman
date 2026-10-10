@@ -6,12 +6,12 @@ import threading
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.connector_health import (
+from brandman import store
+from brandman.connector_health import (
     ConnectorHealthStore, HEALTH_CHECK_JOB_TYPE, make_connector_health_handler,
 )
-from app.connectors import ConnectorError, ConnectorKind, ConnectorResult
-from app.main import app
+from brandman.connectors import ConnectorError, ConnectorKind, ConnectorResult
+from brandman.main import app
 
 
 HEADERS = {"Authorization": "Basic " + base64.b64encode(
@@ -44,7 +44,7 @@ def test_read_probe_is_queued_then_durably_audited_healthy(tmp_path):
             calls.append(cursor)
             return ConnectorResult()
 
-    check = health.trigger(brand["id"], actor="preview-operator")[0]
+    check = health.trigger(brand["id"], actor="chris")[0]
     assert check["status"] == "queued"
     assert check["provider_responded"] is False
     assert calls == []
@@ -71,7 +71,7 @@ def test_provider_error_is_redacted_and_only_response_can_claim_unhealthy(tmp_pa
         def sync(self, cursor):
             raise ConnectorError(ConnectorKind.RSS, "feed auth token-do-not-store", 401)
 
-    check = health.trigger(brand["id"], actor="preview-operator")[0]
+    check = health.trigger(brand["id"], actor="chris")[0]
     completed = make_connector_health_handler({account["id"]: Connector()}, health)(job_for(check))
     persisted = database.read_bytes()
 
@@ -91,7 +91,7 @@ def test_timeout_is_bounded_and_does_not_make_a_provider_health_claim(tmp_path):
         def sync(self, cursor):
             release.wait(10)
 
-    check = health.trigger(brand["id"], actor="preview-operator", timeout_seconds=1)[0]
+    check = health.trigger(brand["id"], actor="chris", timeout_seconds=1)[0]
     completed = make_connector_health_handler({account["id"]: Connector()}, health)(job_for(check))
     release.set()
 
@@ -108,7 +108,7 @@ def test_write_only_x_is_audited_not_probeable_and_never_enqueued(tmp_path):
         status="healthy", scopes=["tweet.write"],
     )
     checks = health.trigger(
-        brand["id"], actor="preview-operator", connector_account_id=x_write["id"],
+        brand["id"], actor="chris", connector_account_id=x_write["id"],
     )
 
     assert checks[0]["status"] == "not_probeable"
@@ -122,7 +122,7 @@ def test_write_only_x_is_audited_not_probeable_and_never_enqueued(tmp_path):
 
 def test_unregistered_connector_fails_without_changing_account_health(tmp_path):
     _, brand, account, health = setup_health(tmp_path)
-    check = health.trigger(brand["id"], actor="preview-operator")[0]
+    check = health.trigger(brand["id"], actor="chris")[0]
     completed = make_connector_health_handler({}, health)(job_for(check))
     assert completed["status"] == "not_configured"
     assert completed["provider_responded"] is False
@@ -131,7 +131,7 @@ def test_unregistered_connector_fails_without_changing_account_health(tmp_path):
 
 def test_store_rejects_provider_health_claim_without_response(tmp_path):
     _, brand, _, health = setup_health(tmp_path)
-    check = health.trigger(brand["id"], actor="preview-operator")[0]
+    check = health.trigger(brand["id"], actor="chris")[0]
     health.start(check["id"], actor="worker")
     with pytest.raises(ValueError, match="without a response"):
         health.complete(
@@ -142,7 +142,7 @@ def test_store_rejects_provider_health_claim_without_response(tmp_path):
 def test_rest_trigger_is_authenticated_and_mcp_surface_will_be_status_only(tmp_path, monkeypatch):
     database, brand, account, _ = setup_health(tmp_path)
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app) as client:
         denied = client.post(f"/api/brands/demo-brand/connector-health-checks")
         triggered = client.post(
@@ -155,9 +155,9 @@ def test_rest_trigger_is_authenticated_and_mcp_surface_will_be_status_only(tmp_p
         )
     assert denied.status_code == 401
     assert triggered.status_code == 202
-    assert triggered.json()[0]["requested_by"] == "preview-operator"
+    assert triggered.json()[0]["requested_by"] == "chris"
     assert listed.json()[0]["id"] == triggered.json()[0]["id"]
     assert "credential" not in json.dumps(listed.json()).lower()
-    from app.mcp_server import list_connector_health_checks
+    from brandman.mcp_server import list_connector_health_checks
     mcp_status = list_connector_health_checks("demo-brand")
     assert mcp_status[0]["id"] == triggered.json()[0]["id"]

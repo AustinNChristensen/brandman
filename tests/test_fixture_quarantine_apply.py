@@ -8,12 +8,12 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app import fixture_quarantine_apply as quarantine_apply
-from app.dispatch import GovernedDispatcher, SQLiteDispatchStore
-from app.fixture_quarantine import fixture_quarantine_plan
-from app.fixture_quarantine_apply import FixtureQuarantineError, execute_fixture_quarantine
-from app.ops_cli import create_backup, initialize_all
+from brandman import store
+from brandman import fixture_quarantine_apply as quarantine_apply
+from brandman.dispatch import GovernedDispatcher, SQLiteDispatchStore
+from brandman.fixture_quarantine import fixture_quarantine_plan
+from brandman.fixture_quarantine_apply import FixtureQuarantineError, execute_fixture_quarantine
+from brandman.ops_cli import create_backup, initialize_all
 
 
 def _sha(path: Path) -> str:

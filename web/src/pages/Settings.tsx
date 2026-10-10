@@ -3,6 +3,7 @@ import { settings } from '../api/endpoints'
 import type { BrandSettings } from '../api/types'
 import { describe, useLoad } from '../api/useLoad'
 import { Icon } from '../components/icons'
+import { NewBrandCard } from '../components/NewBrand'
 import { Shell } from '../components/Shell'
 import { Card, CardHeader, Chip, Empty, ErrorState, Loading, Modal, StatusChip } from '../components/ui'
 import { shortDateTime, titleCase } from '../lib/format'
@@ -10,12 +11,13 @@ import { useBrands } from '../state/BrandContext'
 import { useToast } from '../state/Toast'
 
 export default function Settings() {
-  const { selected, active } = useBrands(), brand = selected ? active[0] : undefined
+  const { selected, active, select, reload } = useBrands(), brand = selected ? active[0] : undefined
   const load = useLoad(() => brand ? settings.get(brand.slug) : Promise.resolve(null), [brand?.slug])
   const { notify } = useToast()
   const [modal, setModal] = useState<'rate' | null>(null), [busy, setBusy] = useState(false), [limit, setLimit] = useState('25')
   const mutate = async (fn: () => Promise<unknown>, message: string) => { setBusy(true); try { await fn(); notify(message); setModal(null); load.reload() } catch (error) { notify(describe(error), 'bad') } finally { setBusy(false) } }
-  if (!selected) return <Shell title="Settings"><Card><Empty>Select one brand to change its governed settings.</Empty></Card></Shell>
+  if (!selected) return <Shell title="Settings"><Card><Empty>Select one brand to change its governed settings, or create a new one.</Empty></Card>
+    <NewBrandCard onCreated={(slug) => { notify('Brand created.'); reload(); select(slug) }} /></Shell>
   return <Shell title="Settings" crumb={brand?.name} right={<Chip kind="agent" icon="lock">brand-scoped · audited · no provider action</Chip>}>
     {load.error && <ErrorState message={load.error} retry={load.reload} />}{load.loading && !load.data && <Loading label="Loading brand settings…" />}
     {brand && load.data && <><BrandEditor key={load.data.brand.updated_at} data={load.data} busy={busy} save={(body) => mutate(() => settings.update(brand.slug, body), 'Brand settings saved and audited.')} />

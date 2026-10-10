@@ -2,11 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from app import store
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, SyncCursor
-from app.runtime import BrandOSRuntime, build_runtime
-from app.sync import enqueue_sync_job
-from app.website_metrics import WebsiteCampaignMetricProjector
+from brandman import store
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, SyncCursor
+from brandman.runtime import BrandOSRuntime, build_runtime
+from brandman.sync import enqueue_sync_job
+from brandman.website_metrics import WebsiteCampaignMetricProjector
 
 
 class StubConnector:

@@ -3,10 +3,10 @@ import base64
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
-from app import store
-from app.beehiiv_runtime import BEEHIIV_NEWSLETTER_EXPORT_JOB
-from app.credentials import CredentialStore
-from app.main import app
+from brandman import store
+from brandman.beehiiv_runtime import BEEHIIV_NEWSLETTER_EXPORT_JOB
+from brandman.credentials import CredentialStore
+from brandman.main import app
 
 
 def auth_headers(password: str) -> dict[str, str]:
@@ -41,9 +41,9 @@ def test_api_queues_only_approved_revision_and_exposes_durable_status(
     tmp_path, monkeypatch,
 ):
     password = "beehiiv-export-test"
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", password)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", password)
     key = Fernet.generate_key().decode()
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", key)
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", key)
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "brand-os.db")
     store.init_db()
     brand = store.get_brand("demo-brand")
@@ -109,8 +109,8 @@ def test_api_queues_only_approved_revision_and_exposes_durable_status(
 
 def test_api_rejects_non_write_scoped_or_cross_brand_connector(tmp_path, monkeypatch):
     password = "beehiiv-export-test"
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", password)
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", password)
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", Fernet.generate_key().decode())
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "brand-os.db")
     store.init_db()
     brand = store.get_brand("demo-brand")
@@ -145,8 +145,8 @@ def test_api_rejects_non_write_scoped_or_cross_brand_connector(tmp_path, monkeyp
 
 def test_unapproved_export_is_rejected_before_secret_infrastructure(tmp_path, monkeypatch):
     password = "beehiiv-export-test"
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", password)
-    monkeypatch.delenv("BRAND_OS_CREDENTIAL_MASTER_KEY", raising=False)
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", password)
+    monkeypatch.delenv("BRANDMAN_CREDENTIAL_MASTER_KEY", raising=False)
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "brand-os.db")
     store.init_db()
     with TestClient(app, headers=auth_headers(password)) as client:

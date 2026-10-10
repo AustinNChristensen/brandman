@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from app.attribution_store import (
+from brandman.attribution_store import (
     AttributionStore,
     KpiEvidenceRequired,
     TrackedLinkConflict,

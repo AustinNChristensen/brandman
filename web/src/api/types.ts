@@ -1,4 +1,4 @@
-// Shapes mirror app/main.py responses. Keep in sync with the backend; the
+// Shapes mirror brandman/main.py responses. Keep in sync with the backend; the
 // dashboard never invents fields the API does not return.
 
 export interface Brand {

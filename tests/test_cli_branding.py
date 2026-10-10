@@ -6,13 +6,13 @@ from pathlib import Path
 import pytest
 
 CASES = [
-    ("app.bootstrap_cli", "brandman-bootstrap", ["--execution-agent", "demo"],
+    ("brandman.bootstrap_cli", "brandman-bootstrap", ["--execution-agent", "demo"],
      "execution_agent and execution_channel must be provided together"),
-    ("app.ops_cli", "brandman-ops", ["--database", "/nonexistent/aus14.db", "audit"],
+    ("brandman.ops_cli", "brandman-ops", ["--database", "/nonexistent/aus14.db", "audit"],
      "database file does not exist"),
-    ("app.api_supervisor", "brandman-api-supervisor", ["status", "--label", "bad"],
+    ("brandman.api_supervisor", "brandman-api-supervisor", ["status", "--label", "bad"],
      "invalid managed API label"),
-    ("app.launchd_supervisor", "brandman-supervisor", ["status", "--label", "bad"],
+    ("brandman.launchd_supervisor", "brandman-supervisor", ["status", "--label", "bad"],
      "label must match com.brandos.worker."),
 ]
 

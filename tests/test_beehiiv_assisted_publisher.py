@@ -2,12 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from app.beehiiv_assisted_publisher import (
+from brandman.beehiiv_assisted_publisher import (
     BeehiivAssistedPublisher, BeehiivAssistedPublisherError,
     attach_verified_public_asset, build_private_draft_manifest,
     verify_private_draft_readback,
 )
-from app.editorial import EditorialStore, IssueLifecycle
+from brandman.editorial import EditorialStore, IssueLifecycle
 
 
 DEMO_BRAND_ISSUE_ID = "5e9d38e1-0ac8-4f29-b06f-2a07ae885265"
@@ -187,10 +187,10 @@ def test_public_url_adapter_is_enabled_only_after_exact_byte_verification(tmp_pa
         def open(self, *_args, **_kwargs): return Response()
 
     monkeypatch.setattr(
-        "app.beehiiv_assisted_publisher.socket.getaddrinfo",
+        "brandman.beehiiv_assisted_publisher.socket.getaddrinfo",
         lambda *_args, **_kwargs: [(None, None, None, None, ("8.8.8.8", 443))],
     )
-    monkeypatch.setattr("app.beehiiv_assisted_publisher.build_opener", lambda *_args: Opener())
+    monkeypatch.setattr("brandman.beehiiv_assisted_publisher.build_opener", lambda *_args: Opener())
     verified = attach_verified_public_asset(
         instruction, "https://demo.example/approved.png",
         allowed_hosts={"demo.example", "www.demo.example"},
@@ -213,11 +213,11 @@ def test_public_url_adapter_rejects_hash_drift(tmp_path, monkeypatch):
         def __exit__(self, *_args): return None
 
     monkeypatch.setattr(
-        "app.beehiiv_assisted_publisher.socket.getaddrinfo",
+        "brandman.beehiiv_assisted_publisher.socket.getaddrinfo",
         lambda *_args, **_kwargs: [(None, None, None, None, ("8.8.8.8", 443))],
     )
     monkeypatch.setattr(
-        "app.beehiiv_assisted_publisher.build_opener",
+        "brandman.beehiiv_assisted_publisher.build_opener",
         lambda *_args: type("Opener", (), {"open": lambda self, *_a, **_k: Response()})(),
     )
     with pytest.raises(BeehiivAssistedPublisherError, match="fingerprint"):

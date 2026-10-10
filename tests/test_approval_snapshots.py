@@ -4,11 +4,11 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
-from app.approval_snapshots import ApprovalSnapshotStore
-from app.dispatch import GovernedDispatcher, SQLiteDispatchStore
-from app.editorial import EditorialStore, IssueLifecycle
-from app.main import app
+from brandman import store
+from brandman.approval_snapshots import ApprovalSnapshotStore
+from brandman.dispatch import GovernedDispatcher, SQLiteDispatchStore
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.main import app
 
 
 def content():
@@ -32,7 +32,7 @@ def test_dispatch_and_engagement_snapshots_capture_complete_immutable_scope(tmp_
         "scheduled_for": "2026-09-03T12:00:00+00:00",
     }, brand_id="brand-1")
     dispatcher.submit_for_approval(post.id, actor="writer")
-    approved = dispatcher.approve(post.id, revision=1, approver="preview-operator")
+    approved = dispatcher.approve(post.id, revision=1, approver="chris")
     snapshot = snapshots.capture_dispatch(approved)
     assert {
         "brand_id": snapshot["brand_id"], "account_ref": snapshot["account_ref"],
@@ -42,7 +42,7 @@ def test_dispatch_and_engagement_snapshots_capture_complete_immutable_scope(tmp_
     } == {
         "brand_id": "brand-1", "account_ref": "account-1", "action_type": "post",
         "destination": "x:public", "intended_schedule": "2026-09-03T12:00:00+00:00",
-        "revision": 1, "approver": "preview-operator",
+        "revision": 1, "approver": "chris",
     }
     assert snapshot["material_fingerprint"].startswith("sha256:")
     assert snapshot["approved_at"] == "2026-09-02T12:00:00+00:00"
@@ -56,7 +56,7 @@ def test_dispatch_and_engagement_snapshots_capture_complete_immutable_scope(tmp_
 
     reply = dispatcher.create("x", {"body": "Reply", "reply_to_post_id": "123"}, brand_id="brand-1")
     dispatcher.submit_for_approval(reply.id, actor="writer")
-    reply = dispatcher.approve(reply.id, revision=1, approver="preview-operator")
+    reply = dispatcher.approve(reply.id, revision=1, approver="chris")
     reply_snapshot = snapshots.capture_dispatch(reply)
     assert reply_snapshot["resource_type"] == "engagement_action"
     assert reply_snapshot["action_type"] == "reply"
@@ -99,7 +99,7 @@ def test_reconciler_invalidates_snapshot_after_direct_canonical_edit(tmp_path):
     dispatcher = GovernedDispatcher(SQLiteDispatchStore(database))
     post = dispatcher.create("x", {"body": "Approved body"}, brand_id="brand-1")
     dispatcher.submit_for_approval(post.id, actor="writer")
-    post = dispatcher.approve(post.id, revision=1, approver="preview-operator")
+    post = dispatcher.approve(post.id, revision=1, approver="chris")
     snapshots = ApprovalSnapshotStore(database)
     evidence = snapshots.capture_dispatch(post)
 
@@ -179,10 +179,10 @@ def test_newsletter_snapshot_and_backfill_are_idempotent(tmp_path):
 
 
 def test_rest_approval_snapshot_is_readable_and_edit_invalidation_is_visible(tmp_path, monkeypatch):
-    from app.mcp_server import list_approval_snapshots, mcp
+    from brandman.mcp_server import list_approval_snapshots, mcp
 
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "api.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test")
     auth = ("operator", "test")
     with TestClient(app) as client:
         created = client.post(
@@ -228,7 +228,7 @@ def test_rest_approval_snapshot_is_readable_and_edit_invalidation_is_visible(tmp
 
 def test_displayed_scope_token_fails_closed_after_material_change(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "DATA_PATH", tmp_path / "scope-token.db")
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test")
     auth = ("operator", "test")
     with TestClient(app) as client:
         created = client.post(

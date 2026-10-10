@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from app.editorial import (
+from brandman.editorial import (
     ApprovalBlocked,
     EditorialStore,
     ExportConflict,

@@ -2,12 +2,12 @@ import base64
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.main import app
+from brandman import store
+from brandman.main import app
 
 
 def test_seeded_brand_list_reports_active_mission_without_creating_one(monkeypatch):
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     with TestClient(app, headers={"Authorization": "Basic " + base64.b64encode(b"operator:test-only-password").decode()}) as client:
         brands = {brand['slug']: brand for brand in client.get('/api/brands').json()}
         assert brands['demo-brand']['has_active_mission'] is True

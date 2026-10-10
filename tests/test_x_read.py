@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from app.connectors import EventKind, HttpResponse, SyncCursor
-from app.x_read import (
+from brandman.connectors import EventKind, HttpResponse, SyncCursor
+from brandman.x_read import (
     XRateLimitError,
     XReadConnector,
     XReadCursorError,

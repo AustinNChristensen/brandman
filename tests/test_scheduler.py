@@ -6,8 +6,8 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app.scheduler import (
+from brandman import store
+from brandman.scheduler import (
     CONNECTOR_SYNC, DOWNSTREAM_JOB, OPERATING_PLAN_JOB_TYPE,
     PeriodicOrchestrator,
 )
@@ -17,7 +17,7 @@ def setup_database(tmp_path):
     database = tmp_path / "scheduler.db"
     store.DATA_PATH = database
     store.init_db()
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     brand = store.get_brand("demo-brand")
     account = store.upsert_connector_account(
         brand["id"], "rss", "https://example.test/feed", "Example feed",
@@ -201,7 +201,7 @@ def test_downstream_schedules_fail_closed_without_explicit_safe_allowlist(tmp_pa
 
 def test_operating_plan_job_handler_runs_via_service_runtime(tmp_path):
     from cryptography.fernet import Fernet
-    from app.service_runtime import build_service_runtime
+    from brandman.service_runtime import build_service_runtime
 
     database, brand, mission, account = setup_database(tmp_path)
     store.upsert_connector_account(

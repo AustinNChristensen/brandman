@@ -11,16 +11,16 @@ import json
 
 import pytest
 
-from app import store
-from app.attribution_store import AttributionStore
-from app.beehiiv_delivery import BeehiivDraftDelivery
-from app.beehiiv_runtime import NewsletterExportJobError, enqueue_newsletter_export, register_beehiiv_newsletter_export
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, HttpResponse
-from app.editorial import EditorialStore, IssueLifecycle
-from app.kpi_projection import MissionKpiProjector
-from app.runtime import BrandOSRuntime
-from app.scheduler import CONNECTOR_SYNC, PeriodicOrchestrator
-from app.source_campaign import SourceCampaignOperator
+from brandman import store
+from brandman.attribution_store import AttributionStore
+from brandman.beehiiv_delivery import BeehiivDraftDelivery
+from brandman.beehiiv_runtime import NewsletterExportJobError, enqueue_newsletter_export, register_beehiiv_newsletter_export
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, HttpResponse
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.kpi_projection import MissionKpiProjector
+from brandman.runtime import BrandOSRuntime
+from brandman.scheduler import CONNECTOR_SYNC, PeriodicOrchestrator
+from brandman.source_campaign import SourceCampaignOperator
 
 
 class FakeReadConnector:
@@ -52,7 +52,7 @@ def test_periodic_source_to_approved_draft_to_evidence_backed_trajectory(tmp_pat
     monkeypatch.setattr(store, "DATA_PATH", database)
     store.init_db()
     brand = store.get_brand("demo-brand")
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     editorial = EditorialStore(database, clock=lambda: "2026-09-02T12:00:00+00:00")
     source_operator = SourceCampaignOperator(editorial)
     attribution = AttributionStore(database, clock=lambda: "2026-09-02T12:00:00+00:00")

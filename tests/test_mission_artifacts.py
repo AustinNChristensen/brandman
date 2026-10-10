@@ -7,7 +7,7 @@ import sqlite3
 
 import pytest
 
-from app.mission_artifacts import (
+from brandman.mission_artifacts import (
     END_OF_DAY_SCORECARD,
     MORNING_PLAN,
     MissionArtifactService,

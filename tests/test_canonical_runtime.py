@@ -4,16 +4,16 @@ from cryptography.fernet import Fernet
 import base64
 from fastapi.testclient import TestClient
 
-from app import store
-from app.canonical_revalidation import CanonicalSourceRevalidationStore
-from app.canonical_runtime import (
+from brandman import store
+from brandman.canonical_revalidation import CanonicalSourceRevalidationStore
+from brandman.canonical_runtime import (
     CANONICAL_REVALIDATE_JOB_TYPE, enqueue_canonical_revalidation,
 )
-from app.connectors import ConnectorError, ConnectorKind, HttpResponse
-from app.service_runtime import build_service_runtime
-from app.sync import enqueue_sync_job
-from app.worker_cli import build_secretless_assisted_runtime
-from app.main import app
+from brandman.connectors import ConnectorError, ConnectorKind, HttpResponse
+from brandman.service_runtime import build_service_runtime
+from brandman.sync import enqueue_sync_job
+from brandman.worker_cli import build_secretless_assisted_runtime
+from brandman.main import app
 
 
 class RouteTransport:
@@ -172,7 +172,7 @@ def test_rest_enqueues_manual_revalidation_and_read_surface_labels_metadata_only
         "body_summary": "Terms", "lifecycle_state": "published",
         "scheduled_for": None, "external_source_id": "issuer-terms",
     })
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "canonical-test")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "canonical-test")
     token = base64.b64encode(b"operator:canonical-test").decode()
     with TestClient(app, headers={"Authorization": f"Basic {token}"}) as client:
         queued = client.post(

@@ -3,14 +3,14 @@ from __future__ import annotations
 import base64
 import os
 
-os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
+os.environ["BRANDMAN_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 
-from app import store
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, dedup_identity
-from app.main import app, engagement_store
-from app.mcp_server import (
+from brandman import store
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind, dedup_identity
+from brandman.main import app, engagement_store
+from brandman.mcp_server import (
     dismiss_engagement_opportunity as mcp_dismiss,
     draft_engagement_action as mcp_draft,
     get_engagement_history as mcp_history,
@@ -18,7 +18,7 @@ from app.mcp_server import (
     list_engagement_opportunities as mcp_list,
     submit_engagement_action as mcp_submit,
 )
-from app.sync import SyncOrchestrator
+from brandman.sync import SyncOrchestrator
 
 
 HEADERS = {
@@ -132,7 +132,7 @@ def test_rest_brand_scoped_inbox_detail_history_draft_and_submit():
         assert {
             entry["actor"] for entry in history
             if entry["action"] in {"action_drafted", "awaiting_approval"}
-        } == {"preview-operator"}
+        } == {"chris"}
 
 
 def test_rest_dismiss_and_brand_scope_are_enforced():

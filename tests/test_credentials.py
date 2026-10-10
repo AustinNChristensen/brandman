@@ -4,7 +4,7 @@ from dataclasses import asdict
 import pytest
 from cryptography.fernet import Fernet
 
-from app.credentials import (
+from brandman.credentials import (
     ConnectionMetadata,
     CredentialConfigurationError,
     CredentialDecryptionError,
@@ -92,7 +92,7 @@ def test_scope_health_reconnect_disconnect_delete_and_audit(tmp_path, key):
         "beehiiv", "publication", "Newsletter", {"token": "secret"},
         required_scopes=["posts.read", "subscribers.read"],
         granted_scopes=["posts.read", "admin"],
-        actor="preview-operator",
+        actor="chris",
     )
     assert metadata.missing_scopes == ("subscribers.read",)
     assert metadata.excessive_scopes == ("admin",)
@@ -106,14 +106,14 @@ def test_scope_health_reconnect_disconnect_delete_and_audit(tmp_path, key):
     with pytest.raises(ValueError, match="machine-readable"):
         store.set_health("beehiiv", "publication", "unhealthy", error_code="Bearer secret")
 
-    disconnected = store.disconnect("beehiiv", "publication", actor="preview-operator")
+    disconnected = store.disconnect("beehiiv", "publication", actor="chris")
     assert disconnected.status == "disconnected"
     assert disconnected.has_credentials is False
     assert disconnected.credential_revision == 0
     with pytest.raises(CredentialDisconnectedError):
         store.secret("beehiiv", "publication")
 
-    store.delete("beehiiv", "publication", actor="preview-operator")
+    store.delete("beehiiv", "publication", actor="chris")
     with pytest.raises(KeyError, match="unknown connector account"):
         store.get("beehiiv", "publication")
     assert [event.action for event in store.audit("beehiiv", "publication")] == [

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 
-from app import store
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.editorial import EditorialStore
-from app.learning_engine import BrandLearningEngine
-from app.source_campaign import SourceCampaignOperator
-from app.sync import SyncOrchestrator
+from brandman import store
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.editorial import EditorialStore
+from brandman.learning_engine import BrandLearningEngine
+from brandman.source_campaign import SourceCampaignOperator
+from brandman.sync import SyncOrchestrator
 
 
 def _setup(tmp_path, *, mission: bool = True):
@@ -15,7 +15,7 @@ def _setup(tmp_path, *, mission: bool = True):
     store.init_db()
     brand = store.get_brand("demo-brand")
     if mission:
-        store.ensure_demo_brand_growth_mission()
+        store.ensure_growth_mission("demo-brand")
     operator = SourceCampaignOperator(EditorialStore(store.DATA_PATH))
     account = store.upsert_connector_account(
         brand["id"], "rss", "context-feed", "Context feed", status="healthy",
@@ -98,7 +98,7 @@ def test_missing_required_context_surfaces_needs_attention_and_safe_retry(tmp_pa
     assert store.row("SELECT decision FROM source_promotion_audit")["decision"] == "context_blocked"
     assert store.rows("SELECT * FROM campaigns") == []
 
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     promoted = operator.promote_shortlist(brand["id"], [candidate["id"]], minimum_score=0)
     assert len(promoted) == 1
     assert operator.planning_context(candidate["id"])["status"] == "ready"
@@ -111,7 +111,7 @@ def test_unbound_source_evidence_fails_closed_without_generation(tmp_path):
     brand, account, operator = _setup(tmp_path, mission=False)
     _ingest(brand, account, operator, "unbound")
     candidate = operator.editorial.list_candidates(brand["id"])[0]
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     evidence = candidate["supporting_sources"]
     evidence[0]["connector_event_id"] = "wrong-event"
     with store.connection() as connection:
@@ -146,7 +146,7 @@ def test_context_blocked_cluster_leader_does_not_hide_valid_runner_up(tmp_path):
         connection.execute(
             "UPDATE editorial_candidates SET score=98 WHERE id=?", (runner_up["id"],),
         )
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
 
     promoted = operator.promote_shortlist(
         brand["id"], [leader["id"], runner_up["id"]], minimum_score=0, limit=1,

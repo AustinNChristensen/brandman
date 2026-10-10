@@ -2,18 +2,18 @@ import json
 
 import pytest
 
-from app import store
-from app.beehiiv_delivery import BeehiivDraftDelivery, BeehiivDraftReceipt
-from app.beehiiv_runtime import (
+from brandman import store
+from brandman.beehiiv_delivery import BeehiivDraftDelivery, BeehiivDraftReceipt
+from brandman.beehiiv_runtime import (
     BEEHIIV_NEWSLETTER_EXPORT_JOB,
     NewsletterExportJobError,
     enqueue_newsletter_export,
     register_beehiiv_newsletter_export,
 )
-from app.connectors import HttpResponse
-from app.editorial import EditorialStore, IssueLifecycle
-from app.jobs import JobWorker
-from app.runtime import BrandOSRuntime
+from brandman.connectors import HttpResponse
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.jobs import JobWorker
+from brandman.runtime import BrandOSRuntime
 
 
 class Transport:

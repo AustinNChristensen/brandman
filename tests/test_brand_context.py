@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app import store
+from brandman import store
 
 
 def _seed_source(brand_id: str, index: int, *, state: str = "published") -> dict:

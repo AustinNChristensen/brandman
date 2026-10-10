@@ -3,13 +3,13 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
-from app.campaign_graph import CampaignGraphError, CampaignGraphStore
-from app.campaign_templates import CampaignTemplateStore
-from app.dispatch import GovernedDispatcher, SQLiteDispatchStore
-from app.distribution_package import DistributionPackageStore
-from app.editorial import EditorialStore
-from app.main import app
+from brandman import store
+from brandman.campaign_graph import CampaignGraphError, CampaignGraphStore
+from brandman.campaign_templates import CampaignTemplateStore
+from brandman.dispatch import GovernedDispatcher, SQLiteDispatchStore
+from brandman.distribution_package import DistributionPackageStore
+from brandman.editorial import EditorialStore
+from brandman.main import app
 
 
 def setup_graph(tmp_path, monkeypatch):
@@ -244,7 +244,7 @@ def test_channel_native_metrics_do_not_invent_cross_channel_reach_or_ctr(tmp_pat
 def test_generic_graph_rest_acceptance_and_template_instantiation(tmp_path, monkeypatch):
     database = tmp_path / "campaign-graph-api.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-password")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-password")
     headers = {"Authorization": "Basic b3BlcmF0b3I6dGVzdC1wYXNzd29yZA=="}
     with TestClient(app, headers=headers) as client:
         brand = store.get_brand("demo-brand")
@@ -305,7 +305,7 @@ def test_generic_graph_rest_acceptance_and_template_instantiation(tmp_path, monk
             f"/api/campaign-memberships/{touchpoint['id']}/detach",
             json={"reason": "Remove the completed touchpoint"},
         ).json()["active"] == 0
-        from app.mcp_server import get_campaign_graph, get_campaign_measurement, list_campaign_graphs, mcp
+        from brandman.mcp_server import get_campaign_graph, get_campaign_measurement, list_campaign_graphs, mcp
         assert get_campaign_graph(graph["id"])["id"] == graph["id"]
         assert get_campaign_measurement(graph["id"])["campaign_id"] == graph["id"]
         assert any(item["id"] == graph["id"] for item in list_campaign_graphs("demo-brand"))

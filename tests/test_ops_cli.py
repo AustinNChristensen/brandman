@@ -7,13 +7,13 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app.ops_cli import (
+from brandman import store
+from brandman.ops_cli import (
     beehiiv_private_draft_manifest, create_backup, database_audit, export_usage, initialize_all, local_soak,
     main, operability_audit, reconcile_legacy_dispatches, restore_backup,
 )
-from app.provider_usage import ProviderUsageLedger
-from app.fixture_quarantine import fixture_quarantine_plan
+from brandman.provider_usage import ProviderUsageLedger
+from brandman.fixture_quarantine import fixture_quarantine_plan
 
 
 def test_migrate_initializes_all_schemas_idempotently(tmp_path):
@@ -51,9 +51,9 @@ def test_local_beehiiv_manifest_command_owns_service_construction(tmp_path, monk
     class Services:
         execution_handoff_store = Handoffs()
 
-    import app.main
+    import brandman.main
     monkeypatch.setattr(
-        app.main, "initialize_application_services",
+        brandman.main, "initialize_application_services",
         lambda path, profile: (
             calls.append((Path(path), profile)) or Services()
         ),
@@ -131,7 +131,7 @@ def test_fixture_quarantine_plan_is_read_only_and_keeps_ambiguous_rows(tmp_path)
                VALUES (?,NULL,'created','fixture','test','{}',?)""",
             (fixture["id"], store.now()),
         )
-    from app.dispatch import GovernedDispatcher, SQLiteDispatchStore
+    from brandman.dispatch import GovernedDispatcher, SQLiteDispatchStore
     dispatch = GovernedDispatcher(SQLiteDispatchStore(database)).create(
         "x", {"body": "Draft"}, brand_id=brand["id"], item_id="fixture-dispatch",
     )
@@ -218,7 +218,7 @@ def test_rate_card_cli_emits_metadata_not_credentials(tmp_path, capsys):
         "--endpoint-pattern", "https://api.x.com/2/tweets",
         "--billable-category", "post.create_plain", "--unit-name", "resource",
         "--unit-price", "0.01", "--currency", "USD",
-        "--effective-at", "2026-09-02T00:00:00Z", "--actor", "preview-operator",
+        "--effective-at", "2026-09-02T00:00:00Z", "--actor", "chris",
     ])
     output = json.loads(capsys.readouterr().out)
     assert output["billable_category"] == "post.create_plain"
@@ -254,7 +254,7 @@ def test_dispatch_reconciliation_is_dry_run_first_and_idempotent(tmp_path):
         "body": "Read https://example.test/story", "status": "draft",
         "scheduled_for": None, "external_post_id": None,
     })
-    from app.dispatch import GovernedDispatcher, SQLiteDispatchStore
+    from brandman.dispatch import GovernedDispatcher, SQLiteDispatchStore
     dispatcher = GovernedDispatcher(SQLiteDispatchStore(database))
     retained = dispatcher.create(
         "x", {"body": post["body"]}, brand_id=brand["id"],

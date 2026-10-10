@@ -4,12 +4,12 @@ import sqlite3
 
 import pytest
 
-from app import store
-from app.canonical_revalidation import (
+from brandman import store
+from brandman.canonical_revalidation import (
     CanonicalPageFetcher, CanonicalRevalidationError, CanonicalSourceRevalidationStore,
 )
-from app.connectors import HttpResponse, RssConnector
-from app.editorial import ApprovalBlocked, EditorialStore, IssueLifecycle
+from brandman.connectors import HttpResponse, RssConnector
+from brandman.editorial import ApprovalBlocked, EditorialStore, IssueLifecycle
 
 
 class Transport:

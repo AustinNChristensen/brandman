@@ -1,17 +1,17 @@
-"""The React dashboard (web/ → app/static/app) is served at /app behind the
+"""The React dashboard (web/ → brandman/static/app) is served at /app behind the
 same boundary and preview password as everything else."""
 import base64
 import os
 import re
 from pathlib import Path
 
-os.environ["BRAND_OS_PREVIEW_PASSWORD"] = "test-only-password"
+os.environ["BRANDMAN_PREVIEW_PASSWORD"] = "test-only-password"
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
-BUILD = Path(__file__).parents[1] / "app" / "static" / "app"
+BUILD = Path(__file__).parents[1] / "brandman" / "static" / "app"
 
 
 def _client() -> TestClient:
@@ -56,7 +56,7 @@ def test_app_routes_require_the_preview_password_and_stay_inside_the_build():
 
 
 def test_missing_build_has_an_actionable_error_without_bypassing_auth(monkeypatch, tmp_path):
-    from app import main
+    from brandman import main
 
     monkeypatch.setattr(main, "DASHBOARD_V2_DIR", tmp_path)
     with TestClient(app) as anonymous:

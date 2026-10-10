@@ -1,18 +1,18 @@
 import json
 import sqlite3
 
-from app.attribution_store import AttributionStore
-from app.dispatch import DispatchItem, Lifecycle, SQLiteDispatchStore
-from app.editorial import EditorialStore, IssueLifecycle
-from app.feedback import FeedbackStore
-from app.operating_repository import (
+from brandman.attribution_store import AttributionStore
+from brandman.dispatch import DispatchItem, Lifecycle, SQLiteDispatchStore
+from brandman.editorial import EditorialStore, IssueLifecycle
+from brandman.feedback import FeedbackStore
+from brandman.operating_repository import (
     SQLiteOperatingPlanRepository,
     build_mission_artifact_store,
     build_operating_plan_service,
     build_progress_loader,
 )
-from app.operating_plan import build_operating_morning_plan
-from app.store import SCHEMA
+from brandman.operating_plan import build_operating_morning_plan
+from brandman.store import SCHEMA
 
 
 def seed(database):
@@ -120,17 +120,17 @@ def test_verified_product_gap_leaves_current_operating_plan_but_keeps_evidence(t
 
     assert [item["id"] for item in repository.open_gaps("brand-1")] == ["gap-1"]
     feedback.start(
-        "gap-1", assignee="builder", actor="preview-operator",
+        "gap-1", assignee="builder", actor="chris",
         implementation_links=["/app/operating_plan.py"],
         implementation_notes="Bound recurring incidents without hiding them.",
     )
     feedback.resolve(
-        "gap-1", actor="preview-operator",
+        "gap-1", actor="chris",
         resolution_evidence="Recurring incident regression passes.",
         implementation_links=["/tests/test_operating_plan.py"],
     )
     feedback.verify(
-        "gap-1", actor="preview-operator",
+        "gap-1", actor="chris",
         evidence="Current plan contains one grouped incident and preserves editorial work.",
     )
 

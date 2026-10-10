@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from brandman.main import app
 
 
 PASSWORD = "migration-test-password"
@@ -19,9 +19,9 @@ def _challenge(verifier: str) -> str:
 
 
 def _client(monkeypatch) -> TestClient:
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", PASSWORD)
-    monkeypatch.setenv("BRAND_OS_ALLOWED_HOSTS", "usebrandman.com")
-    monkeypatch.setenv("BRAND_OS_REQUIRE_HTTPS", "true")
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_ALLOWED_HOSTS", "usebrandman.com")
+    monkeypatch.setenv("BRANDMAN_REQUIRE_HTTPS", "true")
     return TestClient(app, base_url="https://usebrandman.com")
 
 
@@ -170,7 +170,7 @@ def test_consent_screen_describes_write_capable_access(monkeypatch):
 
 
 def test_authorize_password_attempts_are_rate_limited(monkeypatch):
-    from app import hosted_mcp
+    from brandman import hosted_mcp
 
     hosted_mcp._auth_failures.clear()
     verifier = "a-long-enough-pkce-verifier-value-for-the-test"

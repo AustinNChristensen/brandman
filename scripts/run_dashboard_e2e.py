@@ -16,20 +16,20 @@ def main() -> None:
     DATABASE.unlink(missing_ok=True)
     environment = os.environ.copy()
     environment.update({
-        "BRAND_OS_DB": str(DATABASE),
-        "BRAND_OS_DATABASE_PROFILE": "development",
-        "BRAND_OS_PREVIEW_PASSWORD": PASSWORD,
-        "BRAND_OS_ALLOWED_HOSTS": "127.0.0.1,localhost",
-        "BRAND_OS_HTTPS": "false",
+        "BRANDMAN_DB": str(DATABASE),
+        "BRANDMAN_DATABASE_PROFILE": "development",
+        "BRANDMAN_PREVIEW_PASSWORD": PASSWORD,
+        "BRANDMAN_ALLOWED_HOSTS": "127.0.0.1,localhost",
+        "BRANDMAN_HTTPS": "false",
     })
     os.environ.update(environment)
     sys.path.insert(0, str(PROJECT))
     # Application startup creates the standard development brands. UI tests add
     # only reversible scratch records in this disposable database.
     from fastapi.testclient import TestClient
-    from app.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
-    from app.main import app, engagement_store
-    from app import store
+    from brandman.connectors import ConnectorEvent, ConnectorKind, EventKind, dedup_identity
+    from brandman.main import app, engagement_store
+    from brandman import store
 
     with TestClient(app) as client:
         response = client.get("/api/brands", auth=("operator", PASSWORD))
@@ -53,7 +53,7 @@ def main() -> None:
             ),
         )
     os.execve(sys.executable, [
-        sys.executable, "-m", "uvicorn", "app.main:app",
+        sys.executable, "-m", "uvicorn", "brandman.main:app",
         "--host", "127.0.0.1", "--port", "8011",
     ], environment)
 

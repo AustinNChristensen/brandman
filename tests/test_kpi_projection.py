@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from app import store
-from app.attribution_store import AttributionStore
-from app.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
-from app.kpi_projection import MissionKpiProjector
-from app.sync import SyncOrchestrator
+from brandman import store
+from brandman.attribution_store import AttributionStore
+from brandman.connectors import ConnectorEvent, ConnectorKind, ConnectorResult, EventKind
+from brandman.kpi_projection import MissionKpiProjector
+from brandman.sync import SyncOrchestrator
 
 
 import pytest
@@ -17,7 +17,7 @@ def setup_loop(tmp_path: Path, kind: ConnectorKind = ConnectorKind.X, *, status=
     store.DATA_PATH = database
     store.init_db()
     brand = store.get_brand("demo-brand")
-    mission = store.ensure_demo_brand_growth_mission()
+    mission = store.ensure_growth_mission("demo-brand")
     account = store.upsert_connector_account(
         brand["id"], kind.value, "primary", "Primary", status=status
     )

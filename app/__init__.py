@@ -1,1 +1,0 @@
-"""BrandMan application package."""

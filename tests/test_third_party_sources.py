@@ -3,10 +3,10 @@ from __future__ import annotations
 from cryptography.fernet import Fernet
 import pytest
 
-from app import store
-from app.connectors import ConnectorError, HttpResponse, UrllibTransport
-from app.service_runtime import build_service_runtime
-from app.third_party_sources import (
+from brandman import store
+from brandman.connectors import ConnectorError, HttpResponse, UrllibTransport
+from brandman.service_runtime import build_service_runtime
+from brandman.third_party_sources import (
     CONTENT_POLICY, ThirdPartySourceError, ThirdPartySourceService,
     validate_public_feed_url,
 )

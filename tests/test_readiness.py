@@ -7,13 +7,13 @@ from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 import pytest
 
-from app import store
-from app.credentials import CredentialStore
-from app.connector_health import ConnectorHealthStore, make_connector_health_handler
-from app.connectors import ConnectorResult
-from app.main import app
-from app.readiness import LiveReadinessService
-from app.scheduler import PeriodicOrchestrator
+from brandman import store
+from brandman.credentials import CredentialStore
+from brandman.connector_health import ConnectorHealthStore, make_connector_health_handler
+from brandman.connectors import ConnectorResult
+from brandman.main import app
+from brandman.readiness import LiveReadinessService
+from brandman.scheduler import PeriodicOrchestrator
 
 
 NOW = datetime(2026, 9, 2, 12, tzinfo=UTC)
@@ -29,10 +29,10 @@ pytestmark = pytest.mark.usefixtures("launch_window_clock")
 def setup_database(tmp_path, monkeypatch):
     database = tmp_path / "readiness.db"
     monkeypatch.setattr(store, "DATA_PATH", database)
-    monkeypatch.setenv("BRAND_OS_DB", str(database))
-    monkeypatch.setenv("BRAND_OS_PREVIEW_PASSWORD", "test-only-password")
+    monkeypatch.setenv("BRANDMAN_DB", str(database))
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "test-only-password")
     store.init_db()
-    store.ensure_demo_brand_growth_mission()
+    store.ensure_growth_mission("demo-brand")
     return database, store.get_brand("demo-brand")
 
 
@@ -42,7 +42,7 @@ def checks(report):
 
 def test_empty_preflight_distinguishes_code_gaps_from_missing_configuration(tmp_path, monkeypatch):
     database, _ = setup_database(tmp_path, monkeypatch)
-    monkeypatch.delenv("BRAND_OS_CREDENTIAL_MASTER_KEY", raising=False)
+    monkeypatch.delenv("BRANDMAN_CREDENTIAL_MASTER_KEY", raising=False)
 
     report = LiveReadinessService(
         database, environment=dict(__import__("os").environ), clock=lambda: NOW,
@@ -59,7 +59,7 @@ def test_empty_preflight_distinguishes_code_gaps_from_missing_configuration(tmp_
     assert result["active_mission"]["status"] == "ready"
     assert result["worker_schedules"]["status"] == "not_configured"
     assert report["summary"]["code_ready_percent"] == 100.0
-    assert any("BRAND_OS_CREDENTIAL_MASTER_KEY" in action
+    assert any("BRANDMAN_CREDENTIAL_MASTER_KEY" in action
                for action in result["credential_master_key"]["actions"])
 
 
@@ -93,7 +93,7 @@ def test_readiness_does_not_recommend_reconnecting_quarantined_fixture_account(
 def test_connected_preflight_mirrors_runtime_scope_rules_and_preserves_code_gaps(tmp_path, monkeypatch):
     database, brand = setup_database(tmp_path, monkeypatch)
     key = Fernet.generate_key().decode()
-    monkeypatch.setenv("BRAND_OS_CREDENTIAL_MASTER_KEY", key)
+    monkeypatch.setenv("BRANDMAN_CREDENTIAL_MASTER_KEY", key)
     credentials = CredentialStore(database, key)
     credentials.put(
         "beehiiv", "publication-1", "DemoBrand Beehiiv", {"api_key": "bee-secret"},
@@ -153,7 +153,7 @@ def test_connected_preflight_mirrors_runtime_scope_rules_and_preserves_code_gaps
         x_read["id"]: HealthyReadConnector(),
         website["id"]: HealthyReadConnector(),
     }, health)
-    for check in health.trigger(brand["id"], actor="preview-operator"):
+    for check in health.trigger(brand["id"], actor="chris"):
         if check["status"] == "queued":
             handler({"payload": {"health_check_id": check["id"]}})
 
@@ -193,8 +193,8 @@ def test_wrong_but_well_formed_key_is_reported_without_decryption_error_or_secre
         status="healthy", scopes=["tweet.write"],
     )
     environment = {
-        "BRAND_OS_PREVIEW_PASSWORD": "configured",
-        "BRAND_OS_CREDENTIAL_MASTER_KEY": Fernet.generate_key().decode(),
+        "BRANDMAN_PREVIEW_PASSWORD": "configured",
+        "BRANDMAN_CREDENTIAL_MASTER_KEY": Fernet.generate_key().decode(),
     }
 
     report = LiveReadinessService(database, environment=environment, clock=lambda: NOW).inspect(
@@ -212,7 +212,7 @@ def test_wrong_but_well_formed_key_is_reported_without_decryption_error_or_secre
 
 def test_rest_preflight_is_authenticated_and_mcp_helper_is_read_only(tmp_path, monkeypatch):
     database, _ = setup_database(tmp_path, monkeypatch)
-    monkeypatch.delenv("BRAND_OS_CREDENTIAL_MASTER_KEY", raising=False)
+    monkeypatch.delenv("BRANDMAN_CREDENTIAL_MASTER_KEY", raising=False)
     with TestClient(app) as client:
         assert client.get("/api/brands/demo-brand/readiness").status_code == 401
         response = client.get("/api/brands/demo-brand/readiness", headers=HEADERS)
@@ -222,7 +222,7 @@ def test_rest_preflight_is_authenticated_and_mcp_helper_is_read_only(tmp_path, m
     assert response.json()["brand"]["slug"] == "demo-brand"
     assert missing.status_code == 404
     before = store.rows("SELECT id FROM connector_accounts")
-    from app.mcp_server import get_live_readiness
+    from brandman.mcp_server import get_live_readiness
     mcp_report = get_live_readiness("demo-brand")
     assert mcp_report["brand"]["slug"] == "demo-brand"
     assert store.rows("SELECT id FROM connector_accounts") == before
@@ -232,8 +232,8 @@ def test_missing_scope_actions_name_exact_scope(tmp_path, monkeypatch):
     database, brand = setup_database(tmp_path, monkeypatch)
     key = Fernet.generate_key().decode()
     environment = {
-        "BRAND_OS_PREVIEW_PASSWORD": "configured",
-        "BRAND_OS_CREDENTIAL_MASTER_KEY": key,
+        "BRANDMAN_PREVIEW_PASSWORD": "configured",
+        "BRANDMAN_CREDENTIAL_MASTER_KEY": key,
     }
     CredentialStore(database, key).put(
         "x", "demobrand", "DemoBrand X", {"access_token": "hidden"},
@@ -257,8 +257,8 @@ def test_native_x_api_never_claims_connected_without_refresh_material(tmp_path, 
     database, brand = setup_database(tmp_path, monkeypatch)
     key = Fernet.generate_key().decode()
     environment = {
-        "BRAND_OS_PREVIEW_PASSWORD": "configured",
-        "BRAND_OS_CREDENTIAL_MASTER_KEY": key,
+        "BRANDMAN_PREVIEW_PASSWORD": "configured",
+        "BRANDMAN_CREDENTIAL_MASTER_KEY": key,
     }
     scopes = ["tweet.read", "users.read", "offline.access"]
     CredentialStore(database, key).put(

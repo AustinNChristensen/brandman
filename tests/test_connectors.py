@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.connectors import (
+from brandman.connectors import (
     BeehiivConnector,
     ConnectorError,
     ConnectorKind,
