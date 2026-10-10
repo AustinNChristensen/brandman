@@ -36,7 +36,7 @@ export function Shell({ title, crumb, right, meters, children }: { title: ReactN
   return (
     <div className="shell">
       <aside className="side">
-        <div className="logo"><div className="logo-mark"><Icon name="layers" size={15} strokeWidth={2} /></div><div className="logo-name">Brand OS</div></div>
+        <div className="logo"><div className="logo-mark"><Icon name="layers" size={15} strokeWidth={2} /></div><div className="logo-name">BrandMan</div></div>
         <label className="brand-switch">
           <span style={{ display: 'flex', gap: 2 }}>{dots.map((b) => <span key={b.id} className="dot" style={{ background: brandColor(b.slug) }} />)}</span>
           <span>{selected ? brands.find((b) => b.slug === selected)?.name : 'All brands'}</span>

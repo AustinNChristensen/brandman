@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('deep links and reloads the brand-scoped integration surface', async ({ page }) => {
   await page.goto('./integrations?brand=demo-brand')
   await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible()
-  await expect(page.getByText('Choose how Brand OS connects')).toBeVisible()
+  await expect(page.getByText('Choose how BrandMan connects')).toBeVisible()
   await expect(page.getByText('secrets are write-only')).toBeVisible()
   await page.reload()
   await expect(page.getByText('Live readiness')).toBeVisible()
