@@ -103,7 +103,7 @@ test('runs the learning lifecycle through explicit human decisions without publi
 test('drafts and submits engagement for approval without direct execution', async ({ page }) => {
   await page.goto('./engagement?brand=demo-brand')
   await expect(page.getByRole('heading', { name: 'Engagement' })).toBeVisible()
-  await expect(page.getByText('E2E: should I change plans now?').first()).toBeVisible()
+  await expect(page.getByText('E2E: should I transfer these points now?').first()).toBeVisible()
   await page.getByRole('button', { name: 'Draft governed action' }).click()
   await page.getByLabel('Reply draft').fill('Confirm the pricing page and plan limits before switching.')
   await page.getByRole('button', { name: 'Create draft only' }).click()
@@ -120,35 +120,50 @@ test('drafts and submits engagement for approval without direct execution', asyn
   await expect(page.getByRole('button', { name: /^(send|publish|schedule|like|follow)$/i })).toHaveCount(0)
 })
 
-test('previews a source-grounded command and saves only inert package drafts', async ({ page }) => {
-  const sourceResponse = await page.request.post('http://127.0.0.1:8011/api/brands/demo-brand/sources', {
-    data: { title: 'E2E governed source', source_type: 'manual', body_summary: 'Official terms end Friday.', url: 'https://issuer.test/e2e-terms', lifecycle_state: 'published' },
+for (const viewport of [{ name: 'desktop', width: 1440, height: 1000 }, { name: 'mobile', width: 390, height: 844 }]) {
+  test(`previews draft structure honestly and saves only inert drafts on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize(viewport)
+    const sourceResponse = await page.request.post('http://127.0.0.1:8011/api/brands/demo-brand/sources', {
+      data: { title: `E2E governed source ${viewport.name}`, source_type: 'manual', body_summary: 'Official terms end Friday.', url: 'https://issuer.test/e2e-terms', lifecycle_state: 'published' },
+    })
+    expect(sourceResponse.ok()).toBeTruthy()
+    const source = await sourceResponse.json()
+    await page.goto('./content?brand=demo-brand')
+    await page.getByRole('button', { name: 'Create draft structure' }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByText(/No AI writing happens here/)).toBeVisible()
+    await expect(dialog.getByText(/Writing instructions do not rewrite the source text/)).toBeVisible()
+    await expect(dialog.getByText(`E2E governed source ${viewport.name}`, { exact: true })).toBeVisible()
+    const beforePath = test.info().outputPath(`draft-structure-${viewport.name}.png`)
+    await page.screenshot({ path: beforePath })
+    await test.info().attach('draft structure input', { path: beforePath, contentType: 'image/png' })
+    await dialog.getByLabel('Content goal').fill('Build a decision-support package from the selected official terms.')
+    await dialog.getByText(`E2E governed source ${viewport.name}`, { exact: true }).click()
+    await dialog.getByRole('button', { name: 'Preview draft structure' }).click()
+    await expect(dialog.getByText('Exact active guideline binding')).toBeVisible()
+    await expect(dialog.getByText(/No AI writing happens here/)).toBeVisible()
+    await expect(dialog.getByText('X source-text draft')).toBeVisible()
+    await expect(dialog.getByText(`E2E governed source ${viewport.name}: Official terms end Friday.`, { exact: true })).toBeVisible()
+    const previewPath = test.info().outputPath(`draft-preview-${viewport.name}.png`)
+    await page.screenshot({ path: previewPath })
+    await test.info().attach('draft structure preview', { path: previewPath, contentType: 'image/png' })
+    await expect(dialog.getByText(/^sha256:/)).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Save inert drafts' })).toBeDisabled()
+    await dialog.getByLabel('Confirm inert drafts').check()
+    await dialog.getByRole('button', { name: 'Save inert drafts' }).click()
+    await expect(dialog.getByText(/Saved as inert drafts by preview-operator/)).toBeVisible()
+    const context = await page.request.get('http://127.0.0.1:8011/api/brands/demo-brand/context')
+    const matching = (await context.json()).campaigns.find((item: { source_id: string; status: string }) => item.source_id === source.id)
+    expect(matching.status).toBe('draft')
+    const graph = await page.request.get(`http://127.0.0.1:8011/api/campaigns/${matching.id}/graph`)
+    const graphBody = await graph.json()
+    expect(graphBody.memberships.map((item: { asset_type: string; role: string }) => [item.asset_type, item.role])).toEqual([
+      ['newsletter_issue', 'anchor'], ['post', 'touchpoint'],
+    ])
+    expect(graphBody.relationships).toHaveLength(1)
+    await expect(dialog.getByRole('button', { name: /^(approve|send|publish|schedule)$/i })).toHaveCount(0)
   })
-  expect(sourceResponse.ok()).toBeTruthy()
-  const source = await sourceResponse.json()
-  await page.goto('./content?brand=demo-brand')
-  await page.getByRole('button', { name: 'Build governed package' }).click()
-  const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('Operator command').fill('Build a decision-support package from the selected official terms.')
-  await dialog.getByText('E2E governed source', { exact: true }).click()
-  await dialog.getByRole('button', { name: 'Preview proposed changes' }).click()
-  await expect(dialog.getByText('Exact active guideline binding')).toBeVisible()
-  await expect(dialog.getByText(/^sha256:/)).toBeVisible()
-  await expect(dialog.getByRole('button', { name: 'Save inert drafts' })).toBeDisabled()
-  await dialog.getByLabel('Confirm inert drafts').check()
-  await dialog.getByRole('button', { name: 'Save inert drafts' }).click()
-  await expect(dialog.getByText(/Saved as inert drafts by preview-operator/)).toBeVisible()
-  const context = await page.request.get('http://127.0.0.1:8011/api/brands/demo-brand/context')
-  const matching = (await context.json()).campaigns.find((item: { source_id: string; status: string }) => item.source_id === source.id)
-  expect(matching.status).toBe('draft')
-  const graph = await page.request.get(`http://127.0.0.1:8011/api/campaigns/${matching.id}/graph`)
-  const graphBody = await graph.json()
-  expect(graphBody.memberships.map((item: { asset_type: string; role: string }) => [item.asset_type, item.role])).toEqual([
-    ['newsletter_issue', 'anchor'], ['post', 'touchpoint'],
-  ])
-  expect(graphBody.relationships).toHaveLength(1)
-  await expect(dialog.getByRole('button', { name: /^(approve|send|publish|schedule)$/i })).toHaveCount(0)
-})
+}
 
 test('triages an agent-reported product failure through the audited feedback lifecycle', async ({ page }) => {
   const reported = await page.request.post('http://127.0.0.1:8011/api/brands/demo-brand/product-feedback', {
