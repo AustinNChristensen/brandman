@@ -19,7 +19,7 @@ def _client() -> TestClient:
     return TestClient(app, headers={"Authorization": f"Basic {token}"})
 
 
-def test_build_is_committed_and_same_origin_only():
+def test_build_is_complete_and_same_origin_only():
     html = (BUILD / "index.html").read_text(encoding="utf-8")
     assert "https://" not in html, "the dashboard must not load anything cross-origin"
     for asset in re.findall(r'(?:src|href)="/app/([^"]+)"', html):
@@ -53,3 +53,16 @@ def test_app_routes_require_the_preview_password_and_stay_inside_the_build():
         # Either normalized away by the client or answered with the SPA entry; never the legacy file.
         assert escaped.status_code in (200, 404)
         assert "Demo Brand · Brand OS" not in escaped.text
+
+
+def test_missing_build_has_an_actionable_error_without_bypassing_auth(monkeypatch, tmp_path):
+    from brandman import main
+
+    monkeypatch.setattr(main, "DASHBOARD_V2_DIR", tmp_path)
+    with TestClient(app) as anonymous:
+        assert anonymous.get("/app").status_code == 401
+    with _client() as client:
+        response = client.get("/app/content")
+        assert response.status_code == 503
+        assert "scripts/build_dashboard.py" in response.json()["detail"]
+        assert client.get("/app/assets/missing.js").status_code == 404

@@ -103,7 +103,7 @@ test('runs the learning lifecycle through explicit human decisions without publi
 test('drafts and submits engagement for approval without direct execution', async ({ page }) => {
   await page.goto('./engagement?brand=demo-brand')
   await expect(page.getByRole('heading', { name: 'Engagement' })).toBeVisible()
-  await expect(page.getByText('E2E: should I change plans now?').first()).toBeVisible()
+  await expect(page.getByText('E2E: should I transfer these points now?').first()).toBeVisible()
   await page.getByRole('button', { name: 'Draft governed action' }).click()
   await page.getByLabel('Reply draft').fill('Confirm the pricing page and plan limits before switching.')
   await page.getByRole('button', { name: 'Create draft only' }).click()

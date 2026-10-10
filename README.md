@@ -36,7 +36,7 @@ from the results. The brand context itself never lives inside a channel.
 
 ## Quickstart
 
-Requirements: Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+Requirements for a source checkout: Python 3.11+, [uv](https://docs.astral.sh/uv/), and Node.js 22.12+ with npm.
 
 > **Legacy aliases.** The product is BrandMan. For compatibility with existing
 > installs, the `brand-os-*` commands, `BRAND_OS_*` environment variables and the
@@ -45,7 +45,9 @@ Requirements: Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/AustinNChristensen/brandman.git
-cd brandman && uv sync
+cd brandman
+uv sync --locked
+uv run python scripts/build_dashboard.py
 
 uv run brandman init        # asks for your brand; writes .env and the database
 uv run brandman serve       # http://127.0.0.1:8000/app (password is in .env)
@@ -54,6 +56,35 @@ uv run brandman mcp-config --client claude-code   # connect an agent
 
 Or with Docker: `cp .env.example .env`, set `BRANDMAN_PREVIEW_PASSWORD`, then
 `docker compose up -d`.
+
+The source HTML (`web/index.html`) and React code are tracked; generated files in
+`brandman/static/app/` are ignored. After changing dashboard source, rerun
+`uv run python scripts/build_dashboard.py` before serving it or running Python
+HTTP tests. `npm run dev` in `web/` remains available for frontend development.
+
+For a release or deployment, run `uv build` with Node.js available. The wheel
+build hook installs the locked frontend dependencies and builds the dashboard,
+then includes all generated assets in the wheel. Install that wheel in the
+runtime environment; Node.js is only needed by the build machine. Source archives
+include the frontend sources and build hook, and rebuild the assets when converted
+to a wheel. Editable installs do not run frontend builds automatically.
+
+Production notes:
+
+- A host serving directly from a checkout must run
+  `uv run python scripts/build_dashboard.py` after checkout/dependency installation
+  and before starting or restarting the API. A host installing the built wheel
+  already has the assets. CI verifies both paths.
+
+- Configure every value through your host's secret manager; `.env.example` is
+  the non-secret contract. Never commit credentials or a database file.
+- Set `BRAND_OS_ALLOWED_HOSTS` to your public hostname and keep
+  `BRAND_OS_REQUIRE_HTTPS=true` behind TLS.
+- The database must be durable. Do not ship a local SQLite file inside a
+  container image.
+- OAuth state for the hosted MCP endpoint is stored in the same database.
+- The built-in password rate limit on `/oauth/authorize` is in memory and per
+  process.
 
 Walkthrough: [docs/getting-started.md](docs/getting-started.md).
 

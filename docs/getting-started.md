@@ -11,8 +11,10 @@ With [uv](https://docs.astral.sh/uv/):
 uv tool install brandman            # or: pipx install brandman
 ```
 
-From a checkout instead: `git clone … && cd brandman && uv sync`, then prefix
-commands with `uv run`.
+For a source checkout, install Node.js 22.12+ and npm, run `uv sync --locked`
+in the repository, then `uv run python scripts/build_dashboard.py`. Prefix
+commands with `uv run`. Prebuilt wheels include the dashboard and need no Node
+at runtime.
 
 ## 2. Create your brand
 

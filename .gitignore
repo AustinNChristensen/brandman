@@ -14,3 +14,8 @@ __pycache__/
 # dashboard build tooling
 web/node_modules/
 web/dist/
+
+# Dashboard output is generated locally and included by the wheel build hook.
+/brandman/static/app/
+/dist/
+/.package-venv/

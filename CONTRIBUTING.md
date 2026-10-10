@@ -10,10 +10,13 @@ Thanks for helping. Bug reports, fixes, docs and adapters are all welcome.
 ## Development
 
 ```bash
-uv sync
+uv sync --locked
+uv run python scripts/build_dashboard.py
 uv run pytest
 ```
 
+- Install Node.js 22.12+ with npm for the dashboard build. Commit frontend sources,
+  never generated `brandman/static/app/` files. Rebuild locally after frontend changes.
 - Keep changes focused and add or update tests with them.
 - Never commit credentials, database files or real customer data. Tests must use scratch databases only.
 - Nothing may publish to an external channel without an explicit approval step; keep that invariant.

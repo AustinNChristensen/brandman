@@ -32,3 +32,9 @@ web process per database; the worker can run alongside it.
 
 Tagged releases publish `ghcr.io/austinnchristensen/brandman:<version>` and
 the `brandman` package on PyPI.
+
+Build source packages with `uv build` on a machine with Node.js 22.12+ and npm.
+The wheel includes the dashboard; its runtime requires only Python. Docker builds
+the same dashboard and package in a build stage and leaves Node out of the
+runtime image. For a direct source deployment, run
+`uv run python scripts/build_dashboard.py` before restarting the service.
