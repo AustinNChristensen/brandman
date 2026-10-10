@@ -1485,7 +1485,7 @@ def dashboard_v2(path: str = "") -> FileResponse:
             raise HTTPException(status_code=404, detail="Dashboard asset not found")
     entry = DASHBOARD_V2_DIR / "index.html"
     if not entry.is_file():
-        raise HTTPException(status_code=503, detail="Dashboard build is missing; run `npm run build` in web/.")
+        raise HTTPException(status_code=503, detail="Dashboard build is missing; run `python scripts/build_dashboard.py` in the source checkout.")
     return FileResponse(entry)
 
 
