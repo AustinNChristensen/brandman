@@ -139,7 +139,7 @@ def ingest_beehiiv_pull(
                 brand_id=brand_id, connector_account_id=connector_account_id,
                 connector_event=stored_event, event=event,
             )
-            # This provider snapshot is lifecycle evidence for an issue Brand OS
+            # This provider snapshot is lifecycle evidence for an issue BrandMan
             # already owns.  It must not become a new authoring source.
             continue
         tags = ", ".join(post["content_tags"])

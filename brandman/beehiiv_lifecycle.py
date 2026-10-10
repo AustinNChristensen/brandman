@@ -32,7 +32,7 @@ _LOCAL_TERMINAL = frozenset({"published", "abandoned", "archived"})
 
 
 class BeehiivNewsletterLifecycleProjector:
-    """Advance only an exact, already-exported Brand OS newsletter issue."""
+    """Advance only an exact, already-exported BrandMan newsletter issue."""
 
     def __init__(
         self, database: str | Path, *, connection: sqlite3.Connection | None = None,

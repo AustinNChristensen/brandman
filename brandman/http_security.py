@@ -63,7 +63,7 @@ def enforce_request_boundary(
         )
 
     if request.method.upper() not in _SAFE_METHODS:
-        # Login authenticates the local operator; it does not perform a BrandOS
+        # Login authenticates the local operator; it does not perform a BrandMan
         # mutation. Some Chrome navigation paths classify this top-level form
         # submission as cross-site even though it targets the page's own URL.
         # Host, loopback/HTTPS, password verification, and strict session-cookie

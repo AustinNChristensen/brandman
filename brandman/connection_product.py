@@ -120,7 +120,7 @@ def onboarding_manifest(*, encryption_configured: bool) -> dict[str, Any]:
             "ready": encryption_configured,
             "required_for": "Every standalone API or OAuth connection",
             "operator_action": None if encryption_configured else (
-                "Ask the BrandOS administrator to configure credential encryption before entering a token."
+                "Ask the BrandMan administrator to configure credential encryption before entering a token."
             ),
         },
         "modes": [
@@ -157,8 +157,8 @@ def onboarding_manifest(*, encryption_configured: bool) -> dict[str, Any]:
             "source": "customer_supplied_rate_card",
             "vendor_prices_bundled": False,
             "explanation": (
-                "BrandOS records payload-free usage. An administrator enters a versioned rate card "
-                "from the customer's provider agreement; BrandOS does not assume vendor pricing."
+                "BrandMan records payload-free usage. An administrator enters a versioned rate card "
+                "from the customer's provider agreement; BrandMan does not assume vendor pricing."
             ),
         },
     }

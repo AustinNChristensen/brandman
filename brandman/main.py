@@ -11,7 +11,7 @@ from pathlib import Path
 from threading import RLock
 from typing import Any, Generic, TypeVar
 from typing import Literal
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -324,7 +324,10 @@ async def preview_password_gate(request: Request, call_next):
     )
     if not (basic_authenticated or session_authenticated):
         if _is_operator_navigation(request):
-            response = RedirectResponse("/login", status_code=303)
+            destination = request.url.path
+            if request.url.query:
+                destination += "?" + request.url.query
+            response = RedirectResponse("/login?" + urlencode({"next": destination}), status_code=303)
         else:
             response = JSONResponse(
                 status_code=401,
@@ -356,28 +359,36 @@ async def _call_as(authentication: extensions.Authentication, request: Request, 
 def _is_operator_navigation(request: Request) -> bool:
     return (
         request.method.upper() in {"GET", "HEAD"}
-        and request.url.path in {"/", "/docs", "/redoc"}
+        and (
+            request.url.path in {"/", "/docs", "/redoc", "/app"}
+            or request.url.path.startswith("/app/")
+        )
         and "text/html" in request.headers.get("accept", "").casefold()
     )
 
 
 def _safe_login_destination(value: str | None) -> str:
-    candidate = (value or "/").strip()
-    return candidate if candidate.startswith("/") and not candidate.startswith("//") else "/"
+    candidate = (value or "/app").strip()
+    if (
+        not candidate.startswith("/") or candidate.startswith("//")
+        or "\\" in candidate or any(ord(char) < 32 or ord(char) == 127 for char in candidate)
+    ):
+        return "/app"
+    return candidate
 
 
-def _login_page(*, error: str | None = None) -> str:
+def _login_page(*, destination: str | None = "/app", error: str | None = None) -> str:
     message = f'<p class="error" role="alert">{escape(error)}</p>' if error else ""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sign in · BrandMan</title><style>
 :root{{color-scheme:dark}}body{{margin:0;min-height:100vh;display:grid;place-items:center;background:#101314;color:#f4f1e8;font:16px system-ui,sans-serif}}main{{width:min(420px,calc(100% - 40px));background:#1b2021;border:1px solid #394243;border-radius:18px;padding:32px;box-shadow:0 24px 80px #0008}}.eyebrow{{color:#b9a36a;font-size:12px;font-weight:700;letter-spacing:.14em}}h1{{font-size:30px;margin:10px 0}}p{{color:#bdc5c3;line-height:1.5}}label{{display:block;margin:24px 0 8px;font-weight:650}}input{{box-sizing:border-box;width:100%;border:1px solid #566160;border-radius:10px;padding:13px;background:#111515;color:#fff;font:inherit}}button{{width:100%;margin-top:18px;border:0;border-radius:10px;padding:13px;background:#d7bc72;color:#17170f;font:inherit;font-weight:750;cursor:pointer}}.error{{color:#ffb8ae;background:#3a2020;border-radius:8px;padding:10px}}small{{display:block;margin-top:18px;color:#84908e}}
-</style></head><body><main><div class="eyebrow">BRANDMAN · OPERATOR CONSOLE</div><h1>Sign in</h1><p>The BrandMan service is running. Enter the operator password to open the console.</p>{message}<form method="post" action="/login"><label for="password">Preview password</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Open BrandMan</button></form><small>Credentials stay in the request body and are never placed in the URL. This session expires automatically.</small></main></body></html>"""
+</style></head><body><main><div class="eyebrow">BRANDMAN · OPERATOR CONSOLE</div><h1>Sign in</h1><p>The BrandMan service is running. Enter the operator password to open the console.</p>{message}<form method="post" action="/login"><input type="hidden" name="next" value="{escape(_safe_login_destination(destination), quote=True)}"><label for="password">Preview password</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Open BrandMan</button></form><small>Credentials stay in the request body and are never placed in the URL. This session expires automatically.</small></main></body></html>"""
 
 
 @app.get("/login", response_class=HTMLResponse)
-def login_page() -> HTMLResponse:
-    return HTMLResponse(_login_page())
+def login_page(request: Request) -> HTMLResponse:
+    return HTMLResponse(_login_page(destination=request.query_params.get("next")))
 
 
 @app.post("/login")
@@ -386,11 +397,12 @@ async def create_login_session(request: Request) -> Response:
     if len(body) > 4096:
         return HTMLResponse(_login_page(error="The sign-in request was too large."), status_code=413)
     fields = parse_qs(body.decode("utf-8", errors="replace"), keep_blank_values=True)
+    destination = _safe_login_destination(fields.get("next", ["/app"])[0])
     supplied = fields.get("password", [""])[0]
     password = os.getenv("BRANDMAN_PREVIEW_PASSWORD", "")
     if not password or not secrets.compare_digest(supplied, password):
-        return HTMLResponse(_login_page(error="That preview password was not accepted."), status_code=401)
-    response = RedirectResponse(_safe_login_destination(fields.get("next", ["/"])[0]), status_code=303)
+        return HTMLResponse(_login_page(destination=destination, error="That preview password was not accepted."), status_code=401)
+    response = RedirectResponse(destination, status_code=303)
     response.set_cookie(
         PREVIEW_SESSION_COOKIE, create_preview_session(password),
         max_age=PREVIEW_SESSION_TTL_SECONDS, httponly=True, samesite="strict",

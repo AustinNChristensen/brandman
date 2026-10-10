@@ -1,4 +1,4 @@
-"""Validated user-launchd lifecycle for the Brand OS loopback API origin."""
+"""Validated user-launchd lifecycle for the BrandMan loopback API origin."""
 from __future__ import annotations
 
 import argparse
@@ -109,7 +109,7 @@ def validate_api_launchd_plist(payload: Mapping[str, Any]) -> dict[str, Any]:
     arguments = payload["ProgramArguments"]
     root = Path(str(payload["WorkingDirectory"])).expanduser().resolve()
     if not (root / "brandman" / "api_server.py").is_file():
-        raise ValueError("managed working directory is not a Brand OS checkout")
+        raise ValueError("managed working directory is not a BrandMan checkout")
     if not isinstance(arguments, list) or arguments[1:] != [
         "run", "--project", str(root), "--no-sync", "python", "-m", "brandman.api_server",
     ]:
@@ -242,7 +242,7 @@ def uninstall_api(label: str = DEFAULT_LABEL) -> dict[str, Any]:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brand-os-api-supervisor")
+    parser = argparse.ArgumentParser(prog="brandman-api-supervisor")
     sub = parser.add_subparsers(dest="command", required=True)
     render = sub.add_parser("render")
     render.add_argument("--database", required=True)
@@ -279,7 +279,7 @@ def main(argv: list[str] | None = None) -> None:
         else:  # pragma: no cover
             raise ValueError("unsupported command")
     except (OSError, ValueError, plistlib.InvalidFileException, subprocess.SubprocessError) as error:
-        raise SystemExit(f"brand-os-api-supervisor: {error}") from None
+        raise SystemExit(f"brandman-api-supervisor: {error}") from None
     print(json.dumps(result, sort_keys=True))
 
 

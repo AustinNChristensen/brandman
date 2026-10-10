@@ -195,7 +195,7 @@ class BeehiivDraftDelivery:
         payload = prepared["payload"]
         key = prepared["idempotency_key"]
 
-        # A preceding attempt may have reached Beehiiv but failed before Brand OS
+        # A preceding attempt may have reached Beehiiv but failed before BrandMan
         # recorded the receipt.  Reconcile before issuing another create.
         reconciled = self._lookup_safely(key, issue_id, report_failure=False)
         if reconciled is not None:
@@ -374,7 +374,7 @@ class BeehiivDraftDelivery:
         self.feedback(
             reporter="beehiiv-delivery",
             summary=summary,
-            details="An approved Brand OS newsletter revision could not be safely recorded as a Beehiiv draft.",
+            details="An approved BrandMan newsletter revision could not be safely recorded as a Beehiiv draft.",
             component="beehiiv.newsletter.export",
             severity="high" if category != "provider" or not retryable else "medium",
             fingerprint=f"beehiiv-export:{category}:{status_code or 'transport'}:{issue_id}",

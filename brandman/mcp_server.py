@@ -129,7 +129,7 @@ def get_end_of_day_scorecard(slug: str) -> dict:
 @mcp.tool()
 def create_tracked_url(slug: str, base_url: str, source: str, medium: str,
                        campaign_id: str, artifact_id: str, cta_id: str) -> dict:
-    """Create a canonical Brand OS attribution URL for an exact campaign artifact and CTA."""
+    """Create a canonical BrandMan attribution URL for an exact campaign artifact and CTA."""
     _initialize_runtime()
     brand = store.get_brand(slug)
     if not brand:
@@ -212,7 +212,7 @@ def register_connector_account(slug: str, connector_type: str, account_key: str,
     if not brand:
         raise ValueError(f"Unknown brand: {slug}")
     if connector_type == "rss":
-        raise ValueError("RSS sources must be onboarded through authenticated Brand OS REST")
+        raise ValueError("RSS sources must be onboarded through authenticated BrandMan REST")
     return store.upsert_connector_account(
         brand["id"], connector_type, account_key, display_name, status=status,
         scopes=scopes, capabilities=capabilities, configuration=configuration,
@@ -491,7 +491,7 @@ def propose_brand_learning(
 
 @mcp.tool()
 def report_product_gap(slug: str, summary: str, details: str, reporter: str = "agent") -> dict:
-    """Report a Brand OS capability gap discovered while doing real brand work."""
+    """Report a BrandMan capability gap discovered while doing real brand work."""
     _initialize_runtime()
     brand = store.get_brand(slug)
     if not brand:
@@ -718,7 +718,7 @@ def get_editorial_candidate_history(candidate_id: str) -> list[dict]:
 @mcp.tool()
 def create_newsletter_issue(slug: str, content: dict, created_by: str,
                             candidate_id: str | None = None) -> dict:
-    """Create the canonical Brand OS newsletter issue; this does not approve or export it."""
+    """Create the canonical BrandMan newsletter issue; this does not approve or export it."""
     _initialize_runtime()
     brand = store.get_brand(slug)
     if not brand:

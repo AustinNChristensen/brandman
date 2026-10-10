@@ -778,7 +778,7 @@ def update_learning_status(learning_id: str, expected: str, next_status: str) ->
 
 
 # Connector metadata intentionally excludes credentials. Authentication material belongs
-# in a secret store; Brand OS persists only the operational identity and capabilities.
+# in a secret store; BrandMan persists only the operational identity and capabilities.
 def upsert_connector_account(
     brand_id: str,
     connector_type: str,

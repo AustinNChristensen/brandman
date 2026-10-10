@@ -1,7 +1,7 @@
 """Durable, idempotent orchestration for read-side connector syncs.
 
 Connectors normalize remote responses; this module applies those responses to the
-Brand OS system of record.  It deliberately receives connectors and persistence
+BrandMan system of record.  It deliberately receives connectors and persistence
 as dependencies, so importing it never opens a network connection or requires a
 credential.
 """

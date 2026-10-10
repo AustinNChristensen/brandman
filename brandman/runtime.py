@@ -1,4 +1,4 @@
-"""Bounded Brand OS worker runtime.
+"""Bounded BrandMan worker runtime.
 
 This is an application boundary, not a daemon. Process managers or schedulers may
 call ``run_once`` or ``run_until_idle``; both return control predictably and make

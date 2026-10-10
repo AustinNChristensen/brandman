@@ -2,6 +2,8 @@
 // dashboard never invents fields the API does not return.
 
 export interface Brand {
+  // Present on brand discovery responses; other brand payloads may omit it.
+  has_active_mission?: boolean
   id: string
   slug: string
   name: string

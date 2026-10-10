@@ -1,4 +1,4 @@
-"""Durable, approval-gated delivery of Brand OS dispatch items to X.
+"""Durable, approval-gated delivery of BrandMan dispatch items to X.
 
 This module is an application composition boundary.  It deliberately keeps
 credentials and HTTP behind injected callables, while reusing the governed

@@ -1,4 +1,4 @@
-"""Deterministic mission operating plans composed from canonical Brand OS state."""
+"""Deterministic mission operating plans composed from canonical BrandMan state."""
 
 from __future__ import annotations
 
@@ -160,7 +160,7 @@ def build_prioritized_actions(
         count = incident["count"]
         actions.append(_action(
             action_type="resolve_job_failure", title=f"Resolve failed job: {failure.get('job_type') or failure.get('name') or 'unknown'}",
-            owner="Brand OS", reason=(
+            owner="BrandMan", reason=(
                 f"A recurring connector incident represents {count} failed durable operation(s)."
                 if count > 1 else "A durable operation exhausted retries or needs attention."
             ),
@@ -179,7 +179,7 @@ def build_prioritized_actions(
             continue
         actions.append(_action(
             action_type="close_product_gap", title=f"Close {severity} gap: {gap.get('summary') or gap.get('title') or 'unnamed gap'}",
-            owner="Brand OS", reason="This known product gap can block or distort the 30-day mission.",
+            owner="BrandMan", reason="This known product gap can block or distort the 30-day mission.",
             due_window="today", dependency=str(gap.get("component") or "affected component"),
             blocker=str(gap.get("actual_behavior") or gap.get("details") or "Known gap"),
             related_ids=_ids(gap.get("id"), gap.get("related_ids")),
@@ -193,7 +193,7 @@ def build_prioritized_actions(
                 action_type="review_experiment_winner",
                 title="Review evidence-backed X experiment winner",
                 owner=operator_principal(),
-                reason="Brand OS recommends a pattern but cannot accept or apply the learning.",
+                reason="BrandMan recommends a pattern but cannot accept or apply the learning.",
                 due_window="this_morning",
                 dependency="Connector-backed performance and experiment guardrails",
                 blocker=None,
@@ -243,7 +243,7 @@ def build_prioritized_actions(
         channel = str(work.get("channel") or work.get("connector") or work.get("kind") or "content")
         actions.append(_action(
             action_type="prepare_scheduled_work", title=f"Prepare scheduled {channel} item",
-            owner="Brand OS", reason="Scheduled work must be ready and approved before its delivery window.",
+            owner="BrandMan", reason="Scheduled work must be ready and approved before its delivery window.",
             due_window=str(work.get("scheduled_for") or "today"),
             dependency="Explicit approval" if status in {"draft", "awaiting_approval"} else "Healthy delivery connector",
             blocker="Awaiting explicit approval" if status in {"draft", "awaiting_approval"} else None,
@@ -258,7 +258,7 @@ def build_prioritized_actions(
     for candidate in ranked_candidates[:3]:
         actions.append(_action(
             action_type="develop_editorial_candidate", title=f"Develop editorial candidate: {candidate.get('title') or 'untitled'}",
-            owner="Brand OS", reason=f"Candidate score {float(candidate.get('score') or 0):g} merits editorial review.",
+            owner="BrandMan", reason=f"Candidate score {float(candidate.get('score') or 0):g} merits editorial review.",
             due_window="today", dependency="Source verification and editorial selection", blocker=None,
             related_ids=_ids(candidate.get("id"), candidate.get("supporting_source_ids"), [s.get("source_id") for s in candidate.get("supporting_sources", []) if isinstance(s, Mapping)]),
             contribution=_contribution(_metric_for_channel(progress, "newsletter"), "creates a source-grounded newsletter or campaign opportunity"),
@@ -277,7 +277,7 @@ def build_prioritized_actions(
         channel = str(winner.get("channel") or "content")
         actions.append(_action(
             action_type="reuse_winning_pattern", title="Adapt the strongest recent content pattern",
-            owner="Brand OS", reason="Recent measured performance provides evidence for the next experiment.",
+            owner="BrandMan", reason="Recent measured performance provides evidence for the next experiment.",
             due_window="next_24_hours", dependency="Preserve source grounding and create a distinct draft", blocker=None,
             related_ids=_ids(winner.get("id"), winner.get("post_id"), winner.get("campaign_id"), winner.get("source_id")),
             contribution=_contribution(_metric_for_channel(progress, channel), "reuses an evidence-backed hook or format", confidence="evidence_backed"),

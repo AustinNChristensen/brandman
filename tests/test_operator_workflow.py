@@ -58,7 +58,7 @@ def test_empty_loop_has_one_concrete_source_action():
     workflow = build()
     assert workflow["next_action"] == {
         "code": "ingest_source", "target": "sources-panel",
-        "text": "Ingest one governed source item, then let BrandOS deduplicate and score it.",
+        "text": "Ingest one governed source item, then let BrandMan deduplicate and score it.",
     }
     assert workflow["progress_percent"] == 0
     assert [stage["status"] for stage in workflow["stages"]].count("current") == 1

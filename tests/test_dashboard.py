@@ -156,7 +156,7 @@ def test_connection_wizard_is_least_privilege_one_way_and_never_test_writes():
     assert "No API token or OAuth scopes" in source
     assert "execution-agent heartbeat and provider receipt" in source
     assert "Credential encryption is ready" in source
-    assert "BrandOS never bundles or guesses vendor prices" in source
+    assert "BrandMan never bundles or guesses vendor prices" in source
     assert "Add a price from my provider agreement" in source
     assert 'id="rate-price"' in source
     assert 'operation:$("rate-operation").value' in source

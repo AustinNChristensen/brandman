@@ -38,6 +38,11 @@ from the results. The brand context itself never lives inside a channel.
 
 Requirements: Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
+> **Legacy aliases.** The product is BrandMan. For compatibility with existing
+> installs, the `brand-os-*` commands, `BRAND_OS_*` environment variables and the
+> `brandos_session` cookie name still work; the `brandman-*` commands are the
+> primary names.
+
 ```bash
 git clone https://github.com/AustinNChristensen/brandman.git
 cd brandman && uv sync

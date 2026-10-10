@@ -1,4 +1,4 @@
-"""Offline operator utilities for a standalone Brand OS installation."""
+"""Offline operator utilities for a standalone BrandMan installation."""
 
 from __future__ import annotations
 
@@ -143,7 +143,7 @@ def operability_audit(
         }
     else:
         result["provider_usage"] = {
-            "status": "schema_missing", "action": "Run brand-os-ops migrate.",
+            "status": "schema_missing", "action": "Run brandman-ops migrate.",
         }
     return result
 
@@ -300,7 +300,7 @@ def _connect_readonly(path: Path) -> sqlite3.Connection:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brand-os-ops")
+    parser = argparse.ArgumentParser(prog="brandman-ops")
     parser.add_argument("--database", required=True)
     sub = parser.add_subparsers(dest="command", required=True)
     migrate = sub.add_parser("migrate")
@@ -425,7 +425,7 @@ def main(argv: list[str] | None = None) -> None:
             )
         else: raise ValueError("unsupported command")
     except (OSError, sqlite3.Error, ValueError) as error:
-        raise SystemExit(f"brand-os-ops: {error}") from None
+        raise SystemExit(f"brandman-ops: {error}") from None
     print(json.dumps(result, sort_keys=True))
 
 
