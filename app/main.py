@@ -343,13 +343,22 @@ def _safe_login_destination(value: str | None) -> str:
     return candidate
 
 
+_ACCESS_PANEL = (
+    '<aside id="request-access"><h2>No password? BrandMan is in private preview.</h2>'
+    '<p>This console is invite-only and runs on the operator\'s own data, so there is no public demo. '
+    'To try BrandMan, <a href="https://github.com/AustinNChristensen/brandman/issues/new?title=Access+request">request access</a> '
+    'or <a href="https://github.com/AustinNChristensen/brandman#two-ways-to-run-it">run your own copy</a> with your own data.</p>'
+    '<p>Never share the operator password; access requests do not need it.</p></aside>'
+)
+
+
 def _login_page(*, destination: str | None = "/app", error: str | None = None) -> str:
     message = f'<p class="error" role="alert">{escape(error)}</p>' if error else ""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sign in · BrandMan</title><style>
-:root{{color-scheme:dark}}body{{margin:0;min-height:100vh;display:grid;place-items:center;background:#101314;color:#f4f1e8;font:16px system-ui,sans-serif}}main{{width:min(420px,calc(100% - 40px));background:#1b2021;border:1px solid #394243;border-radius:18px;padding:32px;box-shadow:0 24px 80px #0008}}.eyebrow{{color:#b9a36a;font-size:12px;font-weight:700;letter-spacing:.14em}}h1{{font-size:30px;margin:10px 0}}p{{color:#bdc5c3;line-height:1.5}}label{{display:block;margin:24px 0 8px;font-weight:650}}input{{box-sizing:border-box;width:100%;border:1px solid #566160;border-radius:10px;padding:13px;background:#111515;color:#fff;font:inherit}}button{{width:100%;margin-top:18px;border:0;border-radius:10px;padding:13px;background:#d7bc72;color:#17170f;font:inherit;font-weight:750;cursor:pointer}}.error{{color:#ffb8ae;background:#3a2020;border-radius:8px;padding:10px}}small{{display:block;margin-top:18px;color:#84908e}}
-</style></head><body><main><div class="eyebrow">BRANDMAN · PRIVATE PREVIEW</div><h1>Sign in</h1><p>BrandMan is in private preview. Enter the preview password you were given to open the operator console. If you were invited but have no password, ask the person who invited you; it is shared with invited users directly.</p>{message}<form method="post" action="/login"><input type="hidden" name="next" value="{escape(_safe_login_destination(destination), quote=True)}"><label for="password">Preview password</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Open BrandMan</button></form><small>Credentials stay in the request body and are never placed in the URL. This session expires automatically.</small></main></body></html>"""
+:root{{color-scheme:dark}}body{{margin:0;min-height:100vh;display:grid;place-items:center;background:#101314;color:#f4f1e8;font:16px system-ui,sans-serif}}main{{width:min(420px,calc(100% - 40px));background:#1b2021;border:1px solid #394243;border-radius:18px;padding:32px;box-shadow:0 24px 80px #0008}}.eyebrow{{color:#b9a36a;font-size:12px;font-weight:700;letter-spacing:.14em}}h1{{font-size:30px;margin:10px 0}}p{{color:#bdc5c3;line-height:1.5}}label{{display:block;margin:24px 0 8px;font-weight:650}}input{{box-sizing:border-box;width:100%;border:1px solid #566160;border-radius:10px;padding:13px;background:#111515;color:#fff;font:inherit}}button{{width:100%;margin-top:18px;border:0;border-radius:10px;padding:13px;background:#d7bc72;color:#17170f;font:inherit;font-weight:750;cursor:pointer}}.error{{color:#ffb8ae;background:#3a2020;border-radius:8px;padding:10px}}small{{display:block;margin-top:18px;color:#84908e}}aside{{margin-top:24px;padding-top:20px;border-top:1px solid #394243}}aside h2{{font-size:16px;margin:0 0 6px}}aside p{{margin:0 0 10px;font-size:14px}}aside a{{color:#d7bc72}}
+</style></head><body><main><div class="eyebrow">BRANDMAN · PRIVATE PREVIEW</div><h1>Sign in</h1><p>BrandMan is in private preview. Enter the preview password you were given to open the operator console. If you were invited but have no password, ask the person who invited you; it is shared with invited users directly.</p>{message}<form method="post" action="/login"><input type="hidden" name="next" value="{escape(_safe_login_destination(destination), quote=True)}"><label for="password">Preview password</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Open BrandMan</button></form><small>Credentials stay in the request body and are never placed in the URL. This session expires automatically.</small>{_ACCESS_PANEL}</main></body></html>"""
 
 
 @app.get("/login", response_class=HTMLResponse)
