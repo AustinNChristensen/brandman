@@ -38,7 +38,7 @@ On first start the app seeds a sample brand (`demo-brand`) and a second one (`de
 
 ## Quickstart (self-hosting)
 
-Requirements: Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+Requirements for a source checkout: Python 3.11+, [uv](https://docs.astral.sh/uv/), and Node.js 22.12+ with npm.
 
 > **Legacy aliases.** The product is BrandMan. For compatibility with existing
 > installs, the `brand-os-*` commands, `BRAND_OS_*` environment variables and the
@@ -48,7 +48,8 @@ Requirements: Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 ```bash
 git clone https://github.com/AustinNChristensen/brandman.git
 cd brandman
-uv sync
+uv sync --locked
+uv run python scripts/build_dashboard.py
 
 # Copy .env.example for the full list of settings. A minimal local run:
 export BRAND_OS_DB="$PWD/brand_os.db"
@@ -60,7 +61,24 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 Open http://127.0.0.1:8000. The home page is public; the dashboard, API and
 login are behind the preview password. Run the test suite with `uv run pytest`.
 
+The source HTML (`web/index.html`) and React code are tracked; generated files in
+`app/static/app/` are ignored. After changing dashboard source, rerun
+`uv run python scripts/build_dashboard.py` before serving it or running Python
+HTTP tests. `npm run dev` in `web/` remains available for frontend development.
+
+For a release or deployment, run `uv build` with Node.js available. The wheel
+build hook installs the locked frontend dependencies and builds the dashboard,
+then includes all generated assets in the wheel. Install that wheel in the
+runtime environment; Node.js is only needed by the build machine. Source archives
+include the frontend sources and build hook, and rebuild the assets when converted
+to a wheel. Editable installs do not run frontend builds automatically.
+
 Production notes:
+
+- A host serving directly from a checkout must run
+  `uv run python scripts/build_dashboard.py` after checkout/dependency installation
+  and before starting or restarting the API. A host installing the built wheel
+  already has the assets. CI verifies both paths.
 
 - Configure every value through your host's secret manager; `.env.example` is
   the non-secret contract. Never commit credentials or a database file.
