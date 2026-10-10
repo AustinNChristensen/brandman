@@ -142,7 +142,7 @@ function DispatchReview({ item, brand, onDone }: { item: DispatchItem; brand: Br
             <button className="btn ok" disabled={!scope || busy} onClick={() => setModal('approve')}><Icon name="check" size={15} />Approve revision {item.revision} <span className="kbd" style={{ color: '#fff', borderColor: 'rgba(255,255,255,.4)', background: 'transparent' }}>A</span></button>
             <button className="btn" disabled={busy} onClick={() => setModal('reject')}>Reject revision <span className="kbd">R</span></button>
           </div>
-          <div className="meta">Edits happen through the API or MCP and create a new revision, which invalidates any approval.</div>
+          <div className="meta">Editing creates a new revision, which invalidates any approval. <Link to={`/content?brand=${encodeURIComponent(brand.slug)}&tab=drafts`}>Edit this draft in Content</Link>.</div>
         </div>
       </Card>
       <div className="stack" style={{ gap: 12 }}>
