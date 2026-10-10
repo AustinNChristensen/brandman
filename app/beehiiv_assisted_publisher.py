@@ -1,7 +1,7 @@
 """Deterministic browser-assisted Beehiiv private-draft contract.
 
 This module deliberately contains no generic click or keyboard operations.  A
-browser integration implements the small driver protocol below, while BrandOS
+browser integration implements the small driver protocol below, while BrandMan
 owns reconciliation, exact field material, read-back verification, and receipt
 fingerprints.  Scheduling and sending are not part of the protocol.
 """

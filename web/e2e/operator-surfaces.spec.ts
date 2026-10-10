@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('deep links and reloads the brand-scoped integration surface', async ({ page }) => {
   await page.goto('./integrations?brand=demo-brand')
   await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible()
-  await expect(page.getByText('Choose how Brand OS connects')).toBeVisible()
+  await expect(page.getByText('Choose how BrandMan connects')).toBeVisible()
   await expect(page.getByText('secrets are write-only')).toBeVisible()
   await page.reload()
   await expect(page.getByText('Live readiness')).toBeVisible()
@@ -410,4 +410,29 @@ test('keeps the Content page inside the 390px viewport', async ({ page }) => {
   await page.goto('./content?brand=demo-brand')
   await expect(page.getByRole('button', { name: /new newsletter/i })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBeTruthy()
+})
+
+test('reflows Overview navigation and cards without clipping at 390px', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('./?brand=')
+  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+  const nav = page.getByRole('navigation', { name: 'Primary navigation' })
+  await expect(nav.getByRole('link', { name: 'Integrations' })).toBeVisible()
+  const metrics = await page.evaluate(() => {
+    const nav = document.querySelector('.mobile-nav') as HTMLElement
+    const links = [...nav.querySelectorAll('a')] as HTMLElement[]
+    const kpis = [...document.querySelectorAll('.overview-kpis .kpi')] as HTMLElement[]
+    return {
+      navScrolls: nav.scrollWidth > nav.clientWidth + 1,
+      pageScrolls: document.documentElement.scrollWidth > window.innerWidth + 1,
+      clippedLabels: links.filter((a) => a.scrollWidth > a.clientWidth + 1 || a.getBoundingClientRect().right > window.innerWidth).length,
+      kpiWidths: kpis.map((k) => Math.round(k.getBoundingClientRect().width)),
+      kpiOverflow: kpis.filter((k) => k.scrollWidth > k.clientWidth + 1).length,
+    }
+  })
+  expect(metrics.navScrolls).toBe(false)
+  expect(metrics.pageScrolls).toBe(false)
+  expect(metrics.clippedLabels).toBe(0)
+  expect(metrics.kpiOverflow).toBe(0)
+  expect(Math.min(...metrics.kpiWidths)).toBeGreaterThan(300)
 })

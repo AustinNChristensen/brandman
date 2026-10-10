@@ -1,4 +1,4 @@
-"""Non-secret, read-only launch preflight for a Brand OS workspace."""
+"""Non-secret, read-only launch preflight for a BrandMan workspace."""
 
 from __future__ import annotations
 
