@@ -12,7 +12,9 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+export const DEFAULT_GET_TIMEOUT_MS = 5000
+
+async function request<T>(method: string, path: string, body?: unknown, timeoutMs = DEFAULT_GET_TIMEOUT_MS): Promise<T> {
   const init: RequestInit = { method, headers: { Accept: 'application/json' }, credentials: 'same-origin' }
   if (body !== undefined) {
     init.headers = { ...init.headers, 'Content-Type': 'application/json' }
@@ -22,7 +24,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   // never invite an automatic retry.
   const controller = method === 'GET' ? new AbortController() : null
   if (controller) init.signal = controller.signal
-  const timer = controller ? setTimeout(() => controller.abort(), 5000) : null
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null
   let response: Response
   let text: string
   try {
@@ -48,7 +50,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>('GET', path),
+  /** `timeoutMs` bounds this read only; mutations are never timed. */
+  get: <T>(path: string, options?: { timeoutMs?: number }) => request<T>('GET', path, undefined, options?.timeoutMs),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
