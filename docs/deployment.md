@@ -36,5 +36,24 @@ the `brandman` package on PyPI.
 Build source packages with `uv build` on a machine with Node.js 22.12+ and npm.
 The wheel includes the dashboard; its runtime requires only Python. Docker builds
 the same dashboard and package in a build stage and leaves Node out of the
-runtime image. For a direct source deployment, run
-`uv run python scripts/build_dashboard.py` before restarting the service.
+runtime image. ## Source deployments and the dashboard build
+
+The built dashboard (`brandman/static/app`) is generated, not tracked in git.
+The app checks for it at **startup**:
+
+- Source checkout with Node.js 22.12+ and npm available: the app builds the
+  dashboard itself on first start (it can take a minute), so a fresh clone needs
+  no manual step. Prefer running `uv run python scripts/build_dashboard.py` in the
+  deploy/build step so the build is not part of serving traffic.
+- Dashboard missing and no way to build it (no Node, no `web/`, a failed build, or
+  `BRANDMAN_AUTO_BUILD_DASHBOARD=false`): the process exits non-zero with
+  "BrandMan dashboard build is missing". A deploy health check fails; users never
+  see a 503 at `/app`.
+- API-only deployments can set `BRANDMAN_REQUIRE_DASHBOARD=false`; startup then
+  logs a warning and `/app` returns 503.
+
+The wheel and Docker image already contain the dashboard and never need Node at
+runtime. A platform that deploys from source (for example FastAPI Cloud) must run
+`python scripts/build_dashboard.py` as its build command, or deploy from the
+Docker image. CI's `clean-checkout` job proves both the failing and the
+self-building path from a fresh checkout.

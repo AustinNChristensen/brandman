@@ -58,6 +58,7 @@ def test_app_routes_require_the_preview_password_and_stay_inside_the_build():
 def test_missing_build_has_an_actionable_error_without_bypassing_auth(monkeypatch, tmp_path):
     from brandman import main
 
+    monkeypatch.setenv("BRANDMAN_REQUIRE_DASHBOARD", "false")
     monkeypatch.setattr(main, "DASHBOARD_V2_DIR", tmp_path)
     with TestClient(app) as anonymous:
         assert anonymous.get("/app").status_code == 401
