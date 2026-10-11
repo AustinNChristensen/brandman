@@ -79,7 +79,7 @@ def test_operator_navigation_gets_clear_login_page_and_cookie_session(monkeypatc
     assert redirect.status_code == 303 and redirect.headers["location"] == "/login?next=%2Fdocs"
     assert login.status_code == 200
     assert "BrandMan is in private preview" in login.text
-    assert "ask the person who invited you" in login.text
+    assert "invite" not in login.text.lower()
     assert "local" not in login.text.lower()
     assert PASSWORD not in login.text
     assert wrong.status_code == 401 and "not accepted" in wrong.text
@@ -304,5 +304,30 @@ def test_login_page_offers_access_request_without_leaking_password(monkeypatch):
 
     for page in (login, failed):
         assert 'id="request-access"' in page.text
-        assert "request access" in page.text and "run your own copy" in page.text
+        assert "run your own copy" in page.text
         assert PASSWORD not in page.text
+
+
+def test_access_panel_shows_mailto_only_when_contact_is_configured(monkeypatch):
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_ACCESS_REQUEST_EMAIL", "access@example.com")
+    with TestClient(app) as client:
+        configured = client.get("/login").text
+    monkeypatch.delenv("BRANDMAN_ACCESS_REQUEST_EMAIL")
+    with TestClient(app) as client:
+        unset = client.get("/login").text
+
+    assert 'href="mailto:access@example.com"' in configured
+    assert "mailto:" not in unset
+    assert "Access is by invitation." in unset
+    for page in (configured, unset):
+        assert "github.com/AustinNChristensen/brandman/issues" not in page
+        assert "invited" not in page.lower() and "invite" not in page.lower()
+
+
+def test_access_contact_that_is_not_an_email_is_ignored(monkeypatch):
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_ACCESS_REQUEST_EMAIL", '"><script>x</script>')
+    with TestClient(app) as client:
+        page = client.get("/login").text
+    assert "mailto:" not in page and "<script>x" not in page
