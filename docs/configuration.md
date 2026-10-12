@@ -11,6 +11,7 @@ deprecation warning; a `BRANDMAN_*` value always wins.
 | `BRANDMAN_DATABASE_PROFILE` | (required) | `operating`, `development`, `test` or `proof`. Checked against the database before any write. |
 | `BRANDMAN_PREVIEW_PASSWORD` | (required) | Sign-in password for the dashboard and API. At least 16 characters for non-loopback access. |
 | `BRANDMAN_BASIC_USER` | `operator` | HTTP Basic user name for API clients. |
+| `BRANDMAN_ACCESS_REQUEST_EMAIL` | none | Contact address for the login page's access-request panel, rendered as a `mailto:` link. When unset or not a valid email, the panel shows "Access is by invitation" with no link. |
 | `BRANDMAN_OPERATOR` | `operator` | Principal recorded on approvals and audits; also the only principal allowed owner-only actions. |
 | `BRANDMAN_ALLOWED_HOSTS` | loopback only | Comma-separated public host names. |
 | `BRANDMAN_REQUIRE_HTTPS` | `false` locally | Reject plain HTTP. Remote hosts always require HTTPS. |
