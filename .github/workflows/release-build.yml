@@ -27,6 +27,14 @@ jobs:
       - run: uv venv .package-venv
       - run: uv pip install --python .package-venv/bin/python dist/*.whl
       - run: .package-venv/bin/python scripts/check_dashboard_package.py
+      - name: Prove the exact wheel runs without Node or source
+        run: bash scripts/check_python_only_wheel.sh
+      - name: Upload runtime artifact receipts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-runtime-receipts
+          path: release-receipts.txt
+          if-no-files-found: error
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-dist

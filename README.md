@@ -69,6 +69,13 @@ runtime environment; Node.js is only needed by the build machine. Source archive
 include the frontend sources and build hook, and rebuild the assets when converted
 to a wheel. Editable installs do not run frontend builds automatically.
 
+Builders without Node/npm must install the verified prebuilt wheel, with
+`--only-binary=:all:` and an exact version/hash; a git dependency or source
+archive still invokes the frontend build hook. A wheel is a Python package,
+not a complete hosting upload configuration. See
+[release wheel preparation](docs/release-wheel.md) for the runtime proof,
+artifact receipts and operator gates before selecting a published version.
+
 Production notes:
 
 - A host serving directly from a checkout must run

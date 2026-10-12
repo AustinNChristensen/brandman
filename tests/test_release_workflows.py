@@ -76,3 +76,16 @@ def test_ci_and_release_share_a_build_only_dry_run():
         assert 'pypi-publish@' not in step.get('uses', '')
         assert 'gh release create' not in step.get('run', '')
         assert 'secrets.' not in str(step)
+
+
+def test_package_and_shared_release_require_python_only_wheel_proof():
+    for name, job in [('ci.yml', 'package'), ('release-build.yml', 'build')]:
+        steps = workflow(name)['jobs'][job]['steps']
+        runs = [step.get('run', '') for step in steps]
+        assert runs.index('uv build') < runs.index('bash scripts/check_python_only_wheel.sh')
+        receipts = next(step for step in steps if step.get('with', {}).get('path') == 'release-receipts.txt')
+        assert receipts['with']['if-no-files-found'] == 'error'
+    shared = workflow('release-build.yml')['jobs']['build']['steps']
+    proof = next(i for i, step in enumerate(shared) if step.get('run') == 'bash scripts/check_python_only_wheel.sh')
+    upload = next(i for i, step in enumerate(shared) if step.get('with', {}).get('name') == 'release-dist')
+    assert proof < upload
