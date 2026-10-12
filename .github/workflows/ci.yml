@@ -107,3 +107,6 @@ jobs:
       - run: uv venv .package-venv
       - run: uv pip install --python .package-venv/bin/python dist/*.whl
       - run: .package-venv/bin/python scripts/check_dashboard_package.py
+
+  release-dry-run:
+    uses: ./.github/workflows/release-build.yml
