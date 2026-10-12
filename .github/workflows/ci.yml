@@ -59,6 +59,39 @@ jobs:
           curl -fsS -u operator:ci-only-password-1234 http://localhost:8000/api/brands
           docker logs brandman
 
+  clean-checkout:
+    # No manual build step: the app builds the dashboard itself on startup from a
+    # fresh checkout, and refuses to start when it cannot.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: uv sync --locked --no-dev
+      - name: Missing dashboard fails at startup, not on a request
+        run: |
+          set +e
+          BRANDMAN_AUTO_BUILD_DASHBOARD=false BRANDMAN_DATABASE_PROFILE=development BRANDMAN_DB=/tmp/startup-fail.db \
+            .venv/bin/python -m uvicorn brandman.main:app --port 8001 > startup.log 2>&1
+          status=$?
+          cat startup.log
+          test "$status" -ne 0
+          grep -q "dashboard build is missing" startup.log
+      - name: Fresh checkout builds the dashboard on startup and serves /app
+        run: |
+          test ! -e brandman/static/app/index.html
+          BRANDMAN_DB=/tmp/clean.db BRANDMAN_DATABASE_PROFILE=development \
+          BRANDMAN_PREVIEW_PASSWORD=ci-only-password-1234 \
+          BRANDMAN_TRUSTED_LOCAL_NETWORKS=127.0.0.0/8 \
+            .venv/bin/python -m uvicorn brandman.main:app --port 8000 > server.log 2>&1 &
+          for i in $(seq 1 180); do curl -fsS http://127.0.0.1:8000/ >/dev/null 2>&1 && break; sleep 1; done
+          curl -fsS -u operator:ci-only-password-1234 http://127.0.0.1:8000/app | grep -q '<div id="root"'
+          cat server.log
+
   package:
     runs-on: ubuntu-latest
     steps:

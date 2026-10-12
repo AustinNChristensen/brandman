@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
 from . import extensions, principals, seed_packs, store
+from .dashboard_build import ensure_dashboard
 from .principals import operator_principal
 from .attribution_store import AttributionStore, AttributionStoreError
 from .approval_snapshots import ApprovalSnapshotStore
@@ -248,6 +249,7 @@ async def lifespan(_: FastAPI):
     Tests intentionally replace ``store.DATA_PATH`` before opening a TestClient;
     keeping initialization at lifespan entry preserves that isolation contract.
     """
+    ensure_dashboard(DASHBOARD_V2_DIR)
     initialize_application_services()
     store.ensure_seeded_growth_missions()
     await hosted_mcp_application.start()

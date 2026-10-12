@@ -14,6 +14,9 @@ from urllib.parse import unquote
 
 import pytest
 
+# The suite runs without a built dashboard; tests of the startup guard opt back in.
+os.environ.setdefault("BRANDMAN_REQUIRE_DASHBOARD", "false")
+
 _COLLECTION_SCRATCH = Path(tempfile.mkdtemp(prefix="brand-os-pytest-")) / "collection.db"
 _PROJECT_DATABASE = Path(__file__).parents[1] / "brand_os.db"
 _LEGACY_TEST_DATABASE = Path(__file__).parent / "test_brand_os.db"
