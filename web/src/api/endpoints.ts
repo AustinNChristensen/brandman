@@ -1,4 +1,7 @@
 import { api, enc } from './client'
+
+// Reads whose payloads grow with history get a longer budget than the default.
+const SLOW_READ_TIMEOUT_MS = 15000
 import type {
   Brand, BrandContext, BrandSettings, CalendarItem, DispatchAudit, DispatchItem, DispatchValidation, FactCheck, Source,
   Learning, LearningAudit, ContentExperiment, EngagementOpportunity, EngagementHistory, EngagementActionResult, LifecycleEvent, NewsletterIssue, NewsletterRevision, OperatorWorkflow, OrchestrationStatus,
@@ -24,7 +27,7 @@ export const brands = {
   context: (slug: string) => api.get<BrandContext>(`/api/brands/${enc(slug)}/context`),
   calendar: (slug: string) => api.get<CalendarItem[]>(`/api/brands/${enc(slug)}/calendar`),
   workflow: (slug: string) => api.get<OperatorWorkflow>(`/api/brands/${enc(slug)}/operator-workflow`),
-  usage: (slug: string) => api.get<ProviderUsage>(`/api/brands/${enc(slug)}/provider-usage`),
+  usage: (slug: string) => api.get<ProviderUsage>(`/api/brands/${enc(slug)}/provider-usage`, { timeoutMs: SLOW_READ_TIMEOUT_MS }),
   scorecard: (slug: string) => api.get<Scorecard>(`/api/brands/${enc(slug)}/mission/scorecard`),
   morningPlan: (slug: string) => api.get<MorningPlan>(`/api/brands/${enc(slug)}/mission/morning-plan`),
   recordKpi: (slug: string, body: { metric: 'x_followers' | 'active_beehiiv_subscribers'; value: number; observed_at: string; source: 'manual'; verification_note: string }) => api.post(`/api/brands/${enc(slug)}/mission/kpis`, body),
@@ -275,7 +278,7 @@ export const sourceInputs = {
 }
 
 export const performance = {
-  list: (slug: string) => api.get<PerformanceRecord[]>(`/api/brands/${enc(slug)}/performance`),
+  list: (slug: string) => api.get<PerformanceRecord[]>(`/api/brands/${enc(slug)}/performance`, { timeoutMs: SLOW_READ_TIMEOUT_MS }),
   record: (slug: string, body: Omit<PerformanceRecord, 'id' | 'brand_id'>) => api.post<PerformanceRecord>(`/api/brands/${enc(slug)}/performance`, body),
   trackedLinks: (slug: string) => api.get<TrackedLink[]>(`/api/brands/${enc(slug)}/tracked-links`),
   planning: (slug: string, channel: string, topic?: string) => api.get<PerformancePlan>(`/api/brands/${enc(slug)}/performance-planning?stage=portfolio&channel=${enc(channel)}${topic ? `&topic=${enc(topic)}` : ''}`),
