@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { settings } from '../api/endpoints'
 import type { BrandSettings } from '../api/types'
 import { describe, useLoad } from '../api/useLoad'
@@ -14,11 +15,21 @@ export default function Settings() {
   const { selected, active, select, reload } = useBrands(), brand = selected ? active[0] : undefined
   const load = useLoad(() => brand ? settings.get(brand.slug) : Promise.resolve(null), [brand?.slug])
   const { notify } = useToast()
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null)
   const [modal, setModal] = useState<'rate' | null>(null), [busy, setBusy] = useState(false), [limit, setLimit] = useState('25')
   const mutate = async (fn: () => Promise<unknown>, message: string) => { setBusy(true); try { await fn(); notify(message); setModal(null); load.reload() } catch (error) { notify(describe(error), 'bad') } finally { setBusy(false) } }
   if (!selected) return <Shell title="Settings"><Card><Empty>Select one brand to change its governed settings, or create a new one.</Empty></Card>
-    <NewBrandCard onCreated={(slug) => { notify('Brand created.'); reload(); select(slug) }} /></Shell>
+    <NewBrandCard onCreated={(slug) => { setCreatedSlug(slug); notify('Brand created.'); reload(); select(slug) }} /></Shell>
   return <Shell title="Settings" crumb={brand?.name} right={<Chip kind="agent" icon="lock">brand-scoped · audited · no provider action</Chip>}>
+    {selected === createdSlug && <Card>
+      <CardHeader icon="plug" title="Next: set up your channels" />
+      <div className="stack card-b">
+        <p>Mission and voice are saved. Choose your channels and review their connection requirements in Integrations.</p>
+        <div className="row" style={{ flexWrap: 'wrap' }}>
+          <Link className="btn primary" to={{ pathname: '/integrations', search: `?${new URLSearchParams({ brand: selected })}` }}>Set up channels</Link>
+        </div>
+      </div>
+    </Card>}
     {load.error && <ErrorState message={load.error} retry={load.reload} />}{load.loading && !load.data && <Loading label="Loading brand settings…" />}
     {brand && load.data && <><BrandEditor key={load.data.brand.updated_at} data={load.data} busy={busy} save={(body) => mutate(() => settings.update(brand.slug, body), 'Brand settings saved and audited.')} />
       <div className="grid settings-grid"><Card><CardHeader icon="chart" title="Provider rate cards" sub="customer-supplied estimates, never bundled vendor prices" right={<button className="btn sm" onClick={() => setModal('rate')}><Icon name="plus" size={13} />Add rate</button>} />{!load.data.rate_cards.length ? <Empty>No customer rate cards configured.</Empty> : load.data.rate_cards.map((rate) => <div className="card-b source-row" key={rate.id}><div className="row source-heading"><b>{titleCase(rate.billable_category)}</b><Chip kind="neutral">{rate.provider}</Chip></div><div>{rate.unit_price} {rate.currency} / {rate.unit_name}</div><div className="meta">{rate.version} · effective {shortDateTime(rate.effective_at)} · configured by {rate.configured_by}</div></div>)}</Card>
