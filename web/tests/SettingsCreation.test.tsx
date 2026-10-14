@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -41,17 +41,25 @@ beforeEach(() => {
 afterEach(cleanup)
 
 async function createBrand() {
-  await waitFor(() => expect(mocks.list).toHaveBeenCalled())
+  // Wait for the initial list to render, rather than just for the loader to start.
+  await screen.findAllByRole('option', { name: demo.name }, { timeout: 5000 })
   fireEvent.change(screen.getByLabelText('Brand name'), { target: { value: created.name } })
   fireEvent.change(screen.getByLabelText('Mission'), { target: { value: governance.mission } })
   fireEvent.click(screen.getByRole('button', { name: 'Create brand' }))
+}
+
+async function channelSetupLink() {
+  // Selection is valid only after the refreshed list contains the created slug.
+  // Full-suite DOM work can exceed Testing Library's default one-second wait.
+  await waitFor(() => expect(screen.getAllByLabelText('Brand')[0]).toHaveValue(created.slug), { timeout: 5000 })
+  return screen.getByRole('link', { name: 'Set up channels' })
 }
 
 describe('brand creation handoff', () => {
   it('refreshes and selects the new brand, then links channel setup to that brand', async () => {
     openSettings()
     await createBrand()
-    const link = await screen.findByRole('link', { name: 'Set up channels' })
+    const link = await channelSetupLink()
     expect(link).toHaveAttribute('href', '/integrations?brand=acme-widgets')
     expect(screen.getByText('Mission and voice are saved. Choose your channels and review their connection requirements in Integrations.')).toBeInTheDocument()
     expect(mocks.list).toHaveBeenCalledTimes(2)
@@ -63,10 +71,27 @@ describe('brand creation handoff', () => {
   it('does not show another brand the new-brand handoff', async () => {
     openSettings()
     await createBrand()
-    await screen.findByRole('link', { name: 'Set up channels' })
+    await channelSetupLink()
     fireEvent.change(screen.getAllByLabelText('Brand')[0], { target: { value: demo.slug } })
     expect(screen.queryByRole('link', { name: 'Set up channels' })).not.toBeInTheDocument()
     expect(await screen.findByDisplayValue(governance.mission)).toBeInTheDocument()
+  })
+
+  it('retains the requested selection while the refreshed list is pending', async () => {
+    let finishReload!: (brands: typeof demo[]) => void
+    const refreshedList = new Promise<typeof demo[]>((resolve) => { finishReload = resolve })
+    mocks.create.mockImplementation(async () => {
+      mocks.list.mockReturnValue(refreshedList)
+      return created
+    })
+    openSettings()
+    await createBrand()
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2), { timeout: 5000 })
+    expect(screen.queryByRole('link', { name: 'Set up channels' })).not.toBeInTheDocument()
+    expect(screen.getAllByLabelText('Brand')[0]).toHaveValue('')
+    await act(async () => { finishReload([demo, created]); await refreshedList })
+    expect(await channelSetupLink()).toHaveAttribute('href', '/integrations?brand=acme-widgets')
+    expect(mocks.create).toHaveBeenCalledTimes(1)
   })
 
   it('keeps failed creation in the form without a success handoff', async () => {
