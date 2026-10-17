@@ -35,8 +35,35 @@ Open `/app/`, select **[DEMO] Fictional Cedar Studio**, then inspect Content,
 Sources, campaign detail, and the calendar. Drafts have no scheduled dates;
 they appear as unscheduled content, not invented historical publications.
 The fictional launch and behind-the-scenes series demonstrate source-to-draft
-review work; newsletter, approval, performance and published-activity stages
-are deliberately unpopulated in this slice.
+review work. Approval, performance and published-activity stages remain empty;
+invented customer metrics or publication history would misrepresent this demo.
+
+## Optional newsletter and review workflow
+
+After applying the base pack, initialize the normal local service schemas
+(application startup does this too), then explicitly opt into the additive pack:
+
+```sh
+BRANDMAN_DB="$PWD/work/fictional-demo.db" uv run python -c \
+  'from brandman import store; from brandman.editorial import EditorialStore; from brandman.feedback import FeedbackStore; EditorialStore(store.DATA_PATH); FeedbackStore(store.DATA_PATH)'
+uv run python -m brandman.demo_workflow --database "$PWD/work/fictional-demo.db"
+uv run python -m brandman.demo_workflow --database "$PWD/work/fictional-demo.db" --apply
+```
+
+The workflow loader itself performs no schema migrations. It requires the base
+pack receipt and its original clearly fictional brand. It adds one newsletter
+at **draft**, two labeled illustrative revisions, one `demo-fixture` lifecycle
+event and one open product-feedback example with history. Content / Newsletters
+shows the draft; open it to inspect Material, Versions and History. Product
+feedback shows the sample review task. Fact checks and approvals remain absent;
+no external draft, delivery job, provider account or performance record exists.
+The manual source is fictional, has no external URL and is not verified evidence.
+
+This separately versioned pack adds to an existing v1 demo without changing its
+posts. All new records and its receipt share a single serialized transaction.
+Failed imports roll back; repeats preserve edits and deletions. If a user has
+repurposed/deleted the original demo brand before this add-on, it refuses to
+attach the samples elsewhere. Use a fresh scratch DB for a reset.
 
 ## Operator handoff still pending
 

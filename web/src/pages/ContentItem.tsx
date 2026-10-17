@@ -62,7 +62,7 @@ export default function ContentItem() {
       {load.loading && !load.data && <Loading />}
       {issue && load.data && (
         <>
-          <div className="row" style={{ gap: 14 }}>
+          <div className="row newsletter-heading" style={{ gap: 14 }}>
             <BrandTag brand={brand} />
             <span className="meta">Newsletter · Beehiiv · created by {issue.content?.created_by}</span>
             <div className="stepper" style={{ marginLeft: 'auto' }}>
@@ -74,9 +74,9 @@ export default function ContentItem() {
               {(issue.lifecycle === 'abandoned' || issue.lifecycle === 'archived') && <StatusChip status={issue.lifecycle} />}
             </div>
           </div>
-          <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 16, alignItems: 'start' }}>
+          <div className="grid newsletter-layout">
             <Card>
-              <div className="card-h" style={{ gap: 0 }}>
+              <div className="card-h newsletter-tabs" style={{ gap: 0 }}>
                 <span className="tabs">
                   <button className={`tab ${tab === 'material' ? 'on' : ''}`} onClick={() => { setTab('material'); setRevisionView(null) }}>Material</button>
                   <button className={`tab ${tab === 'versions' ? 'on' : ''}`} onClick={() => setTab('versions')}>Versions ({load.data.revisions.length})</button>
