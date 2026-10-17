@@ -1,0 +1,13 @@
+[project]
+name = "brandman-cloud-wrapper"
+version = "0.1.0"
+requires-python = "==3.11.*"
+dependencies = ["brandman[anthropic]==0.1.0"]
+
+[tool.fastapi]
+entrypoint = "main:app"
+
+[tool.uv]
+package = false
+# This source wrapper must never build the core sdist (or any dependency).
+no-build = true

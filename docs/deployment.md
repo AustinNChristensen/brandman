@@ -53,7 +53,7 @@ The app checks for it at **startup**:
   logs a warning and `/app` returns 503.
 
 The wheel and Docker image already contain the dashboard and never need Node at
-runtime. A platform that deploys from source (for example FastAPI Cloud) must run
-`python scripts/build_dashboard.py` as its build command, or deploy from the
-Docker image. CI's `clean-checkout` job proves both the failing and the
-self-building path from a fresh checkout.
+runtime. For FastAPI Cloud, use the [standalone locked wheel wrapper](fastapi-cloud-wrapper.md);
+do not assume a configurable Node build command or bare-wheel app upload. Other
+source platforms with Node can run `python scripts/build_dashboard.py` before
+startup. CI's `clean-checkout` job proves the source build/startup paths.
