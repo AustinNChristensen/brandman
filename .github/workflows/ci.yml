@@ -9,6 +9,16 @@ permissions:
   contents: read
 
 jobs:
+  cloud-wrapper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install proof interpreter
+        run: uv python install 3.11
+      - name: Prove locked published-wheel wrapper without source or Node tooling
+        run: uv run --no-project --python 3.11 python scripts/check_cloud_wrapper.py
+
   python:
     runs-on: ubuntu-latest
     steps:

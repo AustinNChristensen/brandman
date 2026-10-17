@@ -4,6 +4,7 @@ import base64
 import os
 from pathlib import Path
 import re
+import runpy
 import shutil
 import sys
 import tempfile
@@ -12,6 +13,7 @@ import tempfile
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--python-only", action="store_true")
+    parser.add_argument("--entrypoint-file", type=Path)
     args = parser.parse_args()
     if args.python_only:
         assert all(shutil.which(name) is None for name in ("node", "npm", "npx")), "Node tooling must be absent"
@@ -40,6 +42,11 @@ def main() -> None:
         import brandman
         from brandman.main import app as application
         from fastapi.testclient import TestClient
+
+        if args.entrypoint_file:
+            wrapper = runpy.run_path(str(args.entrypoint_file))
+            assert wrapper["app"] is application, "Wrapper must serve the installed application"
+            application = wrapper["app"]
 
         assert Path(brandman.__file__).resolve().is_relative_to(Path(sys.prefix).resolve()), (
             "The smoke test must import the installed wheel, not the source checkout"
