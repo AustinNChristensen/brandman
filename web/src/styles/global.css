@@ -99,6 +99,10 @@ textarea.input { resize: vertical; line-height: 1.5; }
 .ai-note { display: flex; gap: 10px; padding: 12px 14px; background: var(--accent-soft); border-radius: 10px; color: var(--accent-ink); align-items: flex-start; }
 .xpost { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: #fff; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 .grid { display: grid; gap: 12px; }
+.newsletter-layout { grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.newsletter-layout > * { min-width: 0; }
+.newsletter-tabs { flex-wrap: wrap; }
+.newsletter-tabs .tabs { flex-wrap: wrap; }
 .row { display: flex; align-items: center; gap: 10px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .state { padding: 28px 16px; text-align: center; color: var(--faint); }
@@ -239,6 +243,9 @@ textarea.input { resize: vertical; line-height: 1.5; }
   .learning-layout, .learning-two-col { grid-template-columns: 1fr; }
   .engagement-layout { grid-template-columns: 1fr; }
   .feedback-layout { grid-template-columns: minmax(0, 1fr); }
+  .newsletter-layout { grid-template-columns: minmax(0, 1fr); }
+  .newsletter-heading { flex-wrap: wrap; }
+  .newsletter-heading .stepper { margin-left: 0 !important; width: 100%; }
   .source-heading, .source-detail { align-items: stretch; flex-direction: column; }
 }
 
