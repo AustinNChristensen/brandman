@@ -29,19 +29,25 @@ from the results. The brand context itself never lives inside a channel.
 
 ## Two ways to run it
 
-- **Self-hosted (this repository):** run the whole thing yourself against a local
-  SQLite database. This repository is licensed AGPL-3.0.
-- **Managed:** a hosted offering built on this core plus separate closed
-  components (billing, multi-tenancy and similar). Not part of this repository.
+- **BrandMan (this repository):** free and open source under AGPL-3.0. Run the
+  whole thing yourself against a local SQLite database. The PyPI package is
+  `brandman`.
+- **[BrandMan Cloud](https://usebrandman.com):** the hosted, paid, multi-workspace
+  edition. It is this core plus separate closed components (billing,
+  multi-tenancy, and similar). Not part of this repository.
+
+BrandOS / brand-os is retired as a product name. Older command and setting
+names still run; see below.
 
 ## Quickstart
 
 Requirements for a source checkout: Python 3.11+, [uv](https://docs.astral.sh/uv/), and Node.js 22.12+ with npm.
 
-> **Legacy aliases.** The product is BrandMan. For compatibility with existing
-> installs, the `brand-os-*` commands, `BRAND_OS_*` environment variables and the
-> `brandos_session` cookie name still work; the `brandman-*` commands are the
-> primary names.
+> **Deprecated names.** For existing installs, the `brand-os-*` commands and
+> `BRAND_OS_*` environment variables still work and warn on use. The canonical
+> names are `brandman-*` and `BRANDMAN_*`. A `BRANDMAN_*` value wins when both
+> are set. The session cookie stays `brandos_session` so a browser that is
+> already signed in stays signed in.
 
 ```bash
 git clone https://github.com/AustinNChristensen/brandman.git
@@ -85,8 +91,9 @@ Production notes:
 
 - Configure every value through your host's secret manager; `.env.example` is
   the non-secret contract. Never commit credentials or a database file.
-- Set `BRAND_OS_ALLOWED_HOSTS` to your public hostname and keep
-  `BRAND_OS_REQUIRE_HTTPS=true` behind TLS.
+- Set `BRANDMAN_ALLOWED_HOSTS` to your public hostname and keep
+  `BRANDMAN_REQUIRE_HTTPS=true` behind TLS. `BRAND_OS_ALLOWED_HOSTS` and
+  `BRAND_OS_REQUIRE_HTTPS` still work and warn on use.
 - The database must be durable. Do not ship a local SQLite file inside a
   container image.
 - OAuth state for the hosted MCP endpoint is stored in the same database.

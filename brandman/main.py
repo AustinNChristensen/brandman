@@ -397,7 +397,9 @@ def _access_panel() -> str:
     return (
         '<aside id="request-access"><h2>No password? BrandMan is in private preview.</h2>'
         "<p>This console runs on the operator's own data, so there is no public demo. "
-        f'{request}<a href="https://github.com/AustinNChristensen/brandman#two-ways-to-run-it">run your own copy</a> with your own data.</p>'
+        f'{request}<a href="https://github.com/AustinNChristensen/brandman#two-ways-to-run-it">run your own copy</a> '
+        "(free, AGPL-3.0). BrandMan Cloud, the hosted paid option, is at "
+        '<a href="https://usebrandman.com">usebrandman.com</a>.</p>'
         "<p>Never share the operator password; access requests do not need it.</p></aside>"
     )
 
@@ -1259,6 +1261,7 @@ def _feedback_operation(operation):
 
 @app.get("/health")
 def health() -> dict[str, str]:
+    # Published 0.1.0 field. Keep the historical service id so existing clients match it.
     return {"status": "ok", "service": "brand-os"}
 
 

@@ -2,8 +2,9 @@
 
 All settings are environment variables. `brandman init` writes a `.env`;
 `brandman serve` and `brandman mcp-config` read it. In production, use your
-host's secret manager. The older `BRAND_OS_*` names are still accepted, with a
-deprecation warning; a `BRANDMAN_*` value always wins.
+host's secret manager. Canonical names use the `BRANDMAN_` prefix. The older
+`BRAND_OS_*` names (from the retired BrandOS product name) are still accepted
+and print a deprecation warning; a `BRANDMAN_*` value always wins.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |

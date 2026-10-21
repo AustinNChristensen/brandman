@@ -1,4 +1,8 @@
-"""Bounded BrandMan worker command suitable for cron or a process supervisor."""
+"""Bounded BrandMan worker command suitable for cron or a process supervisor.
+
+``brandman-worker`` is the command name. ``brand-os-worker`` is a deprecated
+alias and warns on use. Settings use ``BRANDMAN_*``; ``BRAND_OS_*`` still works.
+"""
 from __future__ import annotations
 
 import json
@@ -148,6 +152,9 @@ def run_once() -> dict:
 
 
 def main() -> None:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     print(json.dumps(run_once(), sort_keys=True))
 
 

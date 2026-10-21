@@ -1,7 +1,8 @@
 [project]
 name = "brandman"
 version = "0.1.0"
-description = "AI-native canonical brand and content control plane"
+description = "BrandMan: free, open-source (AGPL-3.0) agent-first brand brain. BrandMan Cloud is the hosted paid edition."
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi[standard]>=0.115,<1",
@@ -23,13 +24,19 @@ brand-os-bootstrap = "brandman.bootstrap_cli:main"
 brand-os-ops = "brandman.ops_cli:main"
 brand-os-supervisor = "brandman.launchd_supervisor:main"
 brand-os-api-supervisor = "brandman.api_supervisor:main"
-# brandman-* are the primary names; brand-os-* remain as aliases for existing setups.
+# brandman-* are the canonical names; brand-os-* remain as deprecated aliases.
 brandman-mcp = "brandman.mcp_server:main"
 brandman-worker = "brandman.worker_cli:main"
 brandman-bootstrap = "brandman.bootstrap_cli:main"
 brandman-ops = "brandman.ops_cli:main"
 brandman-supervisor = "brandman.launchd_supervisor:main"
 brandman-api-supervisor = "brandman.api_supervisor:main"
+
+[project.urls]
+Homepage = "https://github.com/AustinNChristensen/brandman"
+Documentation = "https://github.com/AustinNChristensen/brandman#readme"
+Source = "https://github.com/AustinNChristensen/brandman"
+"BrandMan Cloud" = "https://usebrandman.com"
 
 [dependency-groups]
 dev = ["pytest>=8", "httpx>=0.27"]

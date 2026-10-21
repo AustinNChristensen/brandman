@@ -1096,5 +1096,9 @@ load_plugins("mcp", mcp)
 
 
 def main() -> None:
+    from brandman import warn_if_legacy_command
+
+    # ``brandman-mcp`` is the command. ``brand-os-mcp`` remains a deprecated alias.
+    warn_if_legacy_command()
     _initialize_runtime()
     mcp.run(transport="stdio")

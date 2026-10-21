@@ -24,6 +24,7 @@ _PLACEHOLDER_PASSWORDS = frozenset({
     "password", "changeme", "change-me", "configured", "preview-password",
     "<stored preview password>", "<retrieve from the protected environment>",
 })
+# Legacy cookie name. Renaming it would sign existing operator browsers out.
 PREVIEW_SESSION_COOKIE = "brandos_session"
 PREVIEW_SESSION_TTL_SECONDS = 8 * 60 * 60
 

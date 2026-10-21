@@ -240,6 +240,7 @@ class UrllibTransport:
             else urlencode(form_body).encode("utf-8") if form_body is not None
             else None
         )
+        # Stable wire token. Receivers may key on this string, so it is not the product name.
         safe_headers = {"User-Agent": "BrandOS/0.1", **(headers or {})}
         if body is not None:
             safe_headers.setdefault(
