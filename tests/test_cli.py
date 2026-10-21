@@ -85,6 +85,17 @@ def test_draft_reports_setup_before_a_missing_source(tmp_path, monkeypatch):
     assert "BRANDMAN_DRAFT_PROVIDER" in message
 
 
+def test_mcp_subcommand_starts_the_stdio_server(monkeypatch):
+    started = {}
+
+    def run_mcp():
+        started["yes"] = True
+
+    monkeypatch.setattr("brandman.mcp_server.main", run_mcp)
+    assert cli.main(["mcp"]) == 0
+    assert started == {"yes": True}
+
+
 def test_mcp_config_shapes():
     desktop = json.loads(cli.mcp_config("claude-desktop", database="/data/b.db"))
     server = desktop["mcpServers"]["brandman"]
@@ -114,7 +125,8 @@ def test_mcp_config_replaces_a_uv_cache_path_with_uvx(monkeypatch, tmp_path):
     monkeypatch.setattr(cli.shutil, "which", lambda name: str(cached) if name == "brandman-mcp" else None)
     server = json.loads(cli.mcp_config("cursor", database="/data/b.db"))["mcpServers"]["brandman"]
     assert server["command"] == "uvx"
-    assert server["args"] == ["--from", "brandman", "brandman-mcp"]
+    assert server["args"] == ["brandman", "mcp"]
     rendered = cli.mcp_config("claude-code", database="/data/b.db")
-    assert "uvx --from brandman brandman-mcp" in rendered
+    assert "uvx brandman mcp" in rendered
+    assert "brandman-mcp" not in rendered
     assert "archive-v0" not in rendered

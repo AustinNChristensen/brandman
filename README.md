@@ -94,9 +94,11 @@ export OPENAI_API_KEY=…                 # or BRANDMAN_DRAFT_BASE_URL for Ollam
 brandman draft --brand my-brand --source <source-id>
 ```
 
-`brandman mcp-config` prints a command the agent can keep: the installed
-`brandman-mcp`, or `uvx --from brandman brandman-mcp` when you are inside a
-temporary `uvx` environment. It does not write a uv cache path.
+`brandman mcp` starts the stdio MCP server. `brandman-mcp` still does the same
+thing. `uvx brandman` alone starts this CLI, so a registry or agent launch
+has to be `uvx brandman mcp`. `brandman mcp-config` prints a command the
+agent can keep: the installed `brandman-mcp`, or `uvx brandman mcp` when you
+are inside a temporary `uvx` environment. It does not write a uv cache path.
 
 With Docker, from a checkout of this repository:
 

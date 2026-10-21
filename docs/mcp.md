@@ -7,12 +7,14 @@ publishing stay with a human.**
 
 ## Local (stdio)
 
-The agent starts `brandman-mcp` itself and talks to your database directly.
-`brand-os-mcp` is a deprecated alias and warns on use.
+The agent starts the server itself and talks to your database directly.
+`brandman mcp` and `brandman-mcp` are the same server. `brand-os-mcp` is a
+deprecated alias and warns on use. `uvx brandman` starts the CLI, so the
+server launch is `uvx brandman mcp`.
 
 ```bash
 brandman mcp-config --client claude-code
-# claude mcp add brandman -e BRANDMAN_DB=/…/brandman.db -e BRANDMAN_DATABASE_PROFILE=operating -- /…/brandman-mcp
+# claude mcp add brandman -e BRANDMAN_DB=/…/brandman.db -e BRANDMAN_DATABASE_PROFILE=operating -- uvx brandman mcp
 ```
 
 ```bash
@@ -24,8 +26,8 @@ prints the JSON block to merge into the client's MCP configuration
 
 The stdio command is the installed `brandman-mcp` when that entry point is on
 `PATH` outside a uv cache. `uvx brandman mcp-config` prints
-`uvx --from brandman brandman-mcp`, which resolves the package again on each
-launch. A path under `~/.cache/uv/` is not written into the client config.
+`uvx brandman mcp`, which resolves the package again on each launch. A path
+under `~/.cache/uv/` is not written into the client config.
 
 ## Hosted (Streamable HTTP + OAuth)
 
@@ -61,7 +63,7 @@ Cloud workspace tokens stay in Cloud.
 | `get_active_mission` | Current goals, progress and required pace |
 | `report_product_gap` | Tell the operator BrandMan is missing something |
 
-Run `brandman-mcp` under an MCP inspector to see the full list.
+Run `brandman mcp` (or `brandman-mcp`) under an MCP inspector to see the full list.
 
 ## MCP Registry
 
@@ -72,4 +74,5 @@ ownership. The registry compares that name to the GitHub login **with the
 same letter case**. Publish the package to PyPI before registering it; the
 registry reads the README from the published version. Registering is a
 separate owner step (`mcp-publisher login github`, then `mcp-publisher publish`)
-and is not part of the PyPI release workflow.
+and is not part of the PyPI release workflow. The manifest runs
+`uvx brandman mcp`, not `uvx brandman`, because the package command is the CLI.
