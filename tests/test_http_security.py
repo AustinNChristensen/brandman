@@ -292,7 +292,7 @@ def test_homepage_console_figures_are_labeled_illustrative(monkeypatch):
         home = client.get("/")
 
     assert "ILLUSTRATIVE EXAMPLE" in home.text and "SAMPLE DATA" in home.text
-    assert "not live data" in home.text
+    assert "Demo data" in home.text and "not live data" in home.text
     assert "Your brand is healthy" not in home.text
     assert "free, open-source" in home.text
     assert "AGPL-3.0" in home.text

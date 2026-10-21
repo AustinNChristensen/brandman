@@ -5,6 +5,7 @@ Thanks for helping. Bug reports, fixes, docs and adapters are all welcome.
 ## Before you start
 
 - For anything bigger than a small fix, open an issue first so we can agree on the approach.
+- Starter tasks are described in [docs/launch/good-first-issues.md](docs/launch/good-first-issues.md). They are not opened as GitHub issues until someone files them.
 - Security problems: do not open a public issue. Contact the maintainers privately through the repository's security advisory page.
 
 ## Development

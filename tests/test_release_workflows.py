@@ -39,11 +39,13 @@ def test_manual_runs_cannot_reach_any_publisher_or_write_token():
     assert 'workflow_dispatch' in release['on']
     assert release['permissions'] == {'contents': 'read'}
     jobs = release['jobs']
-    publishers = {'package', 'image', 'github-release'}
+    publishers = {'package', 'image', 'github-release', 'mcp-registry'}
     for name in publishers:
         # Both predicates are required: dispatching an existing tag is still safe.
         assert jobs[name]['if'] == "github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')"
-    assert jobs['package']['environment'] == jobs['image']['environment'] == 'pypi'
+    assert jobs['package']['environment'] == jobs['image']['environment'] == jobs['mcp-registry']['environment'] == 'pypi'
+    assert jobs['mcp-registry']['needs'] == 'package'
+    assert jobs['mcp-registry']['permissions'] == {'contents': 'read', 'id-token': 'write'}
     assert jobs['package']['permissions'] == {'contents': 'read', 'id-token': 'write'}
     assert jobs['image']['permissions'] == {'contents': 'read', 'packages': 'write'}
     assert jobs['github-release']['permissions'] == {'contents': 'write'}
@@ -55,6 +57,14 @@ def test_manual_runs_cannot_reach_any_publisher_or_write_token():
         for step in job.get('steps', []):
             if step.get('with', {}).get('push') == 'true' or 'pypi-publish@' in step.get('uses', '') or 'gh release create' in step.get('run', ''):
                 assert name in publishers
+            if 'pypi-publish@' in step.get('uses', ''):
+                assert name == 'package'
+            if step.get('with', {}).get('push') == 'true':
+                assert name == 'image'
+            if 'gh release create' in step.get('run', ''):
+                assert name == 'github-release'
+            if 'mcp-publisher' in step.get('run', ''):
+                assert name == 'mcp-registry'
 
 
 def test_ci_and_release_share_a_build_only_dry_run():

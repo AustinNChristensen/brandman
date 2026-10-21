@@ -26,3 +26,24 @@ def test_readme_mcp_name_matches_server_json_and_package_version():
     assert [item["value"] for item in package["runtimeArguments"]] == [
         "--from", "brandman", "brandman-mcp",
     ]
+
+
+def test_readme_launch_positioning_and_registry_workflow():
+    readme = (ROOT / "README.md").read_text()
+    workflow = (ROOT / ".github/workflows/release.yml").read_text()
+    issues = (ROOT / "docs/launch/good-first-issues.md").read_text()
+
+    assert "open-source brand context + approval layer" in readme
+    assert "bring your own agent, model and keys" in readme.casefold()
+    assert "uvx --from brandman brandman init --dir my-brand -y" in readme
+    assert "https://usebrandman.com" in readme
+    assert "never moved behind a paywall" in readme
+    for client in ("Claude Code", "Cursor", "Codex", "Grok Bot"):
+        assert client in readme
+    assert "mcp-publisher login github-oidc" in workflow
+    assert "mcp-publisher publish" in workflow
+    assert "needs: package" in workflow
+    assert "v1.8.1" in workflow
+    assert "login github-oidc" in (ROOT / "docs/mcp.md").read_text()
+    headings = [line for line in issues.splitlines() if line.startswith("## ")]
+    assert len(headings) == 5

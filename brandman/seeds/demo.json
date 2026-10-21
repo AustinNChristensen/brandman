@@ -82,7 +82,7 @@
       ],
       "growth_mission": {
         "name": "Demo Brand 30-day growth",
-        "description": "Grow X followers and active Beehiiv subscribers over a rolling 30-day window.",
+        "description": "Demo data. Sample targets for a click-through brand, not measured results. Grow X followers and active Beehiiv subscribers over a rolling 30-day window.",
         "timezone": "America/Denver",
         "goals": {
           "x_followers": [

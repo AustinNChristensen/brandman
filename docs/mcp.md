@@ -20,7 +20,24 @@ brandman mcp-config --client claude-desktop   # or --client cursor
 ```
 
 prints the JSON block to merge into the client's MCP configuration
-(`claude_desktop_config.json`, `.cursor/mcp.json`).
+(`claude_desktop_config.json`, `.cursor/mcp.json`). Grok Bot, when it runs in
+Cursor, uses that same server. There is no separate Grok credential in
+BrandMan.
+
+## Codex
+
+Codex reads `~/.codex/config.toml`. `brandman mcp-config` does not print this
+client yet. Use the absolute database path from `.env`:
+
+```toml
+[mcp_servers.brandman]
+command = "uvx"
+args = ["--from", "brandman", "brandman-mcp"]
+
+[mcp_servers.brandman.env]
+BRANDMAN_DB = "/absolute/path/brandman.db"
+BRANDMAN_DATABASE_PROFILE = "operating"
+```
 
 The stdio command is the installed `brandman-mcp` when that entry point is on
 `PATH` outside a uv cache. `uvx brandman mcp-config` prints
@@ -69,7 +86,18 @@ Run `brandman-mcp` under an MCP inspector to see the full list.
 `io.github.AustinNChristensen/brandman`, and the same string is in this
 repository's README as `mcp-name:` so PyPI's long description can prove
 ownership. The registry compares that name to the GitHub login **with the
-same letter case**. Publish the package to PyPI before registering it; the
-registry reads the README from the published version. Registering is a
-separate owner step (`mcp-publisher login github`, then `mcp-publisher publish`)
-and is not part of the PyPI release workflow.
+same letter case**. Keep that casing. A lowercase `io.github.austinnchristensen`
+does not match.
+
+Publish the package to PyPI before the registry will accept it. The registry
+reads the README from the published version. The release workflow does that
+in order: the PyPI job, then `mcp-registry`, which installs `mcp-publisher`
+1.8.1 and runs `login github-oidc` and `publish`. That job runs only on a
+`v*` tag push. A manual `workflow_dispatch` of the release workflow stays
+build-only and does not publish. No registry token is stored in the
+repository.
+
+The first login is still yours. On your machine, install `mcp-publisher` and
+run `mcp-publisher login github` (GitHub's device-code prompt). Do that once
+before relying on the Action. The Action does not replace that step, and it
+will not publish a `server.json` version that differs from the git tag.
