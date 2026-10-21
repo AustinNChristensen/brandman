@@ -27,8 +27,8 @@ brandman init
 
 `init` asks for your brand's name, mission, voice and compliance rules, then:
 
-- writes `.env` (mode 600) with a generated sign-in password and a
-  credential-encryption key;
+- writes `.env` (mode 600) with a generated sign-in password, a personal
+  API token (`BRANDMAN_API_TOKEN`) and a credential-encryption key;
 - creates `brandman.db` and your brand.
 
 On a terminal it prompts. Without a terminal, and also with `-y`, any field
@@ -72,19 +72,65 @@ newsletter issue. Nothing is published automatically. See
 
 ## 5. Optional: built-in drafting
 
-If you would rather not wire up an agent, install the Anthropic extra and set
-an API key:
+The default is no model. An MCP agent, or **Content → New X draft** in the
+dashboard, writes the drafts. Built-in drafting is for people who want
+`brandman draft` or `POST …/draft-campaign` to call a model they already pay
+for. The core install does not include a model SDK.
 
 ```bash
-uv tool install 'brandman[anthropic]'
+uv tool install 'brandman[anthropic]'    # Claude
+# or
+uv tool install 'brandman[openai]'       # any OpenAI-compatible endpoint
+# or both
+uv tool install 'brandman[drafting]'
+```
+
+Pick the provider explicitly. When `BRANDMAN_DRAFT_PROVIDER` is unset, an
+`ANTHROPIC_API_KEY` selects Anthropic (the previous default). Otherwise an
+OpenAI key or `BRANDMAN_DRAFT_BASE_URL` selects the OpenAI-compatible client.
+`none` leaves drafting to your agent even if a key is present.
+
+```bash
+# Claude
+export BRANDMAN_DRAFT_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=…
-brandman draft --brand my-brand --source <source-id>   # a source added in the dashboard (Sources)
+# BRANDMAN_DRAFT_MODEL=claude-opus-5-5
+
+# OpenAI
+export BRANDMAN_DRAFT_PROVIDER=openai
+export OPENAI_API_KEY=…
+# BRANDMAN_DRAFT_MODEL=gpt-4.1
+
+# xAI
+export BRANDMAN_DRAFT_PROVIDER=openai
+export BRANDMAN_DRAFT_BASE_URL=https://api.x.ai/v1
+export BRANDMAN_DRAFT_API_KEY=…
+export BRANDMAN_DRAFT_MODEL=grok-4
+
+# OpenRouter
+export BRANDMAN_DRAFT_PROVIDER=openai
+export BRANDMAN_DRAFT_BASE_URL=https://openrouter.ai/api/v1
+export BRANDMAN_DRAFT_API_KEY=…
+
+# Ollama on this machine
+export BRANDMAN_DRAFT_PROVIDER=openai
+export BRANDMAN_DRAFT_BASE_URL=http://127.0.0.1:11434/v1
+export BRANDMAN_DRAFT_MODEL=llama3.1
+
+# vLLM (use a port other than the BrandMan server)
+export BRANDMAN_DRAFT_PROVIDER=openai
+export BRANDMAN_DRAFT_BASE_URL=http://127.0.0.1:8001/v1
+export BRANDMAN_DRAFT_MODEL=your-model
+
+brandman draft --brand my-brand --source <source-id>
 ```
 
 This turns one source into a draft campaign. It never approves or publishes.
-Without the extra, or without `ANTHROPIC_API_KEY`, the command says so even
-if the source id is wrong. Create the source first (the dashboard's Sources
-tab, or `POST /api/brands/{slug}/sources`) and pass its id.
+A local server that only has a base URL does not need an API key. Without
+the extra for the provider you chose, the command says so even if the source
+id is wrong. Create the source first (the dashboard's Sources tab, or
+`POST /api/brands/{slug}/sources`) and pass its id. Endpoints that reject
+JSON schema fall back to a JSON object in the message text.
 
 ## 6. Keep it running
 

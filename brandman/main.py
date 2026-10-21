@@ -82,6 +82,7 @@ from .http_security import (
     create_preview_session,
     enforce_request_boundary,
     harden_response,
+    personal_api_token_matches,
     validate_preview_session,
 )
 from .hosted_mcp import (
@@ -316,6 +317,12 @@ async def preview_password_gate(request: Request, call_next):
         return harden_response(await call_next(request), request)
     if request.url.path.startswith("/.well-known/oauth-") or request.url.path.startswith("/oauth/"):
         return harden_response(await call_next(request), request)
+    authorization = request.headers.get("authorization", "")
+    # One operator token for scripts and hosted MCP. OAuth bearer tokens are
+    # unchanged: a value that is not this token still goes through PKCE.
+    if personal_api_token_matches(authorization):
+        request.state.principal = operator_principal()
+        return harden_response(await call_next(request), request)
     if request.url.path == "/mcp" or request.url.path.startswith("/mcp/"):
         try:
             verify_mcp_bearer(request)
@@ -327,7 +334,6 @@ async def preview_password_gate(request: Request, call_next):
             )
             return harden_response(response, request)
         return harden_response(await call_next(request), request)
-    authorization = request.headers.get("authorization", "")
     basic_user = os.getenv("BRANDMAN_BASIC_USER", "").strip() or "operator"
     expected = base64.b64encode(f"{basic_user}:{password}".encode()).decode()
     basic_authenticated = secrets.compare_digest(authorization, f"Basic {expected}")

@@ -39,7 +39,12 @@ Platform credentials, when optional API mode is used, live only in the encrypted
 credential store and are never returned through content, REST, MCP, or logs.
 
 The preview uses an environment-only HTTP Basic password and fails closed if it
-is absent. Its HTTP boundary defaults to loopback-only, rejects unlisted Host
+is absent. An optional `BRANDMAN_API_TOKEN` (at least 32 characters, never a
+placeholder) authenticates that same operator with `Authorization: Bearer` on
+REST and self-hosted `/mcp`. Any other bearer value on `/mcp` still uses the
+OAuth grant. Built-in drafting is optional: Anthropic or an OpenAI-compatible
+endpoint, chosen by configuration, and omitted from the core install. With no
+provider, an external agent drafts. The HTTP boundary defaults to loopback-only, rejects unlisted Host
 headers, requires HTTPS for non-loopback requests, rejects cross-site browser
 mutations using Origin/Referer and Fetch Metadata, disables response caching, and
 sets CSP/frame/referrer/MIME/cross-origin browser protections on every response,

@@ -30,6 +30,45 @@ def _brand_payload(slug: str) -> dict:
     }
 
 
+def test_personal_api_token_authenticates_the_operator(monkeypatch):
+    token = "a" * 43
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", token)
+    with TestClient(app) as client:
+        accepted = client.get("/health", headers={"Authorization": f"Bearer {token}"})
+        wrong = client.get("/health", headers={"Authorization": "Bearer " + "b" * 43})
+        oauth_only = client.get("/mcp", headers={"Authorization": "Bearer not-the-personal-token"})
+        hosted = client.get("/mcp", headers={"Authorization": f"Bearer {token}"})
+    assert accepted.status_code == 200
+    assert wrong.status_code == 401
+    assert oauth_only.status_code == 401
+    assert "resource_metadata" in oauth_only.headers.get("www-authenticate", "")
+    assert hosted.status_code != 401
+
+
+def test_short_or_placeholder_api_tokens_do_not_authenticate(monkeypatch):
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", "too-short")
+    with TestClient(app) as client:
+        short = client.get("/health", headers={"Authorization": "Bearer too-short"})
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", "replace-with-a-secret-manager-reference")
+    with TestClient(app) as client:
+        placeholder = client.get(
+            "/health",
+            headers={"Authorization": "Bearer replace-with-a-secret-manager-reference"},
+        )
+    assert short.status_code == 401
+    assert placeholder.status_code == 401
+
+
+def test_personal_token_does_not_replace_the_preview_password(monkeypatch):
+    monkeypatch.delenv("BRANDMAN_PREVIEW_PASSWORD", raising=False)
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", "c" * 43)
+    with TestClient(app) as client:
+        response = client.get("/health", headers={"Authorization": "Bearer " + "c" * 43})
+    assert response.status_code == 503
+
+
 def test_public_homepage_is_static_and_every_other_surface_stays_gated(monkeypatch):
     monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:

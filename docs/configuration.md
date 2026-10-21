@@ -25,5 +25,10 @@ and print a deprecation warning; a `BRANDMAN_*` value always wins.
 | `BRANDMAN_SCHEDULER_MAX_DECISIONS` | `50` | Due schedules one tick may enqueue (1–500). |
 | `BRANDMAN_MCP_STATELESS` | `false` | Bind each hosted MCP request to its own HTTP request. Required when one process serves several databases. |
 | `BRANDMAN_DISABLE_PLUGINS` | `false` | Skip installed `brandman.plugins`. |
-| `BRANDMAN_DRAFT_MODEL` | `claude-opus-5-5` | Model for optional built-in drafting. |
-| `ANTHROPIC_API_KEY` | none | Only for optional built-in drafting. |
+| `BRANDMAN_API_TOKEN` | none | Personal bearer token for scripts and self-hosted `/mcp`. At least 32 characters. `brandman init` generates one. A short or example value is ignored. Not a BrandMan Cloud workspace token. |
+| `BRANDMAN_DRAFT_PROVIDER` | auto | `anthropic`, `openai` or `none`. Unset: Anthropic when `ANTHROPIC_API_KEY` is set, otherwise an OpenAI-compatible endpoint when a key or `BRANDMAN_DRAFT_BASE_URL` is set, otherwise no model (an MCP agent drafts). |
+| `BRANDMAN_DRAFT_MODEL` | provider default | Model id. Anthropic default `claude-opus-5-5`. OpenAI-compatible default `gpt-4.1`. |
+| `BRANDMAN_DRAFT_BASE_URL` | provider default | OpenAI-compatible base URL (OpenAI, xAI, OpenRouter, Ollama, vLLM). |
+| `BRANDMAN_DRAFT_API_KEY` | none | Key for an OpenAI-compatible endpoint. `OPENAI_API_KEY` is used when this is unset. A base URL with no key uses a dummy local key. |
+| `ANTHROPIC_API_KEY` | none | Key for optional Anthropic drafting (`brandman[anthropic]`). |
+| `OPENAI_API_KEY` | none | Key for optional OpenAI-compatible drafting (`brandman[openai]`). |
