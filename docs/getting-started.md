@@ -60,7 +60,10 @@ through `uvx` prints `uvx brandman mcp` instead of a path inside the uv
 cache, which would break the next time the cache is cleared. `uvx brandman`
 without `mcp` starts the CLI, not the server.
 
-Then ask your agent something like *"Read the brand context for my-brand and
+Claude Code, Cursor, Codex, and Grok Bot all use this same server. Cursor's
+config is also what Grok Bot reads when it runs in Cursor. Codex uses the
+TOML block in the [README](../README.md). Then ask your agent something like
+*"Read the brand context for my-brand and
 draft three X posts about our launch."* `draft_post` saves canonical campaign
 drafts. It does not submit them for approval. In the dashboard, open
 **Content → Campaign posts → Create review draft**, then **Submit for review**.
