@@ -53,24 +53,33 @@ def _slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-") or "my-brand"
 
 
-def _brand_details(args: argparse.Namespace) -> dict[str, str]:
+def _brand_details(args: argparse.Namespace, *, directory: Path) -> dict[str, str]:
+    """Prompt on a terminal. Without one, or with ``-y``, fill any omitted field."""
     interactive = sys.stdin.isatty() and not args.yes
+    folder = directory.name.replace("_", " ").replace("-", " ").strip()
+    name_default = folder.title() if folder and set(folder) != {"."} else "My brand"
     fields = {
-        "name": (args.name, "Brand name", None),
-        "mission": (args.mission, "Mission (what the brand helps people do)", None),
-        "voice": (args.voice, "Voice (how it sounds)", "Clear, specific, no generic marketing fluff."),
-        "compliance_rules": (args.compliance, "Compliance rules", "Verify claims, dates and sources before publishing."),
+        "name": (args.name, "Brand name", name_default, False),
+        "mission": (
+            args.mission, "Mission (what the brand helps people do)",
+            "Help the right people understand and choose this brand.", False,
+        ),
+        "voice": (args.voice, "Voice (how it sounds)", "Clear, specific, no generic marketing fluff.", True),
+        "compliance_rules": (
+            args.compliance, "Compliance rules",
+            "Verify claims, dates and sources before publishing.", True,
+        ),
     }
     details = {}
-    for key, (given, prompt, default) in fields.items():
+    for key, (given, prompt, default, offered_when_interactive) in fields.items():
         if given:
             details[key] = given
         elif interactive:
-            details[key] = _ask(prompt, default)
-        elif default:
-            details[key] = default
+            details[key] = _ask(prompt, default if offered_when_interactive else None)
         else:
-            raise SystemExit(f"--{key.replace('_rules', '')} is required without a terminal")
+            details[key] = default
+            if not offered_when_interactive:
+                print(f"No --{key.replace('_rules', '')} and no terminal; using {default!r}.")
     details["slug"] = args.slug or _slugify(details["name"])
     return details
 
@@ -103,7 +112,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     store.init_db(profile=os.environ.get("BRANDMAN_DATABASE_PROFILE", "operating"))
     created = None
     if not args.skip_brand:
-        details = _brand_details(args)
+        details = _brand_details(args, directory=directory)
         if store.get_brand(details["slug"]):
             print(f"Brand {details['slug']!r} already exists; leaving it unchanged.")
         else:
@@ -128,17 +137,48 @@ def cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
-def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
+def _ephemeral_uv_executable(executable: str) -> bool:
+    """True when ``executable`` lives in a uv cache that ``uvx`` may delete."""
+    try:
+        resolved = Path(executable).resolve()
+    except OSError:
+        return False
+    roots = [Path.home() / ".cache" / "uv"]
+    xdg_cache = os.environ.get("XDG_CACHE_HOME", "").strip()
+    if xdg_cache:
+        roots.append(Path(xdg_cache) / "uv")
+    uv_cache = os.environ.get("UV_CACHE_DIR", "").strip()
+    if uv_cache:
+        roots.append(Path(uv_cache))
+    for root in roots:
+        try:
+            root = root.resolve()
+        except OSError:
+            continue
+        if resolved == root or root in resolved.parents:
+            return True
+    return False
+
+
+def _mcp_stdio_command() -> tuple[str, list[str]]:
+    """A command an agent can keep. Never a path inside the uv cache."""
     executable = shutil.which("brandman-mcp")
+    if executable and not _ephemeral_uv_executable(executable):
+        return executable, []
+    return "uvx", ["--from", "brandman", "brandman-mcp"]
+
+
+def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
     if url:
         server: dict[str, Any] = {"type": "http", "url": url.rstrip("/") + "/mcp"}
-    elif executable:
-        server = {"command": executable, "env": {"BRANDMAN_DB": database, "BRANDMAN_DATABASE_PROFILE": "operating"}}
     else:
+        command, args = _mcp_stdio_command()
         server = {
-            "command": "uvx", "args": ["--from", "brandman", "brandman-mcp"],
+            "command": command,
             "env": {"BRANDMAN_DB": database, "BRANDMAN_DATABASE_PROFILE": "operating"},
         }
+        if args:
+            server["args"] = args
     if client == "claude-code":
         if url:
             return f"claude mcp add --transport http brandman {server['url']}"
@@ -164,7 +204,10 @@ def cmd_draft(args: argparse.Namespace) -> int:
     store.init_db()
     try:
         result = drafting.draft_campaign_from_source(args.brand, args.source, actor=operator_principal())
-    except (drafting.DraftingUnavailable, drafting.DraftingRefused, KeyError) as error:
+    except KeyError as error:
+        detail = error.args[0] if error.args else "not found"
+        raise SystemExit(str(detail)) from error
+    except (drafting.DraftingUnavailable, drafting.DraftingRefused) as error:
         raise SystemExit(str(error)) from error
     print(json.dumps(result.model_dump(), indent=2, default=str))
     return 0

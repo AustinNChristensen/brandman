@@ -1,0 +1,40 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.AustinNChristensen/brandman",
+  "title": "BrandMan",
+  "description": "Brand context, drafts, and exact-revision approval for MCP agents.",
+  "repository": {
+    "url": "https://github.com/AustinNChristensen/brandman",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "websiteUrl": "https://github.com/AustinNChristensen/brandman",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "brandman",
+      "version": "0.1.1",
+      "runtimeHint": "uvx",
+      "runtimeArguments": [
+        {"type": "positional", "value": "--from"},
+        {"type": "positional", "value": "brandman"},
+        {"type": "positional", "value": "brandman-mcp"}
+      ],
+      "transport": {"type": "stdio"},
+      "environmentVariables": [
+        {
+          "name": "BRANDMAN_DB",
+          "description": "Path to the SQLite database created by brandman init.",
+          "format": "filepath",
+          "isRequired": true
+        },
+        {
+          "name": "BRANDMAN_DATABASE_PROFILE",
+          "description": "Database profile. Use operating for a real install.",
+          "default": "operating",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

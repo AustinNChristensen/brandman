@@ -199,6 +199,23 @@ def test_remote_or_malformed_security_configuration_is_inert(monkeypatch):
     assert "wildcards" in wildcard.json()["detail"]
 
 
+def test_example_preview_password_is_rejected_on_loopback(monkeypatch):
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "replace-with-a-secret-manager-reference")
+    example = "Basic " + base64.b64encode(
+        b"operator:replace-with-a-secret-manager-reference"
+    ).decode()
+    with TestClient(app) as client:
+        response = client.get("/health", headers={"Authorization": example})
+    assert response.status_code == 503
+    assert "example value" in response.json()["detail"]
+    assert "replace-with-a-secret-manager-reference" not in response.text
+    status = deployment_boundary_status({
+        "BRANDMAN_PREVIEW_PASSWORD": "replace-with-a-secret-manager-reference",
+    })
+    assert status["healthy"] is False
+    assert any("example" in action for action in status["actions"])
+
+
 def test_secret_free_deployment_readiness_distinguishes_local_and_remote_boundaries():
     local = deployment_boundary_status({"BRANDMAN_PREVIEW_PASSWORD": PASSWORD})
     unsafe_remote = deployment_boundary_status({
@@ -327,7 +344,8 @@ def test_access_panel_shows_mailto_only_when_contact_is_configured(monkeypatch):
 
     assert 'href="mailto:access@example.com"' in configured
     assert "mailto:" not in unset
-    assert "Access is by invitation." in unset
+    assert "There is no shared demo sign-in." in unset
+    assert "BRANDMAN_PREVIEW_PASSWORD" in unset
     for page in (configured, unset):
         assert "github.com/AustinNChristensen/brandman/issues" not in page
         assert "invited" not in page.lower() and "invite" not in page.lower()

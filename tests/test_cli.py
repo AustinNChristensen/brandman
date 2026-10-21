@@ -1,6 +1,8 @@
 import json
 import os
 
+import pytest
+
 from brandman import cli, store
 
 
@@ -36,6 +38,45 @@ def test_env_file_never_overrides_the_real_environment(tmp_path, monkeypatch):
     monkeypatch.delenv("B_TEST_KEY")
 
 
+def test_init_without_a_terminal_uses_directory_defaults(tmp_path, monkeypatch):
+    for key in ("BRANDMAN_DB", "BRANDMAN_PREVIEW_PASSWORD", "BRANDMAN_SEED_PACK", "BRANDMAN_CREDENTIAL_MASTER_KEY"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "test")
+    monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: False)
+    directory = tmp_path / "cedar-studio"
+    previous, environment = store.DATA_PATH, dict(os.environ)
+    try:
+        assert cli.main(["init", "--dir", str(directory)]) == 0
+        brand = store.get_brand("cedar-studio")
+        assert brand["name"] == "Cedar Studio"
+        assert brand["mission"] == "Help the right people understand and choose this brand."
+        assert "generic marketing fluff" in brand["voice"]
+    finally:
+        store.DATA_PATH = previous
+        os.environ.clear()
+        os.environ.update(environment)
+
+
+def test_draft_reports_setup_before_a_missing_source(tmp_path, monkeypatch):
+    for key in ("BRANDMAN_DB", "BRANDMAN_PREVIEW_PASSWORD", "BRANDMAN_SEED_PACK", "BRANDMAN_CREDENTIAL_MASTER_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "test")
+    monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: False)
+    directory = tmp_path / "cedar-studio"
+    previous, environment = store.DATA_PATH, dict(os.environ)
+    try:
+        assert cli.main(["init", "--dir", str(directory)]) == 0
+        with pytest.raises(SystemExit) as raised:
+            cli.main(["draft", "--brand", "cedar-studio", "--source", "missing", "--env-file", str(directory / ".env")])
+    finally:
+        store.DATA_PATH = previous
+        os.environ.clear()
+        os.environ.update(environment)
+    message = str(raised.value)
+    assert "source not found" not in message
+    assert "anthropic extra" in message or "ANTHROPIC_API_KEY" in message
+
+
 def test_mcp_config_shapes():
     desktop = json.loads(cli.mcp_config("claude-desktop", database="/data/b.db"))
     server = desktop["mcpServers"]["brandman"]
@@ -45,3 +86,27 @@ def test_mcp_config_shapes():
     assert cli.mcp_config("claude-code", database="x", url="https://b.example") == (
         "claude mcp add --transport http brandman https://b.example/mcp"
     )
+
+
+def test_mcp_config_keeps_a_persistent_entrypoint(monkeypatch, tmp_path):
+    executable = tmp_path / ".local" / "bin" / "brandman-mcp"
+    executable.parent.mkdir(parents=True)
+    executable.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(cli.shutil, "which", lambda name: str(executable) if name == "brandman-mcp" else None)
+    server = json.loads(cli.mcp_config("cursor", database="/data/b.db"))["mcpServers"]["brandman"]
+    assert server["command"] == str(executable)
+    assert "args" not in server
+
+
+def test_mcp_config_replaces_a_uv_cache_path_with_uvx(monkeypatch, tmp_path):
+    cached = tmp_path / ".cache" / "uv" / "archive-v0" / "abc" / "bin" / "brandman-mcp"
+    cached.parent.mkdir(parents=True)
+    cached.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(cli.Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(cli.shutil, "which", lambda name: str(cached) if name == "brandman-mcp" else None)
+    server = json.loads(cli.mcp_config("cursor", database="/data/b.db"))["mcpServers"]["brandman"]
+    assert server["command"] == "uvx"
+    assert server["args"] == ["--from", "brandman", "brandman-mcp"]
+    rendered = cli.mcp_config("claude-code", database="/data/b.db")
+    assert "uvx --from brandman brandman-mcp" in rendered
+    assert "archive-v0" not in rendered

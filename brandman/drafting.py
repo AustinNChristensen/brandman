@@ -59,6 +59,12 @@ def anthropic_planner() -> Planner:
         raise DraftingUnavailable(
             "built-in drafting needs the anthropic extra: pip install 'brandman[anthropic]'"
         ) from error
+    if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
+        raise DraftingUnavailable(
+            "built-in drafting needs ANTHROPIC_API_KEY. Without a key, create a draft "
+            "in the dashboard (Content → New X draft) or with the MCP tools "
+            "create_campaign and draft_post."
+        )
     try:
         client = anthropic.Anthropic()
     except anthropic.AnthropicError as error:  # missing credentials
@@ -101,13 +107,14 @@ def draft_campaign_from_source(
     campaign_graph: CampaignGraphStore | None = None,
 ) -> DraftResult:
     """Plan a campaign for one source and save it as drafts only."""
+    plan_fn = planner if planner is not None else anthropic_planner()
     context = store.brand_context(slug)
     if not context:
         raise KeyError("brand not found")
     source = store.row("SELECT * FROM sources WHERE id=? AND brand_id=?", (source_id, context["id"]))
     if source is None:
         raise KeyError("source not found")
-    plan = (planner or anthropic_planner())(context, source)
+    plan = plan_fn(context, source)
     if not plan.posts:
         raise DraftingRefused("the model proposed no posts")
     graph = campaign_graph or CampaignGraphStore(store.DATA_PATH)

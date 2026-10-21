@@ -117,6 +117,15 @@ jobs:
       - run: uv venv .package-venv
       - run: uv pip install --python .package-venv/bin/python dist/*.whl
       - run: .package-venv/bin/python scripts/check_dashboard_package.py
+      - name: Wheel metadata carries the README and project URLs
+        run: |
+          meta=$(unzip -p dist/*.whl '*/METADATA')
+          version=$(uv version --short)
+          printf '%s\n' "$meta" | grep -q 'mcp-name: io.github.AustinNChristensen/brandman'
+          printf '%s\n' "$meta" | grep -q 'Project-URL: Homepage, https://github.com/AustinNChristensen/brandman'
+          printf '%s\n' "$meta" | grep -q "^Version: ${version}$"
+      - name: Clean install can approve a draft and reach MCP
+        run: PATH="$PWD/.package-venv/bin:$PATH" .package-venv/bin/python scripts/smoke_operator_path.py
       - name: Prove the exact wheel runs without Node or source
         run: bash scripts/check_python_only_wheel.sh
       - name: Upload runtime artifact receipts
