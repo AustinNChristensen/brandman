@@ -10,7 +10,9 @@ export default defineConfig({
       Authorization: `Basic ${Buffer.from('operator:brand-os-e2e-only').toString('base64')}`,
     },
     headless: true,
-    launchOptions: { executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' },
+    launchOptions: {
+      executablePath: process.env.BRANDMAN_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    },
   },
   webServer: {
     command: 'uv run --project .. python ../scripts/run_dashboard_e2e.py',

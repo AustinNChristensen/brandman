@@ -36,6 +36,10 @@ h1, h2, h3, p { margin: 0; }
 .nav a svg { flex: 0 0 18px; }
 .badge { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--human-soft); color: var(--human); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
 .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 10px 4px; border-top: 1px solid var(--line-2); }
+.edition-note { margin: 0; color: var(--faint); font-size: 11px; line-height: 1.4; }
+.top .edition-note { max-width: 280px; text-align: right; }
+.edition-note a { text-decoration: underline; }
+.demo-data-banner { margin: 0 0 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--human-soft, var(--surface)); color: var(--text); font-size: 12px; font-weight: 650; }
 .meter-row { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .top { height: 56px; flex: 0 0 56px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 5; }
@@ -215,6 +219,7 @@ textarea.input { resize: vertical; line-height: 1.5; }
 }
 @media (max-width: 900px) {
   .side { display: none; }
+  .top .edition-note { display: none; }
   .mobile-bar { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 20; }
   .mobile-brand { position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; min-width: 126px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; }
   .mobile-brand select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }

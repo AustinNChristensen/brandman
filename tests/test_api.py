@@ -223,7 +223,7 @@ def test_editorial_issue_and_canonical_dispatch_integration():
         assert client.get(f"/api/dispatch-items/{first['id']}/validation").json()["valid"] is True
 
         content = {
-            "editorial_thesis": "Brand OS should own the issue.",
+            "editorial_thesis": "BrandMan should own the issue.",
             "target_reader": "Readers", "intended_outcome": "Subscribe",
             "working_title": "A better pricing decision", "final_title": "A better pricing decision",
             "subject": "Make one better pricing decision", "preview_text": "The useful math.",

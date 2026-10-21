@@ -1,4 +1,8 @@
-# Brand OS MVP technical scope
+# BrandMan MVP technical scope
+
+BrandMan is the free, open-source (AGPL-3.0) edition in this repository.
+[BrandMan Cloud](https://usebrandman.com) is the hosted paid multi-workspace
+edition and is outside this spec. BrandOS is retired as a product name.
 
 ## Outcome
 
@@ -14,7 +18,7 @@ A trusted, portable brand context and content action layer that a brand team can
 4. An agent performs the same flows through MCP rather than a browser.
 5. Record channel outcomes → propose an evidence-backed learning → explicitly
    accept it into canonical brand context.
-6. Report missing Brand OS capabilities discovered during live brand operations.
+6. Report missing BrandMan capabilities discovered during live brand operations.
 
 ## Data model
 
@@ -35,14 +39,19 @@ Platform credentials, when optional API mode is used, live only in the encrypted
 credential store and are never returned through content, REST, MCP, or logs.
 
 The preview uses an environment-only HTTP Basic password and fails closed if it
-is absent. Its HTTP boundary defaults to loopback-only, rejects unlisted Host
+is absent. An optional `BRANDMAN_API_TOKEN` (at least 32 characters, never a
+placeholder) authenticates that same operator with `Authorization: Bearer` on
+REST and self-hosted `/mcp`. Any other bearer value on `/mcp` still uses the
+OAuth grant. Built-in drafting is optional: Anthropic or an OpenAI-compatible
+endpoint, chosen by configuration, and omitted from the core install. With no
+provider, an external agent drafts. The HTTP boundary defaults to loopback-only, rejects unlisted Host
 headers, requires HTTPS for non-loopback requests, rejects cross-site browser
 mutations using Origin/Referer and Fetch Metadata, disables response caching, and
 sets CSP/frame/referrer/MIME/cross-origin browser protections on every response,
 including authentication failures. Remote configuration requires an explicit
 hostname allowlist, HTTPS enforcement, and a non-placeholder password of at least
-16 characters. Production will replace this single-user boundary with workspace
-auth/RBAC.
+16 characters. Workspace auth and RBAC belong to BrandMan Cloud. This
+open-source edition keeps the single-operator boundary described here.
 
 ## Architecture
 

@@ -27,13 +27,16 @@ def load_preview_password(path: str | Path) -> str:
 
 
 def main() -> None:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     password_file = os.environ.get(PASSWORD_FILE_ENV)
     if not password_file:
         raise SystemExit(f"{PASSWORD_FILE_ENV} is required")
     try:
         password = load_preview_password(password_file)
     except (OSError, UnicodeError, ValueError) as error:
-        raise SystemExit(f"brand-os-api: {error}") from None
+        raise SystemExit(f"brandman-api: {error}") from None
     variable = "BRANDMAN_PREVIEW_PASSWORD"
     previous = os.environ.get(variable)
     os.environ[variable] = password

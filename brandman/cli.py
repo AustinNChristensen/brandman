@@ -1,12 +1,15 @@
-"""The ``brandman`` command: set up, run and connect a self-hosted BrandMan.
+"""Set up, run, and connect self-hosted BrandMan (free, AGPL-3.0). BrandMan Cloud is the hosted paid edition at https://usebrandman.com.
 
     brandman init          create a .env, a database and your first brand
     brandman serve         run the dashboard, REST API and hosted MCP endpoint
+    brandman mcp           run the stdio MCP server (same process as brandman-mcp)
     brandman mcp-config    print the MCP client configuration for this install
-    brandman draft         draft a campaign for a source (needs brandman[anthropic])
+    brandman draft         draft a campaign for a source (optional; bring your own model)
 
 The worker, MCP stdio server and operations tools keep their own commands
-(``brandman-worker``, ``brandman-mcp``, ``brandman-ops``, ...).
+(``brandman-worker``, ``brandman-mcp``, ``brandman-ops``, ...). ``brandman mcp``
+starts the same server as ``brandman-mcp``. ``brand-os-*`` is a deprecated
+alias for each of those commands.
 """
 from __future__ import annotations
 
@@ -52,24 +55,33 @@ def _slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-") or "my-brand"
 
 
-def _brand_details(args: argparse.Namespace) -> dict[str, str]:
+def _brand_details(args: argparse.Namespace, *, directory: Path) -> dict[str, str]:
+    """Prompt on a terminal. Without one, or with ``-y``, fill any omitted field."""
     interactive = sys.stdin.isatty() and not args.yes
+    folder = directory.name.replace("_", " ").replace("-", " ").strip()
+    name_default = folder.title() if folder and set(folder) != {"."} else "My brand"
     fields = {
-        "name": (args.name, "Brand name", None),
-        "mission": (args.mission, "Mission (what the brand helps people do)", None),
-        "voice": (args.voice, "Voice (how it sounds)", "Clear, specific, no generic marketing fluff."),
-        "compliance_rules": (args.compliance, "Compliance rules", "Verify claims, dates and sources before publishing."),
+        "name": (args.name, "Brand name", name_default, False),
+        "mission": (
+            args.mission, "Mission (what the brand helps people do)",
+            "Help the right people understand and choose this brand.", False,
+        ),
+        "voice": (args.voice, "Voice (how it sounds)", "Clear, specific, no generic marketing fluff.", True),
+        "compliance_rules": (
+            args.compliance, "Compliance rules",
+            "Verify claims, dates and sources before publishing.", True,
+        ),
     }
     details = {}
-    for key, (given, prompt, default) in fields.items():
+    for key, (given, prompt, default, offered_when_interactive) in fields.items():
         if given:
             details[key] = given
         elif interactive:
-            details[key] = _ask(prompt, default)
-        elif default:
-            details[key] = default
+            details[key] = _ask(prompt, default if offered_when_interactive else None)
         else:
-            raise SystemExit(f"--{key.replace('_rules', '')} is required without a terminal")
+            details[key] = default
+            if not offered_when_interactive:
+                print(f"No --{key.replace('_rules', '')} and no terminal; using {default!r}.")
     details["slug"] = args.slug or _slugify(details["name"])
     return details
 
@@ -89,6 +101,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             f"BRANDMAN_DB={database}",
             "BRANDMAN_DATABASE_PROFILE=operating",
             f"BRANDMAN_PREVIEW_PASSWORD={secrets.token_urlsafe(24)}",
+            f"BRANDMAN_API_TOKEN={secrets.token_urlsafe(32)}",
             f"BRANDMAN_CREDENTIAL_MASTER_KEY={Fernet.generate_key().decode()}",
             f"BRANDMAN_SEED_PACK={'demo' if args.with_demo else 'none'}",
             "",
@@ -102,7 +115,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     store.init_db(profile=os.environ.get("BRANDMAN_DATABASE_PROFILE", "operating"))
     created = None
     if not args.skip_brand:
-        details = _brand_details(args)
+        details = _brand_details(args, directory=directory)
         if store.get_brand(details["slug"]):
             print(f"Brand {details['slug']!r} already exists; leaving it unchanged.")
         else:
@@ -112,6 +125,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     print("Next steps:")
     print(f"  cd {directory} && brandman serve        # then open http://127.0.0.1:8000/app")
     print("  The sign-in password is BRANDMAN_PREVIEW_PASSWORD in .env.")
+    print("  Scripts and hosted MCP can send Authorization: Bearer plus BRANDMAN_API_TOKEN from .env.")
     print("  brandman mcp-config                     # connect Claude or another MCP client")
     return 0
 
@@ -127,17 +141,49 @@ def cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
-def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
+def _ephemeral_uv_executable(executable: str) -> bool:
+    """True when ``executable`` lives in a uv cache that ``uvx`` may delete."""
+    try:
+        resolved = Path(executable).resolve()
+    except OSError:
+        return False
+    roots = [Path.home() / ".cache" / "uv"]
+    xdg_cache = os.environ.get("XDG_CACHE_HOME", "").strip()
+    if xdg_cache:
+        roots.append(Path(xdg_cache) / "uv")
+    uv_cache = os.environ.get("UV_CACHE_DIR", "").strip()
+    if uv_cache:
+        roots.append(Path(uv_cache))
+    for root in roots:
+        try:
+            root = root.resolve()
+        except OSError:
+            continue
+        if resolved == root or root in resolved.parents:
+            return True
+    return False
+
+
+def _mcp_stdio_command() -> tuple[str, list[str]]:
+    """A command an agent can keep. Never a path inside the uv cache."""
     executable = shutil.which("brandman-mcp")
+    if executable and not _ephemeral_uv_executable(executable):
+        return executable, []
+    # ``uvx brandman`` starts the CLI. The server is the ``mcp`` subcommand.
+    return "uvx", ["brandman", "mcp"]
+
+
+def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
     if url:
         server: dict[str, Any] = {"type": "http", "url": url.rstrip("/") + "/mcp"}
-    elif executable:
-        server = {"command": executable, "env": {"BRANDMAN_DB": database, "BRANDMAN_DATABASE_PROFILE": "operating"}}
     else:
+        command, args = _mcp_stdio_command()
         server = {
-            "command": "uvx", "args": ["--from", "brandman", "brandman-mcp"],
+            "command": command,
             "env": {"BRANDMAN_DB": database, "BRANDMAN_DATABASE_PROFILE": "operating"},
         }
+        if args:
+            server["args"] = args
     if client == "claude-code":
         if url:
             return f"claude mcp add --transport http brandman {server['url']}"
@@ -145,6 +191,14 @@ def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
         args = " ".join(server.get("args", []))
         return f"claude mcp add brandman {env} -- {server['command']} {args}".rstrip()
     return json.dumps({"mcpServers": {"brandman": server}}, indent=2)
+
+
+def cmd_mcp(_args: argparse.Namespace) -> int:
+    """Run the stdio MCP server. ``brandman-mcp`` calls the same entry point."""
+    from brandman.mcp_server import main as run_mcp
+
+    run_mcp()
+    return 0
 
 
 def cmd_mcp_config(args: argparse.Namespace) -> int:
@@ -163,14 +217,21 @@ def cmd_draft(args: argparse.Namespace) -> int:
     store.init_db()
     try:
         result = drafting.draft_campaign_from_source(args.brand, args.source, actor=operator_principal())
-    except (drafting.DraftingUnavailable, drafting.DraftingRefused, KeyError) as error:
+    except KeyError as error:
+        detail = error.args[0] if error.args else "not found"
+        raise SystemExit(str(detail)) from error
+    except (drafting.DraftingUnavailable, drafting.DraftingRefused) as error:
         raise SystemExit(str(error)) from error
     print(json.dumps(result.model_dump(), indent=2, default=str))
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brandman", description=__doc__.split("\n\n")[0])
+    from brandman import LEGACY_ALIAS_HELP
+
+    parser = argparse.ArgumentParser(
+        prog="brandman", description=__doc__.split("\n\n")[0], epilog=LEGACY_ALIAS_HELP,
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     init = sub.add_parser("init", help="create a .env, database and first brand")
@@ -193,13 +254,16 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--env-file", default=ENV_FILE)
     serve.set_defaults(func=cmd_serve)
 
+    mcp_server = sub.add_parser("mcp", help="run the stdio MCP server (same as brandman-mcp)")
+    mcp_server.set_defaults(func=cmd_mcp)
+
     mcp = sub.add_parser("mcp-config", help="print MCP client configuration")
     mcp.add_argument("--client", choices=("claude-desktop", "claude-code", "cursor", "json"), default="claude-desktop")
     mcp.add_argument("--url", help="a deployed BrandMan base URL (uses the OAuth-protected /mcp endpoint)")
     mcp.add_argument("--env-file", default=ENV_FILE)
     mcp.set_defaults(func=cmd_mcp_config)
 
-    draft = sub.add_parser("draft", help="draft a campaign for one source (needs brandman[anthropic])")
+    draft = sub.add_parser("draft", help="draft a campaign for one source (optional; bring your own model)")
     draft.add_argument("--brand", required=True)
     draft.add_argument("--source", required=True, help="source id")
     draft.add_argument("--env-file", default=ENV_FILE)
@@ -208,6 +272,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     args = build_parser().parse_args(argv)
     return args.func(args)
 

@@ -1,5 +1,9 @@
 """Safe user-level launchd lifecycle and target-host restart evidence.
 
+``brandman-supervisor`` is the command name. ``brand-os-supervisor`` is a
+deprecated alias and warns on use. Installed job labels stay ``com.brandos.*``
+so existing launchd jobs keep their identities.
+
 The managed job is deliberately a one-shot bounded worker. launchd starts it on
 an interval and never overlaps an invocation. Browser-assisted deployments are
 forced into secretless mode even if the user's launchd environment contains an
@@ -593,7 +597,13 @@ def _valid_uuid(value: Any) -> bool:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brandman-supervisor")
+    from brandman import LEGACY_ALIAS_HELP
+
+    parser = argparse.ArgumentParser(
+        prog="brandman-supervisor",
+        description="Install and inspect a BrandMan worker launchd job.",
+        epilog=LEGACY_ALIAS_HELP,
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     render = sub.add_parser("render")
     render.add_argument("--label", default="com.brandos.worker.demo-brand")
@@ -621,6 +631,9 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     args = _parser().parse_args(argv)
     try:
         if args.command == "render":

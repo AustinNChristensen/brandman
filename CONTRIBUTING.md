@@ -5,6 +5,7 @@ Thanks for helping. Bug reports, fixes, docs and adapters are all welcome.
 ## Before you start
 
 - For anything bigger than a small fix, open an issue first so we can agree on the approach.
+- Starter tasks are described in [docs/launch/good-first-issues.md](docs/launch/good-first-issues.md). They are not opened as GitHub issues until someone files them.
 - Security problems: do not open a public issue. Contact the maintainers privately through the repository's security advisory page.
 
 ## Development
@@ -24,7 +25,7 @@ uv run pytest
 ## Contributor License Agreement
 
 BrandMan is licensed under AGPL-3.0. The project owner also offers the code under
-other terms for the managed product, so every contributor must sign a CLA
+other terms for BrandMan Cloud, so every contributor must sign a CLA
 before a pull request can be merged. We use the
 [CLA Assistant](https://github.com/apps/cla-assistant) GitHub app: it comments on
 your first pull request with a link to sign, once, with your GitHub account.

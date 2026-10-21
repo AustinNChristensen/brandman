@@ -1,4 +1,7 @@
-"""Offline operator utilities for a standalone BrandMan installation."""
+"""Offline operator utilities for a standalone BrandMan installation.
+
+``brandman-ops`` is the command name. ``brand-os-ops`` is a deprecated alias.
+"""
 
 from __future__ import annotations
 
@@ -300,7 +303,13 @@ def _connect_readonly(path: Path) -> sqlite3.Connection:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brandman-ops")
+    from brandman import LEGACY_ALIAS_HELP
+
+    parser = argparse.ArgumentParser(
+        prog="brandman-ops",
+        description="Offline operator utilities for self-hosted BrandMan.",
+        epilog=LEGACY_ALIAS_HELP,
+    )
     parser.add_argument("--database", required=True)
     sub = parser.add_subparsers(dest="command", required=True)
     migrate = sub.add_parser("migrate")
@@ -362,6 +371,9 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     args = _parser().parse_args(argv)
     try:
         if args.command == "migrate": result = initialize_all(args.database, profile=args.profile)

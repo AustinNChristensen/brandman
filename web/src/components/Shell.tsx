@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useBrands } from '../state/BrandContext'
 import { brandColor } from '../lib/brands'
+import { isSampleBrand } from '../lib/demoData'
 import { Icon, type IconName } from './icons'
 
 const NAV: { to: string; label: string; icon: IconName }[] = [
@@ -28,15 +29,28 @@ export interface ShellMeters {
   spend?: string
 }
 
+function EditionNote() {
+  return <p className="edition-note">Free and open source (AGPL). <a href="https://usebrandman.com">BrandMan Cloud</a> is the hosted option.</p>
+}
+
+function DemoDataBanner({ brands }: { brands: { slug: string; name: string }[] }) {
+  if (!brands.some(isSampleBrand)) return null
+  return <p className="demo-data-banner" role="note">Demo data. Mission figures on a sample brand are not live results.</p>
+}
+
 export function Shell({ title, crumb, right, meters, children }: { title: ReactNode; crumb?: ReactNode; right?: ReactNode; meters?: ShellMeters; children: ReactNode }) {
   const { brands, selected, select } = useBrands()
   const location = useLocation()
   const search = location.search
-  const dots = useMemo(() => (selected ? brands.filter((b) => b.slug === selected) : brands).slice(0, 4), [brands, selected])
+  const visibleBrands = selected ? brands.filter((b) => b.slug === selected) : brands
+  const dots = useMemo(
+    () => (selected ? brands.filter((b) => b.slug === selected) : brands).slice(0, 4),
+    [brands, selected],
+  )
   return (
     <div className="shell">
       <aside className="side">
-        <div className="logo"><div className="logo-mark"><Icon name="layers" size={15} strokeWidth={2} /></div><div className="logo-name">BrandMan</div></div>
+        <div className="logo"><div className="logo-mark"><Icon name="layers" size={15} strokeWidth={2} /></div><div><div className="logo-name">BrandMan</div><div className="meta">Open source</div></div></div>
         <label className="brand-switch">
           <span style={{ display: 'flex', gap: 2 }}>{dots.map((b) => <span key={b.id} className="dot" style={{ background: brandColor(b.slug) }} />)}</span>
           <span>{selected ? brands.find((b) => b.slug === selected)?.name : 'All brands'}</span>
@@ -72,6 +86,7 @@ export function Shell({ title, crumb, right, meters, children }: { title: ReactN
               {brands.map((b) => <option key={b.id} value={b.slug}>{b.name}</option>)}
             </select>
           </label>
+          <EditionNote />
           <nav className="mobile-nav" aria-label="Primary navigation">
             {NAV.map((item) => (
               <NavLink key={item.to} to={{ pathname: item.to, search }} end={item.to === '/'} className={({ isActive }) => (isActive ? 'on' : '')}>
@@ -86,9 +101,10 @@ export function Shell({ title, crumb, right, meters, children }: { title: ReactN
           {crumb && <span className="crumb">{crumb}</span>}
           <h1>{title}</h1>
           <span style={{ marginLeft: 'auto' }} />
+          <EditionNote />
           {right}
         </header>
-        <div className="content">{children}</div>
+        <div className="content"><DemoDataBanner brands={visibleBrands} />{children}</div>
       </div>
     </div>
   )

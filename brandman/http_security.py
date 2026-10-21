@@ -23,9 +23,15 @@ _HOST = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?$")
 _PLACEHOLDER_PASSWORDS = frozenset({
     "password", "changeme", "change-me", "configured", "preview-password",
     "<stored preview password>", "<retrieve from the protected environment>",
+    # The value shipped in .env.example. It must never open a deployment.
+    "replace-with-a-secret-manager-reference",
 })
+# Legacy cookie name. Renaming it would sign existing operator browsers out.
 PREVIEW_SESSION_COOKIE = "brandos_session"
 PREVIEW_SESSION_TTL_SECONDS = 8 * 60 * 60
+# A personal token is a second secret for scripts and hosted MCP. It is not a
+# Cloud workspace token and it does not replace the preview password.
+MIN_API_TOKEN_LENGTH = 32
 
 
 def enforce_request_boundary(
@@ -56,6 +62,11 @@ def enforce_request_boundary(
         return _error(400, "HTTPS is required for this deployment.")
 
     password = str(env.get("BRANDMAN_PREVIEW_PASSWORD") or "")
+    if password.casefold() in _PLACEHOLDER_PASSWORDS:
+        return _error(
+            503,
+            "BRANDMAN_PREVIEW_PASSWORD is still an example value. Set a secret before starting BrandMan.",
+        )
     if not is_local and not _strong_remote_password(password):
         return _error(
             503,
@@ -74,6 +85,13 @@ def enforce_request_boundary(
         if fetch_site in {"cross-site", "none"}:
             return _error(403, "Cross-site browser mutations are not allowed.")
         origin = request.headers.get("origin")
+        # A same-origin HTML form can legitimately carry Origin: null when a
+        # restrictive referrer policy is in effect.  Fetch Metadata is then
+        # the browser's unambiguous same-origin signal; do not reject that
+        # request solely because the legacy Origin header is opaque.  A null
+        # origin without that signal still fails closed below.
+        if origin is not None and origin.strip().casefold() == "null" and fetch_site == "same-origin":
+            origin = None
         if origin is not None and not _same_origin(origin, request):
             return _error(403, "Cross-site browser mutations are not allowed.")
         referer = request.headers.get("referer")
@@ -116,12 +134,15 @@ def deployment_boundary_status(environment: Mapping[str, str]) -> dict[str, obje
     allowed, host_error = _allowed_hosts(environment)
     require_https, https_error = _require_https(environment)
     remote_hosts = sorted(host for host in allowed if not _is_loopback(host))
+    example_password = password.casefold() in _PLACEHOLDER_PASSWORDS
     remote_password_ready = not remote_hosts or _strong_remote_password(password)
-    healthy = bool(password) and host_error is None and https_error is None
+    healthy = bool(password) and not example_password and host_error is None and https_error is None
     healthy = healthy and remote_password_ready and (not remote_hosts or require_https)
     actions: list[str] = []
     if not password:
         actions.append("Set BRANDMAN_PREVIEW_PASSWORD in the deployed service environment.")
+    if example_password:
+        actions.append("Replace the example BRANDMAN_PREVIEW_PASSWORD with a secret.")
     if host_error:
         actions.append("Set BRANDMAN_ALLOWED_HOSTS to explicit hostnames without wildcards.")
     if remote_hosts and not require_https:
@@ -166,6 +187,27 @@ def validate_preview_session(
     payload = f"{version}:{expires_at}:{nonce}"
     expected = hmac.new(password.encode(), payload.encode(), hashlib.sha256).hexdigest()
     return hmac.compare_digest(supplied, expected)
+
+
+def personal_api_token_matches(
+    authorization: str, *, environment: Mapping[str, str] | None = None,
+) -> bool:
+    """True when ``Authorization: Bearer`` matches ``BRANDMAN_API_TOKEN``.
+
+    A missing, short, or example token never matches, so a copied placeholder
+    cannot authenticate.
+    """
+    env = environment if environment is not None else os.environ
+    token = str(env.get("BRANDMAN_API_TOKEN") or "").strip()
+    if len(token) < MIN_API_TOKEN_LENGTH or token.casefold() in _PLACEHOLDER_PASSWORDS:
+        return False
+    prefix = "Bearer "
+    if not authorization.startswith(prefix):
+        return False
+    supplied = authorization[len(prefix):].strip()
+    if not supplied:
+        return False
+    return hmac.compare_digest(supplied, token)
 
 
 def secrets_token() -> str:

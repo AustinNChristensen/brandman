@@ -1,7 +1,8 @@
 """Extension points for hosts that build on BrandMan.
 
-The self-hosted app needs none of this. A host such as a managed, multi-user
-deployment uses it to:
+BrandMan is free and open source (AGPL-3.0). The self-hosted app needs none of
+this. BrandMan Cloud (https://usebrandman.com), the hosted paid multi-workspace
+edition, uses it to:
 
 * replace the single-operator password gate with its own authentication
   (``set_authenticator``), including choosing which database a request uses;

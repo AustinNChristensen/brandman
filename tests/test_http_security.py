@@ -30,6 +30,45 @@ def _brand_payload(slug: str) -> dict:
     }
 
 
+def test_personal_api_token_authenticates_the_operator(monkeypatch):
+    token = "a" * 43
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", token)
+    with TestClient(app) as client:
+        accepted = client.get("/health", headers={"Authorization": f"Bearer {token}"})
+        wrong = client.get("/health", headers={"Authorization": "Bearer " + "b" * 43})
+        oauth_only = client.get("/mcp", headers={"Authorization": "Bearer not-the-personal-token"})
+        hosted = client.get("/mcp", headers={"Authorization": f"Bearer {token}"})
+    assert accepted.status_code == 200
+    assert wrong.status_code == 401
+    assert oauth_only.status_code == 401
+    assert "resource_metadata" in oauth_only.headers.get("www-authenticate", "")
+    assert hosted.status_code != 401
+
+
+def test_short_or_placeholder_api_tokens_do_not_authenticate(monkeypatch):
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", "too-short")
+    with TestClient(app) as client:
+        short = client.get("/health", headers={"Authorization": "Bearer too-short"})
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", "replace-with-a-secret-manager-reference")
+    with TestClient(app) as client:
+        placeholder = client.get(
+            "/health",
+            headers={"Authorization": "Bearer replace-with-a-secret-manager-reference"},
+        )
+    assert short.status_code == 401
+    assert placeholder.status_code == 401
+
+
+def test_personal_token_does_not_replace_the_preview_password(monkeypatch):
+    monkeypatch.delenv("BRANDMAN_PREVIEW_PASSWORD", raising=False)
+    monkeypatch.setenv("BRANDMAN_API_TOKEN", "c" * 43)
+    with TestClient(app) as client:
+        response = client.get("/health", headers={"Authorization": "Bearer " + "c" * 43})
+    assert response.status_code == 503
+
+
 def test_public_homepage_is_static_and_every_other_surface_stays_gated(monkeypatch):
     monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
     with TestClient(app) as client:
@@ -150,6 +189,24 @@ def test_same_origin_browser_and_explicit_non_browser_mutations_remain_supported
     assert explicit_client.status_code == 201
 
 
+def test_same_origin_form_with_opaque_origin_remains_supported(monkeypatch):
+    """Browser navigation form posts may send ``Origin: null`` under no-referrer."""
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        allowed = client.post(
+            "/api/brands", json=_brand_payload("same-origin-opaque-origin"),
+            headers={"Authorization": AUTH, "Origin": "null", "Sec-Fetch-Site": "same-origin"},
+        )
+        rejected = client.post(
+            "/api/brands", json=_brand_payload("opaque-origin-without-metadata"),
+            headers={"Authorization": AUTH, "Origin": "null"},
+        )
+
+    assert allowed.status_code == 201
+    assert rejected.status_code == 403
+    assert rejected.json() == {"detail": "Cross-site browser mutations are not allowed."}
+
+
 def test_host_allowlist_and_remote_https_fail_closed(monkeypatch):
     monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "a-strong-remote-preview-password")
     with TestClient(app) as client:
@@ -199,6 +256,23 @@ def test_remote_or_malformed_security_configuration_is_inert(monkeypatch):
     assert "wildcards" in wildcard.json()["detail"]
 
 
+def test_example_preview_password_is_rejected_on_loopback(monkeypatch):
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "replace-with-a-secret-manager-reference")
+    example = "Basic " + base64.b64encode(
+        b"operator:replace-with-a-secret-manager-reference"
+    ).decode()
+    with TestClient(app) as client:
+        response = client.get("/health", headers={"Authorization": example})
+    assert response.status_code == 503
+    assert "example value" in response.json()["detail"]
+    assert "replace-with-a-secret-manager-reference" not in response.text
+    status = deployment_boundary_status({
+        "BRANDMAN_PREVIEW_PASSWORD": "replace-with-a-secret-manager-reference",
+    })
+    assert status["healthy"] is False
+    assert any("example" in action for action in status["actions"])
+
+
 def test_secret_free_deployment_readiness_distinguishes_local_and_remote_boundaries():
     local = deployment_boundary_status({"BRANDMAN_PREVIEW_PASSWORD": PASSWORD})
     unsafe_remote = deployment_boundary_status({
@@ -236,8 +310,13 @@ def test_homepage_console_figures_are_labeled_illustrative(monkeypatch):
         home = client.get("/")
 
     assert "ILLUSTRATIVE EXAMPLE" in home.text and "SAMPLE DATA" in home.text
-    assert "not live data" in home.text
+    assert "Demo data" in home.text and "not live data" in home.text
     assert "Your brand is healthy" not in home.text
+    assert "free, open-source" in home.text
+    assert "AGPL-3.0" in home.text
+    assert "BrandMan Cloud" in home.text
+    assert "https://usebrandman.com" in home.text
+    assert "Brand OS" not in home.text and "BrandOS" not in home.text
 
 
 class _LoginDestinationParser(HTMLParser):
@@ -305,6 +384,9 @@ def test_login_page_offers_access_request_without_leaking_password(monkeypatch):
     for page in (login, failed):
         assert 'id="request-access"' in page.text
         assert "run your own copy" in page.text
+        assert "BrandMan Cloud" in page.text
+        assert "https://usebrandman.com" in page.text
+        assert "AGPL-3.0" in page.text
         assert PASSWORD not in page.text
 
 
@@ -319,7 +401,8 @@ def test_access_panel_shows_mailto_only_when_contact_is_configured(monkeypatch):
 
     assert 'href="mailto:access@example.com"' in configured
     assert "mailto:" not in unset
-    assert "Access is by invitation." in unset
+    assert "There is no shared demo sign-in." in unset
+    assert "BRANDMAN_PREVIEW_PASSWORD" in unset
     for page in (configured, unset):
         assert "github.com/AustinNChristensen/brandman/issues" not in page
         assert "invited" not in page.lower() and "invite" not in page.lower()
