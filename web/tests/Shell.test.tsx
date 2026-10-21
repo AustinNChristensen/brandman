@@ -39,6 +39,12 @@ describe('Shell responsive navigation', () => {
     expect(within(mobileNav).getByRole('link', { name: 'Approvals' })).toHaveAttribute(
       'href', '/approvals?brand=demo-brand',
     )
+    const cloudLinks = screen.getAllByRole('link', { name: 'BrandMan Cloud' })
+    expect(cloudLinks).toHaveLength(2)
+    for (const link of cloudLinks) {
+      expect(link).toHaveAttribute('href', 'https://usebrandman.com')
+      expect(link.closest('p')).toHaveTextContent('Free and open source (AGPL).')
+    }
     const brandSelectors = screen.getAllByLabelText('Brand')
     expect(brandSelectors).toHaveLength(2)
     fireEvent.change(brandSelectors[1], { target: { value: 'second-brand' } })

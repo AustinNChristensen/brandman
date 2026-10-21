@@ -1,4 +1,9 @@
-"""Validated user-launchd lifecycle for the BrandMan loopback API origin."""
+"""Validated user-launchd lifecycle for the BrandMan loopback API origin.
+
+``brandman-api-supervisor`` is the command name. ``brand-os-api-supervisor``
+is a deprecated alias and warns on use. Installed job labels stay
+``com.brandos.api.*`` so existing launchd jobs keep their identities.
+"""
 from __future__ import annotations
 
 import argparse
@@ -242,7 +247,13 @@ def uninstall_api(label: str = DEFAULT_LABEL) -> dict[str, Any]:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brandman-api-supervisor")
+    from brandman import LEGACY_ALIAS_HELP
+
+    parser = argparse.ArgumentParser(
+        prog="brandman-api-supervisor",
+        description="Install and inspect a BrandMan API launchd job.",
+        epilog=LEGACY_ALIAS_HELP,
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     render = sub.add_parser("render")
     render.add_argument("--database", required=True)
@@ -264,6 +275,9 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     args = _parser().parse_args(argv)
     try:
         if args.command == "render":

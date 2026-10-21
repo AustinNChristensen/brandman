@@ -1,4 +1,8 @@
-"""Safe, bounded local bootstrap for the BrandMan MVP."""
+"""Safe, bounded local bootstrap for self-hosted BrandMan.
+
+``brandman-bootstrap`` is the command name. ``brand-os-bootstrap`` is a
+deprecated alias and warns on use.
+"""
 
 from __future__ import annotations
 
@@ -203,9 +207,12 @@ def _next_actions(report: dict[str, Any]) -> list[str]:
 
 
 def _parser() -> argparse.ArgumentParser:
+    from brandman import LEGACY_ALIAS_HELP
+
     parser = argparse.ArgumentParser(
         prog="brandman-bootstrap",
         description="Initialize BrandMan, run one bounded safe cycle, and report readiness.",
+        epilog=LEGACY_ALIAS_HELP,
     )
     parser.add_argument("--database", default=str(store.DATA_PATH))
     parser.add_argument("--slug", default="demo-brand")
@@ -222,6 +229,9 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     args = _parser().parse_args(argv)
     generated_key = None
     try:

@@ -8,6 +8,7 @@ publishing stay with a human.**
 ## Local (stdio)
 
 The agent starts `brandman-mcp` itself and talks to your database directly.
+`brand-os-mcp` is a deprecated alias and warns on use.
 
 ```bash
 brandman mcp-config --client claude-code

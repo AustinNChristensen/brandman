@@ -1,9 +1,13 @@
 """Primary brandman-* commands identify as BrandMan on caught errors (AUS-14)."""
 import importlib
 import tomllib
+import warnings
 from pathlib import Path
 
 import pytest
+
+from brandman import warn_if_legacy_command
+from brandman import cli
 
 CASES = [
     ("brandman.bootstrap_cli", "brandman-bootstrap", ["--execution-agent", "demo"],
@@ -33,3 +37,34 @@ def test_legacy_aliases_remain_registered_to_same_entry_points():
     )["project"]["scripts"]
     for primary in ("mcp", "worker", "bootstrap", "ops", "supervisor", "api-supervisor"):
         assert scripts[f"brand-os-{primary}"] == scripts[f"brandman-{primary}"]
+
+
+def test_legacy_command_name_warns(capsys):
+    with pytest.warns(DeprecationWarning, match="brand-os-ops is deprecated"):
+        warn_if_legacy_command("/usr/local/bin/brand-os-ops")
+    assert "use brandman-ops instead" in capsys.readouterr().err
+
+
+def test_legacy_windows_command_name_warns(capsys):
+    with pytest.warns(DeprecationWarning, match="brand-os-mcp is deprecated"):
+        warn_if_legacy_command("/usr/local/bin/brand-os-mcp.exe")
+    assert "use brandman-mcp instead" in capsys.readouterr().err
+
+
+def test_canonical_command_name_is_silent(capsys):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        warn_if_legacy_command("/usr/local/bin/brandman-ops")
+    assert capsys.readouterr().err == ""
+
+
+def test_brandman_help_states_open_core_and_deprecated_aliases(capsys):
+    with pytest.raises(SystemExit) as raised:
+        cli.main(["--help"])
+    assert raised.value.code == 0
+    text = " ".join(capsys.readouterr().out.split())
+    assert "AGPL-3.0" in text
+    assert "BrandMan Cloud" in text
+    assert "usebrandman.com" in text
+    assert "brand-os-*" in text
+    assert "BRANDMAN_*" in text
