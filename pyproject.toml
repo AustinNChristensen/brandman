@@ -14,7 +14,10 @@ dependencies = [
 
 [project.optional-dependencies]
 # Optional built-in drafting (brandman/drafting.py). Agents over MCP need none of it.
+# Install one extra, or both. The core package stays free of model SDKs.
 anthropic = ["anthropic>=1.12,<2"]
+openai = ["openai>=1.40,<3"]
+drafting = ["anthropic>=1.12,<2", "openai>=1.40,<3"]
 
 [project.scripts]
 brandman = "brandman.cli:main"

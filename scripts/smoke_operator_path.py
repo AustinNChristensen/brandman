@@ -163,7 +163,7 @@ def main() -> None:
         draft_text = f"{draft.stdout}\n{draft.stderr}"
         if draft.returncode == 0 or "source not found" in draft_text:
             _fail(f"draft without a key was confusing\n{draft_text}")
-        if "anthropic extra" not in draft_text and "ANTHROPIC_API_KEY" not in draft_text:
+        if "BRANDMAN_DRAFT_PROVIDER" not in draft_text and "anthropic extra" not in draft_text and "ANTHROPIC_API_KEY" not in draft_text:
             _fail(f"draft without a key did not explain setup\n{draft_text}")
 
         os.environ.update(runtime)

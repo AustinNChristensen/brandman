@@ -364,7 +364,9 @@ def create_campaign(slug: str, input: CampaignInput, request: Request) -> dict:
 def draft_campaign_from_source(slug: str, source_id: str, request: Request) -> dict:
     """Optional built-in drafting: plan a draft campaign for one source.
 
-    Requires the ``anthropic`` extra. Saves drafts only; approval is unchanged.
+    Requires a configured provider (``brandman[anthropic]`` or
+    ``brandman[openai]``). With no provider, use an MCP agent. Saves drafts
+    only; approval is unchanged.
     """
     try:
         return drafting.draft_campaign_from_source(

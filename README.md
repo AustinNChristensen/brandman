@@ -38,6 +38,10 @@ from the results. The brand context itself never lives inside a channel.
   edition. It is this core plus separate closed components (billing,
   multi-tenancy, and similar). Not part of this repository.
 
+BrandMan is the whole engine for one workspace. You bring your own agent,
+model and keys. Features released in BrandMan are never moved behind a
+paywall. BrandMan Cloud adds managed services, team and scale features.
+
 BrandOS / brand-os is retired as a product name. Older command and setting
 names still run; see below.
 
@@ -67,13 +71,28 @@ The sign-in password is `BRANDMAN_PREVIEW_PASSWORD` in `.env`. On a terminal,
 get defaults (the directory name, and a mission you should replace). Pass
 `--name`, `--mission`, `--voice` and `--compliance` to set them.
 
-No Anthropic key is required to draft. In the dashboard open **Content → New
+No model key is required. In the dashboard open **Content → New
 X draft → Save & submit for review**, then **Approvals**, and approve that
 exact revision. **Execution** then shows a pending handoff. Nothing is posted.
 A newsletter issue follows the same approval and becomes a Beehiiv handoff.
 An MCP client can save a campaign draft with `create_campaign` and
 `draft_post`; that draft still has to be turned into a review item and
 approved by a person. See [Getting started](docs/getting-started.md).
+
+`brandman init` also writes `BRANDMAN_API_TOKEN`. Scripts and a self-hosted
+`/mcp` client send it as `Authorization: Bearer`. The dashboard password is
+still required, and this is not a BrandMan Cloud workspace token.
+
+Built-in drafting is optional and stays out of the core install. With no
+provider configured, an external agent does the drafting. To draft inside
+BrandMan, install one extra and choose a provider:
+
+```bash
+uv tool install 'brandman[openai]'      # or brandman[anthropic], or brandman[drafting] for both
+export BRANDMAN_DRAFT_PROVIDER=openai   # anthropic | openai | none
+export OPENAI_API_KEY=…                 # or BRANDMAN_DRAFT_BASE_URL for Ollama, vLLM, xAI, OpenRouter
+brandman draft --brand my-brand --source <source-id>
+```
 
 `brandman mcp` starts the stdio MCP server. `brandman-mcp` still does the same
 thing. `uvx brandman` alone starts this CLI, so a registry or agent launch
