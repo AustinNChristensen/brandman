@@ -189,6 +189,24 @@ def test_same_origin_browser_and_explicit_non_browser_mutations_remain_supported
     assert explicit_client.status_code == 201
 
 
+def test_same_origin_form_with_opaque_origin_remains_supported(monkeypatch):
+    """Browser navigation form posts may send ``Origin: null`` under no-referrer."""
+    monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", PASSWORD)
+    with TestClient(app) as client:
+        allowed = client.post(
+            "/api/brands", json=_brand_payload("same-origin-opaque-origin"),
+            headers={"Authorization": AUTH, "Origin": "null", "Sec-Fetch-Site": "same-origin"},
+        )
+        rejected = client.post(
+            "/api/brands", json=_brand_payload("opaque-origin-without-metadata"),
+            headers={"Authorization": AUTH, "Origin": "null"},
+        )
+
+    assert allowed.status_code == 201
+    assert rejected.status_code == 403
+    assert rejected.json() == {"detail": "Cross-site browser mutations are not allowed."}
+
+
 def test_host_allowlist_and_remote_https_fail_closed(monkeypatch):
     monkeypatch.setenv("BRANDMAN_PREVIEW_PASSWORD", "a-strong-remote-preview-password")
     with TestClient(app) as client:
