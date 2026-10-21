@@ -1,4 +1,8 @@
-# Brand OS MVP technical scope
+# BrandMan MVP technical scope
+
+BrandMan is the free, open-source (AGPL-3.0) edition in this repository.
+[BrandMan Cloud](https://usebrandman.com) is the hosted paid multi-workspace
+edition and is outside this spec. BrandOS is retired as a product name.
 
 ## Outcome
 
@@ -14,7 +18,7 @@ A trusted, portable brand context and content action layer that a brand team can
 4. An agent performs the same flows through MCP rather than a browser.
 5. Record channel outcomes → propose an evidence-backed learning → explicitly
    accept it into canonical brand context.
-6. Report missing Brand OS capabilities discovered during live brand operations.
+6. Report missing BrandMan capabilities discovered during live brand operations.
 
 ## Data model
 
@@ -41,8 +45,8 @@ mutations using Origin/Referer and Fetch Metadata, disables response caching, an
 sets CSP/frame/referrer/MIME/cross-origin browser protections on every response,
 including authentication failures. Remote configuration requires an explicit
 hostname allowlist, HTTPS enforcement, and a non-placeholder password of at least
-16 characters. Production will replace this single-user boundary with workspace
-auth/RBAC.
+16 characters. Workspace auth and RBAC belong to BrandMan Cloud. This
+open-source edition keeps the single-operator boundary described here.
 
 ## Architecture
 

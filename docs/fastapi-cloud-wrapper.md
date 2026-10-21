@@ -65,10 +65,12 @@ runs; no publisher or deployment workflow is added or changed.
    schema/data, worker configuration and public contact setting without copying
    secret values. Compare behavior with this older 0.1.0 wheel. Preserve current
    data and credentials; do not replace a manually uploaded app blindly.
-3. Review environment **names**, not values: old `app.main:app` becomes wrapper
-   `main:app` (installed core `brandman.main:app`). Core accepts legacy
-   `BRAND_OS_*` aliases but canonical names are `BRANDMAN_*`; verify each mapping
-   from `brandman/__init__.py` and `.env.example` before any operator change.
+3. Review environment **names**, not values. The wrapper entrypoint is
+   `main:app`, which imports the installed core at `brandman.main:app`. A
+   pre-split entrypoint of `app.main:app` is retired; point the host at
+   `main:app`. Core accepts deprecated `BRAND_OS_*` aliases but canonical names
+   are `BRANDMAN_*`; verify each mapping from `brandman/__init__.py` and
+   `.env.example` before any operator change.
    Keep `BRANDMAN_DB` pointing at the reconciled durable destination and use
    `BRANDMAN_DATABASE_PROFILE=operating`. No destination is selected here.
    Preserve the existing credential master key and password via the host secret

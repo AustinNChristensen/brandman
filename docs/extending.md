@@ -1,7 +1,8 @@
 # Extending BrandMan
 
-BrandMan is meant to be built on: the managed edition is the open core plus a
-separate package that uses only the extension points below.
+BrandMan is free and open source (AGPL-3.0) and meant to be built on.
+[BrandMan Cloud](https://usebrandman.com), the hosted paid edition, is this
+open core plus a separate package that uses only the extension points below.
 
 ## Plugins
 

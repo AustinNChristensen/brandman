@@ -1,7 +1,9 @@
 # Getting started
 
 This takes about five minutes and ends with your own brand in BrandMan, the
-dashboard open, and an AI agent connected to it over MCP.
+dashboard open, and an AI agent connected to it over MCP. BrandMan is free and
+open source (AGPL-3.0). [BrandMan Cloud](https://usebrandman.com) is the hosted
+paid edition; these steps are for the self-hosted package.
 
 ## 1. Install
 
@@ -71,5 +73,5 @@ This turns one source into a draft campaign. It never approves or publishes.
 
 `brandman-worker` runs one bounded scheduler tick and processes due jobs
 (connector reads, measurement windows, plan refreshes). Run it from cron or a
-process supervisor, e.g. every five minutes. Or use Docker: see
-[Deployment](deployment.md).
+process supervisor, e.g. every five minutes. `brand-os-worker` still runs and
+prints a deprecation warning. Or use Docker: see [Deployment](deployment.md).

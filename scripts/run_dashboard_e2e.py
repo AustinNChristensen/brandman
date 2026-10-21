@@ -1,4 +1,4 @@
-"""Start BrandOS with a disposable, seeded development database for browser tests."""
+"""Start BrandMan with a disposable, seeded development database for browser tests."""
 
 from __future__ import annotations
 

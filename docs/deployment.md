@@ -1,5 +1,9 @@
 # Deployment
 
+This is self-hosted BrandMan, the free open-source edition (AGPL-3.0).
+[BrandMan Cloud](https://usebrandman.com) is the hosted paid edition and is not
+deployed from this repository.
+
 ## Docker Compose (single machine)
 
 ```bash

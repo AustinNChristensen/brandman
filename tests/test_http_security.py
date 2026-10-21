@@ -238,6 +238,11 @@ def test_homepage_console_figures_are_labeled_illustrative(monkeypatch):
     assert "ILLUSTRATIVE EXAMPLE" in home.text and "SAMPLE DATA" in home.text
     assert "not live data" in home.text
     assert "Your brand is healthy" not in home.text
+    assert "free, open-source" in home.text
+    assert "AGPL-3.0" in home.text
+    assert "BrandMan Cloud" in home.text
+    assert "https://usebrandman.com" in home.text
+    assert "Brand OS" not in home.text and "BrandOS" not in home.text
 
 
 class _LoginDestinationParser(HTMLParser):
@@ -305,6 +310,9 @@ def test_login_page_offers_access_request_without_leaking_password(monkeypatch):
     for page in (login, failed):
         assert 'id="request-access"' in page.text
         assert "run your own copy" in page.text
+        assert "BrandMan Cloud" in page.text
+        assert "https://usebrandman.com" in page.text
+        assert "AGPL-3.0" in page.text
         assert PASSWORD not in page.text
 
 

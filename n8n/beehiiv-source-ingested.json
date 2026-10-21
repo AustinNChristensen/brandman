@@ -1,5 +1,5 @@
 {
-  "name": "Brand OS — Beehiiv source ingested",
+  "name": "BrandMan — Beehiiv source ingested",
   "nodes": [
     {
       "parameters": {"httpMethod": "POST", "path": "brand-os/beehiiv-source", "responseMode": "onReceived"},

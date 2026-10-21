@@ -1,4 +1,4 @@
-"""The ``brandman`` command: set up, run and connect a self-hosted BrandMan.
+"""Set up, run, and connect self-hosted BrandMan (free, AGPL-3.0). BrandMan Cloud is the hosted paid edition at https://usebrandman.com.
 
     brandman init          create a .env, a database and your first brand
     brandman serve         run the dashboard, REST API and hosted MCP endpoint
@@ -6,7 +6,8 @@
     brandman draft         draft a campaign for a source (needs brandman[anthropic])
 
 The worker, MCP stdio server and operations tools keep their own commands
-(``brandman-worker``, ``brandman-mcp``, ``brandman-ops``, ...).
+(``brandman-worker``, ``brandman-mcp``, ``brandman-ops``, ...). ``brand-os-*``
+is a deprecated alias for each of those commands.
 """
 from __future__ import annotations
 
@@ -170,7 +171,11 @@ def cmd_draft(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="brandman", description=__doc__.split("\n\n")[0])
+    from brandman import LEGACY_ALIAS_HELP
+
+    parser = argparse.ArgumentParser(
+        prog="brandman", description=__doc__.split("\n\n")[0], epilog=LEGACY_ALIAS_HELP,
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     init = sub.add_parser("init", help="create a .env, database and first brand")
@@ -208,6 +213,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    from brandman import warn_if_legacy_command
+
+    warn_if_legacy_command()
     args = build_parser().parse_args(argv)
     return args.func(args)
 

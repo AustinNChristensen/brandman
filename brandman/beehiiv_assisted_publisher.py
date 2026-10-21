@@ -199,7 +199,11 @@ def verify_public_asset_url(
     opener = build_opener(_AllowlistedRedirectHandler(normalized_hosts))
     try:
         response = opener.open(
-            Request(url, headers={"Accept": "image/*", "User-Agent": "BrandOS-AssetVerifier/1.0"}),
+            Request(url, headers={
+                "Accept": "image/*",
+                # Stable wire token. Receivers may key on this string, so it is not the product name.
+                "User-Agent": "BrandOS-AssetVerifier/1.0",
+            }),
             timeout=timeout_seconds,
         )
     except (HTTPError, OSError) as exc:
