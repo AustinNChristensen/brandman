@@ -19,7 +19,7 @@ refuses to embed a uv cache path. Codex should get the same treatment.
 
 **Done when.**
 
-- `brandman mcp-config --client codex` prints a `[mcp_servers.brandman]` table whose `command` is the installed `brandman-mcp`, or `uvx` with args `--from`, `brandman`, `brandman-mcp` when that entry point is inside a uv cache.
+- `brandman mcp-config --client codex` prints a `[mcp_servers.brandman]` table whose `command` is the installed `brandman-mcp`, or `uvx` with args `brandman`, `mcp` (`uvx brandman mcp`) when that entry point is inside a uv cache.
 - The printed `BRANDMAN_DB` is the database path passed in, and `BRANDMAN_DATABASE_PROFILE` is `operating`.
 - A test covers both the persistent entry point and the uv-cache fallback, and asserts the output does not contain `.cache/uv`.
 - `docs/mcp.md` shows the command instead of only a hand-written example.

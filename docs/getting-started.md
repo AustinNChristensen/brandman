@@ -53,10 +53,12 @@ brandman mcp-config --client claude-code    # prints a `claude mcp add …` comm
 brandman mcp-config --client claude-desktop # prints JSON for claude_desktop_config.json
 ```
 
-`mcp-config` prints a command the agent can keep. A normal install uses the
-`brandman-mcp` entry point on your `PATH`. Running the command through `uvx`
-prints `uvx --from brandman brandman-mcp` instead of a path inside the uv
-cache, which would break the next time the cache is cleared.
+`brandman mcp` starts the stdio server. `brandman-mcp` remains the same
+server. `mcp-config` prints a command the agent can keep. A normal install
+uses the `brandman-mcp` entry point on your `PATH`. Running the command
+through `uvx` prints `uvx brandman mcp` instead of a path inside the uv
+cache, which would break the next time the cache is cleared. `uvx brandman`
+without `mcp` starts the CLI, not the server.
 
 Claude Code, Cursor, Codex, and Grok Bot all use this same server. Cursor's
 config is also what Grok Bot reads when it runs in Cursor. Codex uses the

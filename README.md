@@ -28,7 +28,7 @@ In another terminal, from `my-brand`:
 uvx --from brandman brandman mcp-config --client cursor
 ```
 
-That prints a command the agent can keep: `uvx --from brandman brandman-mcp`. It does not write a path inside the uv cache.
+`brandman mcp` starts the stdio MCP server. `brandman-mcp` does the same thing. The printed command is `uvx brandman mcp`. `uvx brandman` alone starts the CLI. It does not write a path inside the uv cache.
 
 Ask the agent to read the brand context and draft an X post. It saves a draft. In the dashboard, open **Content → New X draft → Save & submit for review**, then **Approvals**, and approve that exact revision. **Execution** shows a pending handoff. Nothing is posted.
 
@@ -36,7 +36,7 @@ Ask the agent to read the brand context and draft an X post. It saves a draft. I
 
 ## How agents connect
 
-Every client talks to the same stdio server, `brandman-mcp`, against your SQLite file. Approving, scheduling, and publishing stay with a person. Details: [Connecting MCP clients](docs/mcp.md).
+Every client talks to the same stdio server (`brandman mcp`, or the `brandman-mcp` entry point) against your SQLite file. Approving, scheduling, and publishing stay with a person. Details: [Connecting MCP clients](docs/mcp.md).
 
 ### Claude Code
 
@@ -44,7 +44,7 @@ Every client talks to the same stdio server, `brandman-mcp`, against your SQLite
 uvx --from brandman brandman mcp-config --client claude-code
 ```
 
-Run the printed `claude mcp add …` command. It passes `BRANDMAN_DB` and starts `brandman-mcp`.
+Run the printed `claude mcp add …` command. It passes `BRANDMAN_DB` and starts the server with `uvx brandman mcp`.
 
 ### Cursor and Grok Bot
 
@@ -61,7 +61,7 @@ Add this to `~/.codex/config.toml`. Use the absolute path `init` wrote for `BRAN
 ```toml
 [mcp_servers.brandman]
 command = "uvx"
-args = ["--from", "brandman", "brandman-mcp"]
+args = ["brandman", "mcp"]
 
 [mcp_servers.brandman.env]
 BRANDMAN_DB = "/absolute/path/my-brand/brandman.db"
