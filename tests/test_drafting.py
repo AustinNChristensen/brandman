@@ -72,9 +72,27 @@ def test_anthropic_planner_requests_structured_output_with_refusal_fallback(monk
     fake.APIConnectionError = type("APIConnectionError", (Exception,), {})
     fake.Anthropic = lambda: types.SimpleNamespace(beta=types.SimpleNamespace(messages=FakeMessages()))
     monkeypatch.setitem(sys.modules, "anthropic", fake)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-used")
     plan = drafting.anthropic_planner()({"name": "Demo"}, {"title": "t"})
     assert plan.campaign_name == "Launch: t"
     assert calls["model"] == drafting.DEFAULT_MODEL
     assert calls["output_format"] is CampaignPlan
     assert calls["fallbacks"] == "default" and calls["betas"] == [drafting.FALLBACK_BETA]
     assert "Demo" in calls["messages"][0]["content"]
+
+
+def test_missing_api_key_is_reported_before_a_provider_call(monkeypatch):
+    import sys
+    import types
+
+    fake = types.ModuleType("anthropic")
+    fake.AnthropicError = Exception
+
+    def refuse():
+        raise AssertionError("Anthropic client must not be constructed without a key")
+
+    fake.Anthropic = refuse
+    monkeypatch.setitem(sys.modules, "anthropic", fake)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(drafting.DraftingUnavailable, match="ANTHROPIC_API_KEY"):
+        drafting.draft_campaign_from_source("demo-brand", "missing-source", actor="chris")

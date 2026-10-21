@@ -23,6 +23,8 @@ _HOST = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?$")
 _PLACEHOLDER_PASSWORDS = frozenset({
     "password", "changeme", "change-me", "configured", "preview-password",
     "<stored preview password>", "<retrieve from the protected environment>",
+    # The value shipped in .env.example. It must never open a deployment.
+    "replace-with-a-secret-manager-reference",
 })
 # Legacy cookie name. Renaming it would sign existing operator browsers out.
 PREVIEW_SESSION_COOKIE = "brandos_session"
@@ -57,6 +59,11 @@ def enforce_request_boundary(
         return _error(400, "HTTPS is required for this deployment.")
 
     password = str(env.get("BRANDMAN_PREVIEW_PASSWORD") or "")
+    if password.casefold() in _PLACEHOLDER_PASSWORDS:
+        return _error(
+            503,
+            "BRANDMAN_PREVIEW_PASSWORD is still an example value. Set a secret before starting BrandMan.",
+        )
     if not is_local and not _strong_remote_password(password):
         return _error(
             503,
@@ -117,12 +124,15 @@ def deployment_boundary_status(environment: Mapping[str, str]) -> dict[str, obje
     allowed, host_error = _allowed_hosts(environment)
     require_https, https_error = _require_https(environment)
     remote_hosts = sorted(host for host in allowed if not _is_loopback(host))
+    example_password = password.casefold() in _PLACEHOLDER_PASSWORDS
     remote_password_ready = not remote_hosts or _strong_remote_password(password)
-    healthy = bool(password) and host_error is None and https_error is None
+    healthy = bool(password) and not example_password and host_error is None and https_error is None
     healthy = healthy and remote_password_ready and (not remote_hosts or require_https)
     actions: list[str] = []
     if not password:
         actions.append("Set BRANDMAN_PREVIEW_PASSWORD in the deployed service environment.")
+    if example_password:
+        actions.append("Replace the example BRANDMAN_PREVIEW_PASSWORD with a secret.")
     if host_error:
         actions.append("Set BRANDMAN_ALLOWED_HOSTS to explicit hostnames without wildcards.")
     if remote_hosts and not require_https:

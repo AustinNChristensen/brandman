@@ -7,13 +7,23 @@ deployed from this repository.
 ## Docker Compose (single machine)
 
 ```bash
-cp .env.example .env     # set BRANDMAN_PREVIEW_PASSWORD (16+ characters)
-docker compose up -d
+cp .env.example .env     # set BRANDMAN_PREVIEW_PASSWORD to a real secret
+docker compose up -d     # pulls ghcr.io/austinnchristensen/brandman:latest
 ```
 
 Opens on <http://localhost:8000/app>. Compose runs the web app and a worker
 that ticks every five minutes, sharing the `brandman-data` volume. The port is
-published on the host's loopback only.
+published on the host's loopback only. `docker compose up` uses the published
+image when it is available. `latest` moves only when a release is published;
+it is not the default branch. `docker compose up --build` builds this checkout
+instead.
+
+`.env.example` leaves `BRANDMAN_ALLOWED_HOSTS` and `BRANDMAN_REQUIRE_HTTPS`
+commented out. Uncommenting them, then opening `http://localhost:8000`, makes
+every request fail with "HTTPS is required". Set those only behind a TLS proxy.
+The example password is rejected; replace it before starting. Compose overrides
+`BRANDMAN_DB` to `/data/brandman.db` on the `brandman-data` volume. The database
+path in `.env.example` is for a host install, not for this Compose file.
 
 ## Behind a TLS proxy
 
@@ -40,7 +50,9 @@ the `brandman` package on PyPI.
 Build source packages with `uv build` on a machine with Node.js 22.12+ and npm.
 The wheel includes the dashboard; its runtime requires only Python. Docker builds
 the same dashboard and package in a build stage and leaves Node out of the
-runtime image. ## Source deployments and the dashboard build
+runtime image.
+
+## Source deployments and the dashboard build
 
 The built dashboard (`brandman/static/app`) is generated, not tracked in git.
 The app checks for it at **startup**:

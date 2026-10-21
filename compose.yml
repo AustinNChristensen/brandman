@@ -1,7 +1,9 @@
 # Local self-hosting:  cp .env.example .env  (set BRANDMAN_PREVIEW_PASSWORD)
 #                      docker compose up -d   then open http://localhost:8000/app
-# The port is published on the host's loopback only. For a public deployment,
-# put a TLS proxy in front and set BRANDMAN_ALLOWED_HOSTS / REQUIRE_HTTPS.
+# `up` pulls ghcr.io/austinnchristensen/brandman:latest (the last published
+# release). Add --build to build this checkout instead.
+# Keep BRANDMAN_REQUIRE_HTTPS unset here. The port is loopback-only. For a
+# public deployment, put a TLS proxy in front and set ALLOWED_HOSTS / REQUIRE_HTTPS.
 services:
   brandman:
     build: .
