@@ -1,5 +1,7 @@
 # BrandMan
 
+<!-- mcp-name: io.github.AustinNChristensen/brandman -->
+
 BrandMan is an agent-first brand brain. It keeps a brand's mission, voice,
 compliance rules, audience personas, content sources, campaigns and results in
 one governed place, and lets AI agents (through MCP) and people (through a
@@ -41,13 +43,57 @@ names still run; see below.
 
 ## Quickstart
 
-Requirements for a source checkout: Python 3.11+, [uv](https://docs.astral.sh/uv/), and Node.js 22.12+ with npm.
+A published install needs Python 3.11+. A source checkout also needs [uv](https://docs.astral.sh/uv/) and Node.js 22.12+ with npm.
 
 > **Deprecated names.** For existing installs, the `brand-os-*` commands and
 > `BRAND_OS_*` environment variables still work and warn on use. The canonical
 > names are `brandman-*` and `BRANDMAN_*`. A `BRANDMAN_*` value wins when both
 > are set. The session cookie stays `brandos_session` so a browser that is
 > already signed in stays signed in.
+
+Install the published package. The wheel includes the dashboard, so this needs
+no Node.js:
+
+```bash
+uv tool install brandman          # or: pip install brandman
+mkdir my-brand && cd my-brand
+brandman init                     # prompts on a terminal; otherwise uses defaults
+brandman serve                    # http://127.0.0.1:8000/app
+brandman mcp-config --client cursor
+```
+
+The sign-in password is `BRANDMAN_PREVIEW_PASSWORD` in `.env`. On a terminal,
+`init` asks for the brand. Without a terminal, or with `-y`, omitted fields
+get defaults (the directory name, and a mission you should replace). Pass
+`--name`, `--mission`, `--voice` and `--compliance` to set them.
+
+No Anthropic key is required to draft. In the dashboard open **Content → New
+X draft → Save & submit for review**, then **Approvals**, and approve that
+exact revision. **Execution** then shows a pending handoff. Nothing is posted.
+A newsletter issue follows the same approval and becomes a Beehiiv handoff.
+An MCP client can save a campaign draft with `create_campaign` and
+`draft_post`; that draft still has to be turned into a review item and
+approved by a person. See [Getting started](docs/getting-started.md).
+
+`brandman mcp` starts the stdio MCP server. `brandman-mcp` still does the same
+thing. `uvx brandman` alone starts this CLI, so a registry or agent launch
+has to be `uvx brandman mcp`. `brandman mcp-config` prints a command the
+agent can keep: the installed `brandman-mcp`, or `uvx brandman mcp` when you
+are inside a temporary `uvx` environment. It does not write a uv cache path.
+
+With Docker, from a checkout of this repository:
+
+```bash
+cp .env.example .env
+# Set BRANDMAN_PREVIEW_PASSWORD to a real secret. Leave ALLOWED_HOSTS and
+# REQUIRE_HTTPS commented out for this loopback Compose file.
+docker compose up -d              # pulls ghcr.io/austinnchristensen/brandman:latest
+```
+
+`latest` is the last published release, not the default branch. Add `--build`
+to build this checkout instead of pulling the image.
+
+From a source checkout (Python 3.11+, [uv](https://docs.astral.sh/uv/), Node.js 22.12+):
 
 ```bash
 git clone https://github.com/AustinNChristensen/brandman.git
@@ -59,9 +105,6 @@ uv run brandman init        # asks for your brand; writes .env and the database
 uv run brandman serve       # http://127.0.0.1:8000/app (password is in .env)
 uv run brandman mcp-config --client claude-code   # connect an agent
 ```
-
-Or with Docker: `cp .env.example .env`, set `BRANDMAN_PREVIEW_PASSWORD`, then
-`docker compose up -d`.
 
 The source HTML (`web/index.html`) and React code are tracked; generated files in
 `brandman/static/app/` are ignored. After changing dashboard source, rerun

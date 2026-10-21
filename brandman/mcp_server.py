@@ -360,7 +360,7 @@ def create_campaign(slug: str, name: str, objective: str, source_id: str | None 
 
 @mcp.tool()
 def draft_post(campaign_id: str, channel: str, body: str) -> dict:
-    """Create a draft social post. It must be approved before it can be scheduled."""
+    """Save a canonical campaign draft. This does not submit it for approval or create a handoff."""
     _initialize_runtime()
     if not store.row("SELECT 1 FROM campaigns WHERE id=?", (campaign_id,)):
         raise ValueError("Unknown campaign")

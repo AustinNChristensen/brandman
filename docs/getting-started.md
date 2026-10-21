@@ -31,8 +31,11 @@ brandman init
   credential-encryption key;
 - creates `brandman.db` and your brand.
 
-Pass `--name`, `--mission`, `--voice`, `--compliance` and `-y` to run it
-without prompts. Add `--with-demo` to also load the two sample brands.
+On a terminal it prompts. Without a terminal, and also with `-y`, any field
+you omit gets a default: the directory name as the brand name, and
+"Help the right people understand and choose this brand." as the mission.
+Replace that mission. Pass `--name`, `--mission`, `--voice` and `--compliance`
+to set them explicitly. Add `--with-demo` to also load the two sample brands.
 
 ## 3. Open the dashboard
 
@@ -50,10 +53,21 @@ brandman mcp-config --client claude-code    # prints a `claude mcp add …` comm
 brandman mcp-config --client claude-desktop # prints JSON for claude_desktop_config.json
 ```
 
+`brandman mcp` starts the stdio server. `brandman-mcp` remains the same
+server. `mcp-config` prints a command the agent can keep. A normal install
+uses the `brandman-mcp` entry point on your `PATH`. Running the command
+through `uvx` prints `uvx brandman mcp` instead of a path inside the uv
+cache, which would break the next time the cache is cleared. `uvx brandman`
+without `mcp` starts the CLI, not the server.
+
 Then ask your agent something like *"Read the brand context for my-brand and
-draft three X posts about our launch."* It reads the brand's mission, voice,
-rules, personas and accepted learnings, and saves drafts. You approve the
-exact revision in the dashboard; nothing is published automatically. See
+draft three X posts about our launch."* `draft_post` saves canonical campaign
+drafts. It does not submit them for approval. In the dashboard, open
+**Content → Campaign posts → Create review draft**, then **Submit for review**.
+You can skip the agent: **Content → New X draft → Save & submit for review**
+needs no API key. Approve that exact revision under **Approvals**. **Execution**
+shows a pending handoff for X, or for Beehiiv after the same approval on a
+newsletter issue. Nothing is published automatically. See
 [MCP clients](mcp.md) for details.
 
 ## 5. Optional: built-in drafting
@@ -68,6 +82,9 @@ brandman draft --brand my-brand --source <source-id>   # a source added in the d
 ```
 
 This turns one source into a draft campaign. It never approves or publishes.
+Without the extra, or without `ANTHROPIC_API_KEY`, the command says so even
+if the source id is wrong. Create the source first (the dashboard's Sources
+tab, or `POST /api/brands/{slug}/sources`) and pass its id.
 
 ## 6. Keep it running
 
