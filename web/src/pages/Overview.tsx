@@ -8,6 +8,7 @@ import { Icon } from '../components/icons'
 import { Shell } from '../components/Shell'
 import { Bar, BrandTag, Card, CardHeader, Chip, Empty, ErrorState, Kpi, Loading } from '../components/ui'
 import { brandColor } from '../lib/brands'
+import { isSampleBrand } from '../lib/demoData'
 import { addDays, money, parseDate, relTime, titleCase } from '../lib/format'
 import { useBrands } from '../state/BrandContext'
 import { metersFrom, useWorkspace } from '../state/useWorkspace'
@@ -163,6 +164,7 @@ function BrandCard({ brand }: { brand: Brand }) {
       {scorecard && scorecard.goals.length > 0 && (
         <div className="stack" style={{ gap: 6 }}>
           <div className="meta">{scorecard.mission_name}</div>
+          {isSampleBrand(brand) && <div className="meta">Demo data. These mission numbers are sample targets, not live results.</div>}
           {scorecard.goals.map((g) => (
             <div key={g.metric} className="row" style={{ justifyContent: 'space-between', fontSize: 12.5 }}>
               <span>{titleCase(g.metric)}</span>

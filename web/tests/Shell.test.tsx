@@ -39,6 +39,8 @@ describe('Shell responsive navigation', () => {
     expect(within(mobileNav).getByRole('link', { name: 'Approvals' })).toHaveAttribute(
       'href', '/approvals?brand=demo-brand',
     )
+    expect(screen.getByRole('note')).toHaveTextContent('Demo data')
+    expect(screen.getByRole('note')).toHaveTextContent('not live results')
     const cloudLinks = screen.getAllByRole('link', { name: 'BrandMan Cloud' })
     expect(cloudLinks).toHaveLength(2)
     for (const link of cloudLinks) {

@@ -14,6 +14,7 @@ for (const width of [1440, 390]) {
       })
       await page.goto(`./${scope}`)
       await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+      await expect(page.getByRole('note')).toContainText('Demo data')
       await expect(page.getByText('Loading...')).toHaveCount(0)
       await expect(page.getByText('Operator loop').first()).toBeVisible()
       expect(personalMissionReads).toEqual([])

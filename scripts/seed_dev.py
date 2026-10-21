@@ -97,7 +97,7 @@ def main() -> None:
             ]},
         ], sources=[
             {"title": "Doctor of Credit — 5/24 thread", "source_type": "rss", "body_summary": "Reader-reported data points on business cards and 5/24.", "url": "https://www.doctorofcredit.com/", "lifecycle_state": "published", "scheduled_for": at(-2, 9)},
-            {"title": "Weekly points brief #142", "source_type": "beehiiv", "body_summary": "Sent to 4,812 subscribers.", "lifecycle_state": "published", "scheduled_for": at(-3, 12)},
+            {"title": "Weekly points brief #142", "source_type": "beehiiv", "body_summary": "Demo data: an invented subscriber count for this sample source, not a measurement.", "lifecycle_state": "published", "scheduled_for": at(-3, 12)},
             {"title": "Reader replies (Beehiiv inbox)", "source_type": "manual", "body_summary": "Three data points with screenshots on the 5/24 change.", "lifecycle_state": "draft"},
         ])
 
@@ -131,8 +131,8 @@ def main() -> None:
 
         # A proposed learning with evidence
         must(client.post("/api/brands/demo-brand/learnings", json={
-            "hypothesis": "Subject lines with a specific dollar amount open 9 points higher.",
-            "evidence": "12 sends over 90 days; 5 with a dollar amount averaged 58% opens vs 49% without.",
+            "hypothesis": "Demo data: subject lines with a specific dollar amount open higher. The rate below is invented.",
+            "evidence": "Demo data, not a measurement: 12 sends over 90 days; 5 with a dollar amount averaged 58% opens vs 49% without.",
             "proposed_change": "Prefer a concrete dollar figure in the subject when the issue is about an offer.",
             "scope": {"stage": "brand_context", "channel": "newsletter"},
             "effect": {"metric": "open_rate", "direction": "up", "size": "0.09"},
