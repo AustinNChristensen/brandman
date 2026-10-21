@@ -19,6 +19,9 @@ def test_init_writes_private_env_and_creates_the_brand(tmp_path, monkeypatch):
         env = (tmp_path / ".env").read_text()
         assert (tmp_path / ".env").stat().st_mode & 0o777 == 0o600
         assert "BRANDMAN_SEED_PACK=none" in env and "BRANDMAN_PREVIEW_PASSWORD=" in env
+        assert "BRANDMAN_API_TOKEN=" in env
+        token = next(line.split("=", 1)[1] for line in env.splitlines() if line.startswith("BRANDMAN_API_TOKEN="))
+        assert len(token) >= 32
         brand = store.get_brand("acme-widgets")
         assert brand["mission"] == "Help people pick widgets."
         assert store.get_brand("demo-brand") is None
@@ -58,7 +61,12 @@ def test_init_without_a_terminal_uses_directory_defaults(tmp_path, monkeypatch):
 
 
 def test_draft_reports_setup_before_a_missing_source(tmp_path, monkeypatch):
-    for key in ("BRANDMAN_DB", "BRANDMAN_PREVIEW_PASSWORD", "BRANDMAN_SEED_PACK", "BRANDMAN_CREDENTIAL_MASTER_KEY", "ANTHROPIC_API_KEY"):
+    for key in (
+        "BRANDMAN_DB", "BRANDMAN_PREVIEW_PASSWORD", "BRANDMAN_SEED_PACK",
+        "BRANDMAN_CREDENTIAL_MASTER_KEY", "BRANDMAN_API_TOKEN", "ANTHROPIC_API_KEY",
+        "OPENAI_API_KEY", "BRANDMAN_DRAFT_API_KEY", "BRANDMAN_DRAFT_BASE_URL",
+        "BRANDMAN_DRAFT_PROVIDER", "BRANDMAN_DRAFT_MODEL",
+    ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("BRANDMAN_DATABASE_PROFILE", "test")
     monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: False)
@@ -74,7 +82,7 @@ def test_draft_reports_setup_before_a_missing_source(tmp_path, monkeypatch):
         os.environ.update(environment)
     message = str(raised.value)
     assert "source not found" not in message
-    assert "anthropic extra" in message or "ANTHROPIC_API_KEY" in message
+    assert "BRANDMAN_DRAFT_PROVIDER" in message
 
 
 def test_mcp_config_shapes():

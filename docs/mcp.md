@@ -40,6 +40,15 @@ brandman mcp-config --client claude-code --url https://your-host
 The client opens a browser sign-in. The consent screen lists what the client
 may do. Tokens are short-lived and can be revoked.
 
+## Self-hosted HTTP with a personal token
+
+On a server you run, `brandman init` writes `BRANDMAN_API_TOKEN`. Send it as
+`Authorization: Bearer` to the REST API and to `/mcp`. The preview password
+must still be configured; the token does not replace it. A bearer value that
+is not this token still uses OAuth on `/mcp` and is rejected on the REST API.
+Short and example tokens never match. This is one operator's token. BrandMan
+Cloud workspace tokens stay in Cloud.
+
 ## Useful first tools
 
 | Tool | What it does |

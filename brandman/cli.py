@@ -3,7 +3,7 @@
     brandman init          create a .env, a database and your first brand
     brandman serve         run the dashboard, REST API and hosted MCP endpoint
     brandman mcp-config    print the MCP client configuration for this install
-    brandman draft         draft a campaign for a source (needs brandman[anthropic])
+    brandman draft         draft a campaign for a source (optional; bring your own model)
 
 The worker, MCP stdio server and operations tools keep their own commands
 (``brandman-worker``, ``brandman-mcp``, ``brandman-ops``, ...). ``brand-os-*``
@@ -99,6 +99,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             f"BRANDMAN_DB={database}",
             "BRANDMAN_DATABASE_PROFILE=operating",
             f"BRANDMAN_PREVIEW_PASSWORD={secrets.token_urlsafe(24)}",
+            f"BRANDMAN_API_TOKEN={secrets.token_urlsafe(32)}",
             f"BRANDMAN_CREDENTIAL_MASTER_KEY={Fernet.generate_key().decode()}",
             f"BRANDMAN_SEED_PACK={'demo' if args.with_demo else 'none'}",
             "",
@@ -122,6 +123,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     print("Next steps:")
     print(f"  cd {directory} && brandman serve        # then open http://127.0.0.1:8000/app")
     print("  The sign-in password is BRANDMAN_PREVIEW_PASSWORD in .env.")
+    print("  Scripts and hosted MCP can send Authorization: Bearer plus BRANDMAN_API_TOKEN from .env.")
     print("  brandman mcp-config                     # connect Claude or another MCP client")
     return 0
 
@@ -247,7 +249,7 @@ def build_parser() -> argparse.ArgumentParser:
     mcp.add_argument("--env-file", default=ENV_FILE)
     mcp.set_defaults(func=cmd_mcp_config)
 
-    draft = sub.add_parser("draft", help="draft a campaign for one source (needs brandman[anthropic])")
+    draft = sub.add_parser("draft", help="draft a campaign for one source (optional; bring your own model)")
     draft.add_argument("--brand", required=True)
     draft.add_argument("--source", required=True, help="source id")
     draft.add_argument("--env-file", default=ENV_FILE)

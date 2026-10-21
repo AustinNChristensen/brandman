@@ -29,6 +29,9 @@ _PLACEHOLDER_PASSWORDS = frozenset({
 # Legacy cookie name. Renaming it would sign existing operator browsers out.
 PREVIEW_SESSION_COOKIE = "brandos_session"
 PREVIEW_SESSION_TTL_SECONDS = 8 * 60 * 60
+# A personal token is a second secret for scripts and hosted MCP. It is not a
+# Cloud workspace token and it does not replace the preview password.
+MIN_API_TOKEN_LENGTH = 32
 
 
 def enforce_request_boundary(
@@ -177,6 +180,27 @@ def validate_preview_session(
     payload = f"{version}:{expires_at}:{nonce}"
     expected = hmac.new(password.encode(), payload.encode(), hashlib.sha256).hexdigest()
     return hmac.compare_digest(supplied, expected)
+
+
+def personal_api_token_matches(
+    authorization: str, *, environment: Mapping[str, str] | None = None,
+) -> bool:
+    """True when ``Authorization: Bearer`` matches ``BRANDMAN_API_TOKEN``.
+
+    A missing, short, or example token never matches, so a copied placeholder
+    cannot authenticate.
+    """
+    env = environment if environment is not None else os.environ
+    token = str(env.get("BRANDMAN_API_TOKEN") or "").strip()
+    if len(token) < MIN_API_TOKEN_LENGTH or token.casefold() in _PLACEHOLDER_PASSWORDS:
+        return False
+    prefix = "Bearer "
+    if not authorization.startswith(prefix):
+        return False
+    supplied = authorization[len(prefix):].strip()
+    if not supplied:
+        return False
+    return hmac.compare_digest(supplied, token)
 
 
 def secrets_token() -> str:
