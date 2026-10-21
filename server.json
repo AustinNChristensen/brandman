@@ -16,9 +16,8 @@
       "version": "0.1.1",
       "runtimeHint": "uvx",
       "runtimeArguments": [
-        {"type": "positional", "value": "--from"},
         {"type": "positional", "value": "brandman"},
-        {"type": "positional", "value": "brandman-mcp"}
+        {"type": "positional", "value": "mcp"}
       ],
       "transport": {"type": "stdio"},
       "environmentVariables": [

@@ -75,9 +75,11 @@ An MCP client can save a campaign draft with `create_campaign` and
 `draft_post`; that draft still has to be turned into a review item and
 approved by a person. See [Getting started](docs/getting-started.md).
 
-`brandman mcp-config` prints a command the agent can keep: the installed
-`brandman-mcp`, or `uvx --from brandman brandman-mcp` when you are inside a
-temporary `uvx` environment. It does not write a uv cache path.
+`brandman mcp` starts the stdio MCP server. `brandman-mcp` still does the same
+thing. `uvx brandman` alone starts this CLI, so a registry or agent launch
+has to be `uvx brandman mcp`. `brandman mcp-config` prints a command the
+agent can keep: the installed `brandman-mcp`, or `uvx brandman mcp` when you
+are inside a temporary `uvx` environment. It does not write a uv cache path.
 
 With Docker, from a checkout of this repository:
 

@@ -24,5 +24,5 @@ def test_readme_mcp_name_matches_server_json_and_package_version():
     assert package["identifier"] == "brandman"
     assert package["runtimeHint"] == "uvx"
     assert [item["value"] for item in package["runtimeArguments"]] == [
-        "--from", "brandman", "brandman-mcp",
+        "brandman", "mcp",
     ]

@@ -2,12 +2,14 @@
 
     brandman init          create a .env, a database and your first brand
     brandman serve         run the dashboard, REST API and hosted MCP endpoint
+    brandman mcp           run the stdio MCP server (same process as brandman-mcp)
     brandman mcp-config    print the MCP client configuration for this install
     brandman draft         draft a campaign for a source (needs brandman[anthropic])
 
 The worker, MCP stdio server and operations tools keep their own commands
-(``brandman-worker``, ``brandman-mcp``, ``brandman-ops``, ...). ``brand-os-*``
-is a deprecated alias for each of those commands.
+(``brandman-worker``, ``brandman-mcp``, ``brandman-ops``, ...). ``brandman mcp``
+starts the same server as ``brandman-mcp``. ``brand-os-*`` is a deprecated
+alias for each of those commands.
 """
 from __future__ import annotations
 
@@ -165,7 +167,8 @@ def _mcp_stdio_command() -> tuple[str, list[str]]:
     executable = shutil.which("brandman-mcp")
     if executable and not _ephemeral_uv_executable(executable):
         return executable, []
-    return "uvx", ["--from", "brandman", "brandman-mcp"]
+    # ``uvx brandman`` starts the CLI. The server is the ``mcp`` subcommand.
+    return "uvx", ["brandman", "mcp"]
 
 
 def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
@@ -186,6 +189,14 @@ def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
         args = " ".join(server.get("args", []))
         return f"claude mcp add brandman {env} -- {server['command']} {args}".rstrip()
     return json.dumps({"mcpServers": {"brandman": server}}, indent=2)
+
+
+def cmd_mcp(_args: argparse.Namespace) -> int:
+    """Run the stdio MCP server. ``brandman-mcp`` calls the same entry point."""
+    from brandman.mcp_server import main as run_mcp
+
+    run_mcp()
+    return 0
 
 
 def cmd_mcp_config(args: argparse.Namespace) -> int:
@@ -240,6 +251,9 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--proxy-headers", action="store_true", help="trust X-Forwarded-* from a TLS proxy")
     serve.add_argument("--env-file", default=ENV_FILE)
     serve.set_defaults(func=cmd_serve)
+
+    mcp_server = sub.add_parser("mcp", help="run the stdio MCP server (same as brandman-mcp)")
+    mcp_server.set_defaults(func=cmd_mcp)
 
     mcp = sub.add_parser("mcp-config", help="print MCP client configuration")
     mcp.add_argument("--client", choices=("claude-desktop", "claude-code", "cursor", "json"), default="claude-desktop")
