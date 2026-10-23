@@ -74,6 +74,13 @@ def enforce_request_boundary(
         if fetch_site in {"cross-site", "none"}:
             return _error(403, "Cross-site browser mutations are not allowed.")
         origin = request.headers.get("origin")
+        # A same-origin HTML form can legitimately carry Origin: null when a
+        # restrictive referrer policy is in effect.  Fetch Metadata is then
+        # the browser's unambiguous same-origin signal; do not reject that
+        # request solely because the legacy Origin header is opaque.  A null
+        # origin without that signal still fails closed below.
+        if origin is not None and origin.strip().casefold() == "null" and fetch_site == "same-origin":
+            origin = None
         if origin is not None and not _same_origin(origin, request):
             return _error(403, "Cross-site browser mutations are not allowed.")
         referer = request.headers.get("referer")
