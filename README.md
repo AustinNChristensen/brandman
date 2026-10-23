@@ -1,124 +1,220 @@
 # BrandMan
 
 BrandMan is an agent-first brand brain. It keeps a brand's mission, voice,
-compliance rules, audience personas, content sources, campaigns and results in
-one governed place, and lets AI agents (through MCP) and people (through a
-dashboard) work from that same source of truth.
+compliance rules, audience personas, sources, campaigns, and results in one
+place, and lets AI agents (through MCP) and people (through a dashboard) work
+from that same record.
 
-Channels are replaceable adapters. X, a newsletter platform or your own site
-sit at the edge: BrandMan drafts for them, records what happened, and learns
-from the results. The brand context itself never lives inside a channel.
+**This repository is the AGPL-3.0 open core.** It is free software and is not
+paywalled. You can run, modify, and self-host it with no BrandMan Cloud
+account. If you run a modified version as a network service, the AGPL requires
+you to offer that source to the people who use the service. The BrandMan name
+and logo are not covered by the license.
 
-> Status: early. The core runs and is tested, but expect rough edges and
-> breaking changes. Nothing is published to a channel automatically; posting
-> is handed off for explicit approval.
+**[BrandMan Cloud](https://usebrandman.com)** is a separate paid product. It is
+this core plus closed components (a hosted service, billing, multi-tenancy, and
+similar). Cloud has more features. The open core is the smaller, functional
+system: one SQLite database, a password-gated dashboard, and an MCP server you
+run yourself. Cloud is not in this repository, and you do not need it to use
+the core.
 
-## What is in the core
+> Status: early (0.1.x). The core runs and is tested. Expect rough edges and
+> breaking changes.
 
-- **Brand context:** mission, voice, guidelines, personas and policy per brand,
-  retrievable by agents and humans.
-- **Content workflow:** sources, campaigns, channel drafts, exact-revision
-  approval, and a governed delivery handoff.
-- **Feedback loop:** record channel outcomes, propose evidence-backed learnings,
-  and accept them into the brand context only on explicit approval.
-- **KPI missions:** time-boxed goals with baselines, targets and trajectory,
-  fed by connector observations.
-- **MCP server:** the same flows exposed to any MCP-compatible agent, over stdio
-  or a hosted OAuth-protected HTTP endpoint.
-- **Dashboard and REST API:** an operator UI and the API behind it.
+## What the open core does
 
-## Two ways to run it
+- **Brand context.** Mission, voice, guidelines, personas, and compliance rules,
+  readable by agents and people.
+- **Content workflow.** Sources, campaigns, channel drafts, and newsletter
+  issues.
+- **Exact-revision approval.** A person approves one revision. The MCP server
+  can draft and submit that revision. It has no tool that approves or publishes.
+  Editing an approved item clears the approval, bumps the revision, and sends it
+  back to draft. Nothing is posted to a channel automatically.
+- **Feedback.** Record what a channel did, propose a learning, and accept it
+  into the brand context only with an explicit decision.
+- **Missions.** Time-boxed goals with a baseline, a target, and a trajectory.
+- **MCP.** The same flows for Claude, Cursor, and Codex, over stdio
+  (`brandman-mcp`) or a hosted OAuth endpoint (`/mcp`).
+- **Dashboard and REST API.** Operator UI at `/app`, and the API behind it.
+- **Channels at the edge.** X and Beehiiv are replaceable adapters. The brand
+  record does not live inside a channel.
 
-- **Self-hosted (this repository):** run the whole thing yourself against a local
-  SQLite database. This repository is licensed AGPL-3.0.
-- **Managed:** a hosted offering built on this core plus separate closed
-  components (billing, multi-tenancy and similar). Not part of this repository.
+## Install
 
-## Quickstart
+Python 3.11 or newer. Package installers download the latest
+[`brandman` release on PyPI](https://pypi.org/project/brandman/). This
+repository can be ahead of that release. The wheel includes the dashboard, so
+a PyPI install does not need Node.js.
 
-Requirements for a source checkout: Python 3.11+, [uv](https://docs.astral.sh/uv/), and Node.js 22.12+ with npm.
+```bash
+pip install brandman
+# or: uv tool install brandman
+# or: pipx install brandman
+```
 
-> **Legacy aliases.** The product is BrandMan. For compatibility with existing
-> installs, the `brand-os-*` commands, `BRAND_OS_*` environment variables and the
-> `brandos_session` cookie name still work; the `brandman-*` commands are the
-> primary names.
+In an empty directory:
+
+```bash
+brandman init     # writes .env (mode 600) and brandman.db, then asks for the brand
+brandman serve    # http://127.0.0.1:8000/app
+```
+
+Sign in with `BRANDMAN_PREVIEW_PASSWORD` from `.env`. Pass `--name`,
+`--mission`, `--voice`, `--compliance`, and `-y` to skip the prompts.
+
+`brandman init` sets the brand's approval policy to `human_approval_required`.
+
+### Connect Claude, Cursor, or Codex
+
+`brandman mcp-config` prints a config for this install. `--client` accepts
+`claude-desktop` (the default), `claude-code`, `cursor`, `codex`, and `json`.
+
+When `brandman-mcp` is on `PATH`, the printed command is that executable.
+When it is not, the command is `uvx --from brandman brandman-mcp`. That `uvx`
+form is a real entry point of the package (`brandman-mcp`), not a separate
+installer. `uvx brandman` starts the `brandman` CLI instead, which is the wrong
+process for an MCP client.
+
+Claude Desktop and Cursor use the same JSON (`claude_desktop_config.json`,
+`.cursor/mcp.json`). This is the block printed when `brandman-mcp` is not on
+`PATH`:
+
+```json
+{
+  "mcpServers": {
+    "brandman": {
+      "command": "uvx",
+      "args": ["--from", "brandman", "brandman-mcp"],
+      "env": {
+        "BRANDMAN_DB": "/absolute/path/brandman.db",
+        "BRANDMAN_DATABASE_PROFILE": "operating"
+      }
+    }
+  }
+}
+```
+
+Claude Code:
+
+```bash
+claude mcp add brandman \
+  -e BRANDMAN_DB=/absolute/path/brandman.db \
+  -e BRANDMAN_DATABASE_PROFILE=operating \
+  -- uvx --from brandman brandman-mcp
+```
+
+Codex writes `~/.codex/config.toml`:
+
+```bash
+codex mcp add brandman \
+  --env BRANDMAN_DB=/absolute/path/brandman.db \
+  --env BRANDMAN_DATABASE_PROFILE=operating \
+  -- uvx --from brandman brandman-mcp
+```
+
+`brandman mcp-config --client codex` prints that command.
+`brandman mcp-config --help` lists the clients the installed release knows.
+The `codex mcp add` line above talks to the same `brandman-mcp` server either
+way.
+
+A deployed BrandMan serves MCP at `https://your-host/mcp` (OAuth 2.1, PKCE,
+dynamic client registration):
+
+```bash
+brandman mcp-config --client claude-code --url https://your-host
+# claude mcp add --transport http brandman https://your-host/mcp
+
+brandman mcp-config --client codex --url https://your-host
+# codex mcp add brandman --url https://your-host/mcp
+```
+
+Useful first tools: `list_brands`, `get_brand_context`,
+`create_editorial_candidate`, `create_campaign`, `draft_post`,
+`create_newsletter_issue`, `revise_newsletter_issue`, `get_active_mission`,
+`report_product_gap`. The full list is the tools on `brandman-mcp`.
+
+### Run this repository
+
+Requires [uv](https://docs.astral.sh/uv/) and Node.js 22.12+ with npm. The
+dashboard source is tracked; generated files under `brandman/static/app/` are
+not.
 
 ```bash
 git clone https://github.com/AustinNChristensen/brandman.git
 cd brandman
 uv sync --locked
 uv run python scripts/build_dashboard.py
-
-uv run brandman init        # asks for your brand; writes .env and the database
-uv run brandman serve       # http://127.0.0.1:8000/app (password is in .env)
-uv run brandman mcp-config --client claude-code   # connect an agent
+uv run brandman init
+uv run brandman serve
+uv run brandman mcp-config --client cursor
 ```
 
-Or with Docker: `cp .env.example .env`, set `BRANDMAN_PREVIEW_PASSWORD`, then
-`docker compose up -d`.
+`uv build` (with Node on the build machine) produces a wheel that already
+contains the dashboard. Editable installs do not build the frontend on their
+own.
 
-The source HTML (`web/index.html`) and React code are tracked; generated files in
-`brandman/static/app/` are ignored. After changing dashboard source, rerun
-`uv run python scripts/build_dashboard.py` before serving it or running Python
-HTTP tests. `npm run dev` in `web/` remains available for frontend development.
+### Docker
 
-For a release or deployment, run `uv build` with Node.js available. The wheel
-build hook installs the locked frontend dependencies and builds the dashboard,
-then includes all generated assets in the wheel. Install that wheel in the
-runtime environment; Node.js is only needed by the build machine. Source archives
-include the frontend sources and build hook, and rebuild the assets when converted
-to a wheel. Editable installs do not run frontend builds automatically.
+```bash
+cp .env.example .env    # set BRANDMAN_PREVIEW_PASSWORD (16+ characters)
+docker compose up -d    # http://127.0.0.1:8000/app
+```
 
-Builders without Node/npm must install the verified prebuilt wheel, with
-`--only-binary=:all:` and an exact version/hash; a git dependency or source
-archive still invokes the frontend build hook. A wheel is a Python package,
-not a complete hosting upload configuration. See
-[release wheel preparation](docs/release-wheel.md) for the runtime proof,
-artifact receipts and operator gates before selecting a published version.
+The published port is loopback-only. See
+[deployment](https://github.com/AustinNChristensen/brandman/blob/main/docs/deployment.md).
 
-Production notes:
+### Optional built-in drafting
 
-- A host serving directly from a checkout must run
-  `uv run python scripts/build_dashboard.py` after checkout/dependency installation
-  and before starting or restarting the API. A host installing the built wheel
-  already has the assets. CI verifies both paths.
+MCP agents do not need this. To draft from a source without an external agent:
 
-- Configure every value through your host's secret manager; `.env.example` is
-  the non-secret contract. Never commit credentials or a database file.
-- Set `BRAND_OS_ALLOWED_HOSTS` to your public hostname and keep
-  `BRAND_OS_REQUIRE_HTTPS=true` behind TLS.
-- The database must be durable. Do not ship a local SQLite file inside a
-  container image.
-- OAuth state for the hosted MCP endpoint is stored in the same database.
-- The built-in password rate limit on `/oauth/authorize` is in memory and per
-  process.
+```bash
+pip install 'brandman[anthropic]'
+export ANTHROPIC_API_KEY=…
+brandman draft --brand my-brand --source <source-id>
+```
 
-Walkthrough: [docs/getting-started.md](docs/getting-started.md).
+That creates a draft campaign. It does not approve or publish it.
+
+`brandman-worker` runs one scheduler tick and due jobs. Run it from cron, or
+use the Compose file, which ticks every five minutes.
+
+The `brand-os-*` commands, `BRAND_OS_*` variables, and the `brandos_session`
+cookie still work. `brandman-*` and `BRANDMAN_*` are the primary names.
 
 ## Documentation
 
-- [Getting started](docs/getting-started.md)
-- [Connecting MCP clients](docs/mcp.md): Claude Code, Claude Desktop, Cursor, hosted OAuth
-- [Configuration](docs/configuration.md): every `BRANDMAN_*` setting
-- [Seed packs](docs/seed-packs.md): start a database with your own brands and house style
-- [Deployment](docs/deployment.md): Docker, TLS proxies, backups
-- [Extending BrandMan](docs/extending.md): plugins, custom authentication, one database per workspace
+- [Getting started](https://github.com/AustinNChristensen/brandman/blob/main/docs/getting-started.md)
+- [MCP clients](https://github.com/AustinNChristensen/brandman/blob/main/docs/mcp.md)
+- [Configuration](https://github.com/AustinNChristensen/brandman/blob/main/docs/configuration.md)
+- [Seed packs](https://github.com/AustinNChristensen/brandman/blob/main/docs/seed-packs.md)
+- [Deployment](https://github.com/AustinNChristensen/brandman/blob/main/docs/deployment.md)
+- [Extending BrandMan](https://github.com/AustinNChristensen/brandman/blob/main/docs/extending.md)
+
+For a host that serves a checkout, build the dashboard before starting the
+API. A wheel install already has those assets. Keep the database on durable
+storage. Set `BRANDMAN_ALLOWED_HOSTS` and `BRANDMAN_REQUIRE_HTTPS=true` behind
+TLS. Do not commit `.env` or a database file.
 
 ## Development
 
 ```bash
-uv sync && uv run pytest
-cd web && npm ci && npm test && npm run build   # rebuilds brandman/static/app
+uv sync --locked
+uv run python scripts/build_dashboard.py
+uv run pytest
 ```
+
+Frontend: `cd web && npm ci && npm test && npm run build`.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Contributors sign a CLA.
+See [CONTRIBUTING.md](https://github.com/AustinNChristensen/brandman/blob/main/CONTRIBUTING.md).
+Contributors sign a CLA. Contributions are released under AGPL-3.0.
 
 ## License
 
 Copyright (C) 2026 Austin Christensen.
 
-[GNU Affero General Public License v3.0](LICENSE). If you run a modified
-version as a network service, you must offer its source to the users of that
-service. The BrandMan name and logo are not covered by the license.
+[GNU Affero General Public License v3.0](https://github.com/AustinNChristensen/brandman/blob/main/LICENSE).
+The open core is not paywalled. If you run a modified version as a network
+service, you must offer its source to the users of that service.

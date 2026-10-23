@@ -1,8 +1,24 @@
 [project]
 name = "brandman"
-version = "0.1.0"
-description = "AI-native canonical brand and content control plane"
+version = "0.1.1"
+description = "AGPL open-core brand brain: brand context, approval-gated content, and an MCP server"
+readme = "README.md"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
+authors = [{ name = "Austin Christensen" }]
+keywords = ["mcp", "brand", "beehiiv", "newsletter", "agents", "seo"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU Affero General Public License v3",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet",
+]
 dependencies = [
   "fastapi[standard]>=0.115,<1",
   "uvicorn[standard]>=0.30,<1",
@@ -10,6 +26,12 @@ dependencies = [
   "langchain-core>=0.3,<2",
   "cryptography>=43,<51",
 ]
+
+[project.urls]
+Homepage = "https://usebrandman.com"
+Repository = "https://github.com/AustinNChristensen/brandman"
+Documentation = "https://github.com/AustinNChristensen/brandman/blob/main/docs/getting-started.md"
+Issues = "https://github.com/AustinNChristensen/brandman/issues"
 
 [project.optional-dependencies]
 # Optional built-in drafting (brandman/drafting.py). Agents over MCP need none of it.
@@ -42,7 +64,7 @@ testpaths = ["tests"]
 entrypoint = "brandman.main:app"
 
 [build-system]
-requires = ["hatchling>=1.25"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]

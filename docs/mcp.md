@@ -21,6 +21,16 @@ brandman mcp-config --client claude-desktop   # or --client cursor
 prints the JSON block to merge into the client's MCP configuration
 (`claude_desktop_config.json`, `.cursor/mcp.json`).
 
+```bash
+brandman mcp-config --client codex
+# codex mcp add brandman --env BRANDMAN_DB=/…/brandman.db --env BRANDMAN_DATABASE_PROFILE=operating -- /…/brandman-mcp
+```
+
+Codex stores that server in `~/.codex/config.toml` (or `.codex/config.toml` in
+a trusted project). When `brandman-mcp` is not on `PATH`, the printed command
+is `uvx --from brandman brandman-mcp`. `brandman mcp-config --help` lists the
+clients the installed release accepts.
+
 ## Hosted (Streamable HTTP + OAuth)
 
 A deployed BrandMan serves MCP at `https://your-host/mcp`, protected by
@@ -29,6 +39,9 @@ OAuth 2.1 with PKCE and dynamic client registration.
 ```bash
 brandman mcp-config --client claude-code --url https://your-host
 # claude mcp add --transport http brandman https://your-host/mcp
+
+brandman mcp-config --client codex --url https://your-host
+# codex mcp add brandman --url https://your-host/mcp
 ```
 
 The client opens a browser sign-in. The consent screen lists what the client

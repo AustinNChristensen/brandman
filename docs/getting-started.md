@@ -5,16 +5,23 @@ dashboard open, and an AI agent connected to it over MCP.
 
 ## 1. Install
 
-With [uv](https://docs.astral.sh/uv/):
+Python 3.11+. These commands install the latest `brandman` release on PyPI.
+A wheel includes the dashboard and does not need Node.js at runtime.
 
 ```bash
-uv tool install brandman            # or: pipx install brandman
+pip install brandman
+# or: uv tool install brandman
+# or: pipx install brandman
 ```
+
+`uvx --from brandman brandman-mcp` starts the MCP stdio server without a
+permanent install. It is the command `brandman mcp-config` prints when
+`brandman-mcp` is not on `PATH`. `uvx brandman` starts the CLI, not the MCP
+server.
 
 For a source checkout, install Node.js 22.12+ and npm, run `uv sync --locked`
 in the repository, then `uv run python scripts/build_dashboard.py`. Prefix
-commands with `uv run`. Prebuilt wheels include the dashboard and need no Node
-at runtime.
+commands with `uv run`. This checkout can be ahead of the PyPI release.
 
 ## 2. Create your brand
 
@@ -46,7 +53,11 @@ from `.env`. You can add more brands under **Settings**.
 ```bash
 brandman mcp-config --client claude-code    # prints a `claude mcp add …` command
 brandman mcp-config --client claude-desktop # prints JSON for claude_desktop_config.json
+brandman mcp-config --client cursor         # same JSON, for .cursor/mcp.json
+brandman mcp-config --client codex          # prints a `codex mcp add …` command
 ```
+
+`brandman mcp-config --help` lists the clients that installed release accepts.
 
 Then ask your agent something like *"Read the brand context for my-brand and
 draft three X posts about our launch."* It reads the brand's mission, voice,

@@ -1,7 +1,8 @@
 # Release wheel preparation (AUS-71)
 
-The current intended package version is **0.1.0**, pending owner review. The
-reviewed starting revision is `04c39c9af83bf30107ff7ac612646882ddc7901b`, which
+The package version this proof locks is **0.1.0**, which is the release on
+PyPI. A newer `[project].version` in the working tree is not a publication
+order. The reviewed starting revision is `04c39c9af83bf30107ff7ac612646882ddc7901b`, which
 includes the dashboard startup/access-contact changes and optional Anthropic
 drafting support. The first release must also include the reviewed AUS-71 proof;
 select its final reviewed commit, not the old starting revision. No tag or
