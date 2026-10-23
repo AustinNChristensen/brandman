@@ -144,6 +144,12 @@ def mcp_config(client: str, *, database: str, url: str | None = None) -> str:
         env = " ".join(f"-e {k}={v}" for k, v in server["env"].items())
         args = " ".join(server.get("args", []))
         return f"claude mcp add brandman {env} -- {server['command']} {args}".rstrip()
+    if client == "codex":
+        if url:
+            return f"codex mcp add brandman --url {server['url']}"
+        env = " ".join(f"--env {k}={v}" for k, v in server["env"].items())
+        args = " ".join(server.get("args", []))
+        return f"codex mcp add brandman {env} -- {server['command']} {args}".rstrip()
     return json.dumps({"mcpServers": {"brandman": server}}, indent=2)
 
 
@@ -194,7 +200,11 @@ def build_parser() -> argparse.ArgumentParser:
     serve.set_defaults(func=cmd_serve)
 
     mcp = sub.add_parser("mcp-config", help="print MCP client configuration")
-    mcp.add_argument("--client", choices=("claude-desktop", "claude-code", "cursor", "json"), default="claude-desktop")
+    mcp.add_argument(
+        "--client",
+        choices=("claude-desktop", "claude-code", "cursor", "codex", "json"),
+        default="claude-desktop",
+    )
     mcp.add_argument("--url", help="a deployed BrandMan base URL (uses the OAuth-protected /mcp endpoint)")
     mcp.add_argument("--env-file", default=ENV_FILE)
     mcp.set_defaults(func=cmd_mcp_config)

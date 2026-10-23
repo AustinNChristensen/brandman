@@ -36,7 +36,7 @@ def test_env_file_never_overrides_the_real_environment(tmp_path, monkeypatch):
     monkeypatch.delenv("B_TEST_KEY")
 
 
-def test_mcp_config_shapes():
+def test_mcp_config_shapes(monkeypatch):
     desktop = json.loads(cli.mcp_config("claude-desktop", database="/data/b.db"))
     server = desktop["mcpServers"]["brandman"]
     assert server["env"]["BRANDMAN_DB"] == "/data/b.db"
@@ -44,4 +44,22 @@ def test_mcp_config_shapes():
     assert hosted["mcpServers"]["brandman"] == {"type": "http", "url": "https://brand.example/mcp"}
     assert cli.mcp_config("claude-code", database="x", url="https://b.example") == (
         "claude mcp add --transport http brandman https://b.example/mcp"
+    )
+    assert cli.mcp_config("codex", database="x", url="https://brand.example/") == (
+        "codex mcp add brandman --url https://brand.example/mcp"
+    )
+    monkeypatch.setattr(cli.shutil, "which", lambda _name: None)
+    assert cli.mcp_config("cursor", database="/data/b.db") == cli.mcp_config(
+        "claude-desktop", database="/data/b.db"
+    )
+    uvx = json.loads(cli.mcp_config("cursor", database="/data/b.db"))["mcpServers"]["brandman"]
+    assert uvx["command"] == "uvx"
+    assert uvx["args"] == ["--from", "brandman", "brandman-mcp"]
+    assert cli.mcp_config("codex", database="/data/b.db") == (
+        "codex mcp add brandman --env BRANDMAN_DB=/data/b.db "
+        "--env BRANDMAN_DATABASE_PROFILE=operating -- uvx --from brandman brandman-mcp"
+    )
+    assert cli.mcp_config("claude-code", database="/data/b.db") == (
+        "claude mcp add brandman -e BRANDMAN_DB=/data/b.db "
+        "-e BRANDMAN_DATABASE_PROFILE=operating -- uvx --from brandman brandman-mcp"
     )

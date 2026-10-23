@@ -18,7 +18,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr
 
-from . import extensions, principals, seed_packs, store
+from . import __version__, extensions, principals, seed_packs, store
 from .dashboard_build import ensure_dashboard
 from .principals import operator_principal
 from .attribution_store import AttributionStore, AttributionStoreError
@@ -261,7 +261,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="BrandMan", version="0.1.0",
+    title="BrandMan", version=__version__,
     description="Canonical brand context and approval-gated content operations.",
     lifespan=lifespan,
 )

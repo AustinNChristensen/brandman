@@ -4,6 +4,8 @@ from __future__ import annotations
 import os
 import warnings
 
+__version__ = "0.1.1"
+
 LEGACY_ENV_PREFIX = "BRAND_OS_"
 ENV_PREFIX = "BRANDMAN_"
 
