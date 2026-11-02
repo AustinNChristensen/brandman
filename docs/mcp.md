@@ -2,8 +2,9 @@
 
 BrandMan exposes the same governed operations to agents that the dashboard
 uses: read brand context, record sources, create and revise drafts and
-campaigns, record outcomes, propose learnings. **Approving, scheduling and
-publishing stay with a human.**
+campaigns, record outcomes, propose learnings. **MCP tools cannot approve,
+schedule or publish.** Approval happens in the dashboard or through the REST
+API, by whoever the operator chooses.
 
 ## Local (stdio)
 
