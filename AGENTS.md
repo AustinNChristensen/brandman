@@ -104,4 +104,10 @@ or GHCR unless the issue asks for it.
    it. Use the PR template.
 5. Squash-merge after review.
 
+- **Commit without signing.** Agents have no GPG or SSH signing key. If a
+  commit asks for a signing key or passphrase, or fails with a signing error,
+  commit unsigned with `git commit --no-gpg-sign` (or
+  `git -c commit.gpgsign=false commit`) and keep going. Do not create, import
+  or ask for a key, and do not change global git config.
+
 See `CONTRIBUTING.md` for commit style and the CLA.
