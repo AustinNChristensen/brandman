@@ -21,16 +21,24 @@ the core.
 > Status: early (0.1.x). The core runs and is tested. Expect rough edges and
 > breaking changes.
 
+**Quick links:** [Quickstart](#install) · [Architecture](#architecture) ·
+[Docs](#documentation) · [Contributing](https://github.com/AustinNChristensen/brandman/blob/main/CONTRIBUTING.md) ·
+[Security](https://github.com/AustinNChristensen/brandman/blob/main/SECURITY.md) · [BrandMan Cloud](https://usebrandman.com) ·
+[PyPI](https://pypi.org/project/brandman/)
+
 ## What the open core does
 
 - **Brand context.** Mission, voice, guidelines, personas, and compliance rules,
   readable by agents and people.
 - **Content workflow.** Sources, campaigns, channel drafts, and newsletter
   issues.
-- **Exact-revision approval.** A person approves one revision. The MCP server
-  can draft and submit that revision. It has no tool that approves or publishes.
-  Editing an approved item clears the approval, bumps the revision, and sends it
-  back to draft. Nothing is posted to a channel automatically.
+- **Exact-revision approval.** An approval covers one exact revision. Editing
+  an approved item clears the approval, bumps the revision, and sends it back
+  to draft. Nothing is posted until its current revision is approved. Human
+  review of each post is optional: you choose who approves (a person in the
+  dashboard, or your own automation through the REST API), and the brand's
+  approval policy is a setting. The MCP server can draft and submit for
+  approval; it has no tool that approves or publishes.
 - **Feedback.** Record what a channel did, propose a learning, and accept it
   into the brand context only with an explicit decision.
 - **Missions.** Time-boxed goals with a baseline, a target, and a trajectory.
@@ -39,6 +47,29 @@ the core.
 - **Dashboard and REST API.** Operator UI at `/app`, and the API behind it.
 - **Channels at the edge.** X and Beehiiv are replaceable adapters. The brand
   record does not live inside a channel.
+
+## Architecture
+
+```
+Claude / Cursor / Codex ──MCP──┐
+browser ──► dashboard (/app) ──┤
+scripts ──► REST API (/api) ───┴─► FastAPI app (brandman.main)
+                                    ├─ brand context, campaigns, newsletters
+                                    ├─ dispatch + exact-revision approvals
+                                    └─ SQLite (one file: brandman.db)
+brandman-worker (cron) ─► scheduler tick ─► due jobs ─► X / Beehiiv adapters
+```
+
+- **One process, one database.** The web app, MCP server and worker all read
+  the same SQLite file. `brandman-mcp` (stdio) opens it directly; `brandman
+  serve` also serves MCP over HTTP at `/mcp`.
+- **Channels at the edge.** Adapters only send an approved revision and record
+  what happened. The brand record never lives inside a channel.
+- **Extension points.** Plugins, a replaceable authenticator,
+  `using_database()` for one database per tenant, and seed packs. See
+  [Extending BrandMan](https://github.com/AustinNChristensen/brandman/blob/main/docs/extending.md). BrandMan Cloud is built on these.
+- **Dashboard.** React + Vite source in `web/`, built into
+  `brandman/static/app/` and shipped inside the wheel.
 
 ## Install
 
@@ -63,7 +94,7 @@ brandman serve    # http://127.0.0.1:8000/app
 Sign in with `BRANDMAN_PREVIEW_PASSWORD` from `.env`. Pass `--name`,
 `--mission`, `--voice`, `--compliance`, and `-y` to skip the prompts.
 
-`brandman init` sets the brand's approval policy to `human_approval_required`.
+Approval settings live under Settings → Brand governance in the dashboard.
 
 ### Connect Claude, Cursor, or Codex
 
@@ -204,12 +235,23 @@ uv run python scripts/build_dashboard.py
 uv run pytest
 ```
 
-Frontend: `cd web && npm ci && npm test && npm run build`.
+Frontend: `cd web && npm ci && npm run lint && npm test && npm run build`.
+
+Coding agents: read [AGENTS.md](https://github.com/AustinNChristensen/brandman/blob/main/AGENTS.md).
 
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/AustinNChristensen/brandman/blob/main/CONTRIBUTING.md).
+Start from an issue, keep pull requests small, and run the tests locally.
 Contributors sign a CLA. Contributions are released under AGPL-3.0.
+Report security problems privately as described in
+[SECURITY.md](https://github.com/AustinNChristensen/brandman/blob/main/SECURITY.md).
+
+## BrandMan Cloud
+
+[BrandMan Cloud](https://usebrandman.com) is the hosted edition: accounts and
+workspaces, roles, billing, hosted MCP, and managed publishing, with no server
+to run. The open core here stays fully usable on its own.
 
 ## License
 
